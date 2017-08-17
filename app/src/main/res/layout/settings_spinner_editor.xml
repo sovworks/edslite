@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+	android:descendantFocusability="blocksDescendants"
+	style="@style/PropertyRow">
+	<TextView 
+		android:layout_width="match_parent" 
+		android:layout_height="wrap_content" 
+		android:id="@+id/title_edit"
+    	android:layout_marginTop="8dip"
+    	android:layout_marginLeft="8dip"
+    	android:text="@string/title"
+		android:textSize="14sp"
+		android:textStyle="bold" />		
+	<TextView 
+	    android:id="@+id/desc"
+	    android:text="@string/temp_data_path"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dip"
+        android:textSize="12sp" />
+	<Spinner
+  	    android:id="@+id/spinner"
+  	    android:layout_width="match_parent"
+  	    android:layout_height="wrap_content"/>
+</LinearLayout>

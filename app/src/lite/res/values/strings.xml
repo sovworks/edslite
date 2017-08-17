@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources
+    xmlns:xliff="http://schemas.android.com/tools">
+    <string name="eds" translatable="false"><xliff:g id="program_name">EDS Lite</xliff:g></string>
+    <string name="changes_text" translatable="false"><![CDATA[<font color="black">
+        <b>2.0.0.202</b>:
+	    <ul>
+	    	<li>Added an option to install additional file system modules. Currently ExFAT module is supported which allows to open containers with ExFAT file system.</li>
+		</ul>
+		<b>2.0.0</b>:
+	    <ul>
+	        <li>EDS Lite is now on <a href="https://github.com/sovworks/">GitHub</a>!</li>
+	    	<li>New UI. Please make yourself familiar with the new UI by watching a few <a href="https://sovworks.com/eds/managing-containers.php">videos</a>.</li>
+	    	<li>Android 8 support</li>
+	    	<li>Added VeraCrypt support</li>
+	    	<li>Added LUKS support</li>
+	    	<li>Added EncFs support</li>
+	    	<li>More encryption algorithms supported</li>
+	    	<li>Improved image viewer.</li>
+	    	<li>You can download the previous version using <a href="https://sovworks.com/eds/files/distr/lite/Edslite-v1.2.0.35.apk">this</a> link</li>
+		</ul>
+		</font>]]></string>
+    <string name="donation_notice">This is the open source version of EDS. <b>Please support</b> the development of <b>the open source version</b> by purchasing the full version or by making a donation.</string>
+    <string name="make_a_donation">Make a donation</string>
+    <string name="check_the_full_version">Check the full version</string>
+    <string name="check_source_code">Check the source code</string>
+</resources>

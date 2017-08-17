@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:minWidth="300dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_gravity="center_vertical|center_horizontal" 
+    android:padding="10dp">
+    <TextView            
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:inputType="none"
+        android:text="@string/cancel_task_confirmation" 
+        android:textSize="15sp" 
+        android:layout_marginTop="1dp" 
+        android:layout_marginBottom="1dp"/>
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">    
+		    <Button
+		        android:id="@+id/yesButton"
+		        android:layout_width="0dp"
+		        android:layout_height="wrap_content"
+		        android:layout_marginRight="2dp"
+		        android:text="@string/yes"
+		        android:layout_weight="0.5"		        
+		        android:onClick="onYesClick"
+				style="?android:attr/buttonStyle"/>
+		    <Button
+		        android:id="@+id/noButton"
+		        android:layout_width="0dp"
+		        android:layout_height="wrap_content"
+		        android:layout_marginLeft="2dp"
+		        android:text="@string/no"
+		        android:layout_weight="0.5"
+		        android:onClick="onNoClick"
+				style="?android:attr/buttonStyle" />
+    </LinearLayout>
+</LinearLayout>

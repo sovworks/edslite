@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:minWidth="300dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_gravity="center_vertical|center_horizontal" 
+    android:padding="5dp">
+
+    <TextView        
+        android:id="@+id/askOverwriteDialogText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"        
+        android:inputType="none"
+        android:textSize="20sp"/>
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">    
+		    <Button
+		        android:id="@+id/askOverwriteDialogSkipButton"
+		        android:layout_width="0dp"
+		        android:layout_height="wrap_content"
+		        android:text="@string/skip"
+		        android:layout_weight="0.5" />
+		    <Button
+		        android:id="@+id/askOverwriteDialogOverwriteButton"
+		        android:layout_width="0dp"
+		        android:layout_height="wrap_content"
+		        android:text="@string/overwrite"
+		        android:layout_weight="0.5" />
+    </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/applyToAllCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/apply_to_all" />
+
+</LinearLayout>

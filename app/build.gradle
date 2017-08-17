@@ -1,0 +1,125 @@
+apply plugin: 'com.android.application'
+
+android {
+
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+
+    defaultConfig {
+        applicationId "com.sovworks.eds.android"
+        minSdkVersion 14
+        targetSdkVersion 25
+        versionCode 204
+        versionName "2.0.0.204"
+
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            abiFilters 'x86', 'armeabi', 'armeabi-v7a', 'mips'
+        }
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+	signingConfigs {
+        debug {
+            storeFile file('../misc/keys.keystore')
+            storePassword 'android'
+            keyAlias 'eds-debug-key'
+            keyPassword 'android'
+        }
+    }    
+
+    flavorDimensions "fullOrLite", "licCheckType", "inet", "fsm"
+
+    productFlavors {
+        
+        lite {
+            dimension "fullOrLite"
+            applicationId "com.sovworks.edslite"
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-lite.pro'
+            externalNativeBuild {
+                cmake {
+                    targets "edsxts", "edsctr", "edsaes", "edsserpent", "edstwofish", "edsripemd160", "edswhirlpool", "fdraio", "localxts", "edscfb", "edscbc", "edsctr", "edsgost"
+                }
+            }
+        }
+        licCheckNone {
+            dimension "licCheckType"
+        }
+        noinet {
+            dimension "inet"
+        }
+        nofsml {
+            dimension "fsm"
+        }
+    }
+
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        if ((names.contains("lite") && !names.contains("licCheckNone")) ||
+                (names.contains("full") && names.contains("licCheckNone")) ||
+                (names.contains("inet") && !names.contains("full")) ||
+                (names.contains("fsm") && !names.contains("full")) ||
+                (names.contains("nofsm") && !names.contains("full")) ||
+                (names.contains("fsm") && !names.contains("inet")) ||
+                (names.contains("fsm") && !names.contains("licCheckGP")) ||
+                (names.contains("nofsml") && !names.contains("lite"))
+
+        ) {
+            setIgnore(true)
+        }
+    }
+
+    buildTypes {
+        
+        debug {
+            signingConfig signingConfigs.debug
+            externalNativeBuild {
+
+                cmake {
+                    cFlags "-DDEBUG"
+                }
+            }
+            debuggable true
+            jniDebuggable true
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+    }
+
+    lintOptions {
+          //checkReleaseBuilds false
+          abortOnError false
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFile = new File(
+                    new File(output.outputFile.parentFile, variant.versionName),
+                    output.outputFile.name.replace("app-", "EDS-").replace(".apk", "-v${variant.versionName}.apk")
+            )
+        }
+    }
+
+    externalNativeBuild {
+
+        cmake {
+           path "CMakeLists.txt"
+        }
+    }
+
+}
+
+dependencies {
+    compile 'com.drewnoakes:metadata-extractor:2.9.1'
+    compile 'com.android.support:design:26.0.0-alpha1'
+}
+
+apply from: 'build-full.gradle'
+apply from: 'build-local.gradle'

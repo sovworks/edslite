@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="mainTextColor" format="reference"/>
+    <attr name="secTextColor" format="reference"/>
+    <attr name="leftDrawerStyle" format="reference" />
+    <attr name="drawerRowBackground" format="reference"/>
+    <attr name="drawerBackground" format="reference"/>
+    <attr name="drawerMenuTitleTextColor" format="reference" />
+    <attr name="drawerMenuItemTextColor" format="reference" />
+    <attr name="dialogStyle" format="reference" />
+    <attr name="propertyButtonStyle" format="reference" />
+    <attr name="settingsBackground" format="reference" />
+    <attr name="propertyCatTextColor" format="reference" />
+    <attr name="propertyCheckboxStyle" format="reference" />
+    <attr name="propertyRadioStyle" format="reference" />
+    <attr name="propertyDivider" format="reference" />
+    <attr name="fmCheckBoxStyle" format="reference" />
+    <attr name="fmRadioStyle" format="reference" />
+    <attr name="fmListStyle" format="reference" />
+    <attr name="iconsColor" format="reference" />
+    <attr name="selectedItemBackground" format="reference" />
+    <attr name="aboutIcon" format="reference" />
+    <attr name="deviceMemoryIcon" format="reference" />
+    <attr name="deviceRootIcon" format="reference" />
+    <attr name="exitIcon" format="reference" />
+    <attr name="extStorageIcon" format="reference" />
+    <attr name="fileIcon" format="reference" />
+    <attr name="folderIcon" format="reference" />
+    <attr name="folderUpIcon" format="reference" />
+    <attr name="helpIcon" format="reference" />
+    <attr name="lockIcon" format="reference" />
+    <attr name="lockOpenIcon" format="reference" />
+    <attr name="manageLocationsIcon" format="reference" />
+    <attr name="settingsIcon" format="reference" />
+    <attr name="storageIcon" format="reference" />
+    <attr name="widgetLockedIcon" format="reference" />
+    <attr name="widgetLockedAllIcon" format="reference" />
+    <attr name="widgetUnlockedIcon" format="reference" />
+    <attr name="widgetUnlockedAllIcon" format="reference" />
+    <attr name="collapseIcon" format="reference" />
+    <attr name="editTextStyle" format="reference" />
+</resources>

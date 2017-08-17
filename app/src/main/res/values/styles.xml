@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="NewApi">
+    <style name="Theme.EDS" parent="android:Theme.Holo.Light.DarkActionBar">
+        <item name="android:actionBarStyle">@style/ActionBar</item>
+        <item name="android:buttonStyle">@style/Button</item>
+        <item name="android:buttonBarButtonStyle">@style/Button</item>
+        <item name="android:checkboxStyle">@style/CheckboxStyle</item>
+        <item name="android:radioButtonStyle">@style/RadioButtonStyle</item>
+        <item name="android:actionModeStyle">@style/ActionMode</item>
+        <item name="android:actionOverflowButtonStyle">@style/OverflowButtonStyle</item>
+        <item name="android:actionModeCloseDrawable">@drawable/ic_menu_back</item>
+        <item name="android:titleTextStyle">@style/ActionBarTitleTextStyle</item>
+        <item name="mainTextColor">@color/gray_medium</item>
+        <item name="secTextColor">@color/gray_light</item>
+        <item name="drawerRowBackground">@android:color/white</item>
+        <item name="drawerBackground">@android:color/white</item>
+        <item name="drawerMenuTitleTextColor">@color/darker_gray</item>
+        <item name="drawerMenuItemTextColor">@color/blue</item>
+        <item name="dialogStyle">@style/Dialog</item>
+        <item name="propertyButtonStyle">@style/Button.Property</item>
+        <item name="settingsBackground">@android:color/white</item>
+        <item name="propertyDivider">@drawable/properties_divider</item>
+        <item name="propertyCatTextColor">@color/darker_gray</item>
+        <item name="propertyCheckboxStyle">@style/CheckboxStyle.Property</item>
+        <item name="leftDrawerStyle">@style/LeftDrawer</item>
+        <item name="fmCheckBoxStyle">@style/RowButton.Check</item>
+        <item name="fmRadioStyle">@style/RowButton.Radio</item>
+        <item name="fmListStyle">@style/FileList</item>
+        <item name="iconsColor">@color/blue2</item>
+        <item name="selectedItemBackground">@color/gray_dark</item>
+        <item name="aboutIcon">@drawable/ic_about</item>
+        <item name="deviceMemoryIcon">@drawable/ic_device_memory</item>
+        <item name="deviceRootIcon">@drawable/ic_device_root_memory</item>
+        <item name="exitIcon">@drawable/ic_exit</item>
+        <item name="extStorageIcon">@drawable/ic_ext_storage</item>
+        <item name="fileIcon">@drawable/ic_file</item>
+        <item name="folderIcon">@drawable/ic_folder</item>
+        <item name="folderUpIcon">@drawable/ic_folder_up</item>
+        <item name="helpIcon">@drawable/ic_help</item>
+        <item name="lockIcon">@drawable/ic_lock</item>
+        <item name="lockOpenIcon">@drawable/ic_lock_open</item>
+        <item name="manageLocationsIcon">@drawable/ic_manage_locations</item>
+        <item name="settingsIcon">@drawable/ic_settings</item>
+        <item name="storageIcon">@drawable/ic_storage</item>
+        <item name="widgetLockedIcon">@drawable/widget_locked</item>
+        <item name="widgetUnlockedIcon">@drawable/widget_unlocked</item>
+        <item name="widgetLockedAllIcon">@drawable/widget_locked_all</item>
+        <item name="widgetUnlockedAllIcon">@drawable/widget_unlocked_all</item>
+        <item name="collapseIcon">@drawable/ic_action_collapse</item>
+    </style>
+    <style name="Theme.EDS.Dark" parent="android:Theme.Holo">
+        <item name="android:actionBarStyle">@style/ActionBar.Dark</item>
+        <item name="android:buttonStyle">@style/Button.Dark</item>
+        <item name="android:buttonBarButtonStyle">@style/Button.Dark</item>
+        <item name="android:checkboxStyle">@style/CheckboxStyle.Dark</item>
+        <item name="android:radioButtonStyle">@style/RadioButtonStyle.Dark</item>
+        <item name="android:actionModeStyle">@style/ActionMode.Dark</item>
+        <item name="android:actionOverflowButtonStyle">@style/OverflowButtonStyle.Dark</item>
+        <item name="android:actionModeCloseDrawable">@drawable/ic_menu_back</item>
+        <item name="android:titleTextStyle">@style/ActionBarTitleTextStyle.Dark</item>
+        <item name="mainTextColor">@android:color/white</item>
+        <item name="secTextColor">@color/gray_light</item>
+        <item name="drawerRowBackground">@color/gray_dark2</item>
+        <item name="drawerBackground">@color/gray_dark2</item>
+        <item name="drawerMenuTitleTextColor">@android:color/white</item>
+        <item name="drawerMenuItemTextColor">@color/gray_light</item>
+        <item name="dialogStyle">@style/Dialog.Dark</item>
+        <item name="propertyButtonStyle">@style/Button.Property.Dark</item>
+        <item name="settingsBackground">@android:color/black</item>
+        <item name="propertyDivider">@drawable/properties_divider_dark</item>
+        <item name="propertyCatTextColor">@color/darker_gray</item>
+        <item name="propertyCheckboxStyle">@style/CheckboxStyle.Dark.Property</item>
+        <item name="leftDrawerStyle">@style/LeftDrawer.Dark</item>
+        <item name="fmCheckBoxStyle">@style/RowButton.Check.Dark</item>
+        <item name="fmRadioStyle">@style/RowButton.Radio.Dark</item>
+        <item name="fmListStyle">@style/FileList.Dark</item>
+        <item name="iconsColor">@color/gray_light</item>
+        <item name="selectedItemBackground">@color/gray_dark</item>
+        <item name="aboutIcon">@drawable/ic_about_dark</item>
+        <item name="deviceMemoryIcon">@drawable/ic_device_memory_dark</item>
+        <item name="deviceRootIcon">@drawable/ic_device_root_memory_dark</item>
+        <item name="exitIcon">@drawable/ic_exit_dark</item>
+        <item name="extStorageIcon">@drawable/ic_ext_storage_dark</item>
+        <item name="fileIcon">@drawable/ic_file_dark</item>
+        <item name="folderIcon">@drawable/ic_folder_dark</item>
+        <item name="folderUpIcon">@drawable/ic_folder_up_dark</item>
+        <item name="helpIcon">@drawable/ic_help_dark</item>
+        <item name="lockIcon">@drawable/ic_lock_dark</item>
+        <item name="lockOpenIcon">@drawable/ic_lock_open_dark</item>
+        <item name="manageLocationsIcon">@drawable/ic_manage_locations_dark</item>
+        <item name="settingsIcon">@drawable/ic_settings_dark</item>
+        <item name="storageIcon">@drawable/ic_storage_dark</item>
+        <item name="widgetLockedIcon">@drawable/widget_locked_dark</item>
+        <item name="widgetUnlockedIcon">@drawable/widget_unlocked_dark</item>
+        <item name="widgetLockedAllIcon">@drawable/widget_locked_all_dark</item>
+        <item name="widgetUnlockedAllIcon">@drawable/widget_unlocked_all_dark</item>
+        <item name="collapseIcon">@drawable/ic_action_collapse_dark</item>
+    </style>
+    <style name="Dialog" parent="Theme.EDS">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:colorBackground">?attr/colorBackgroundFloating</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowTitleStyle">@style/RtlOverlay.DialogWindowTitle.AppCompat</item>
+        <item name="android:windowTitleBackgroundStyle">@style/Base.DialogWindowTitleBackground.AppCompat</item>
+        <item name="android:windowBackground">@drawable/abc_dialog_material_background</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@style/Animation.AppCompat.Dialog</item>
+        <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="listPreferredItemPaddingLeft">24dip</item>
+        <item name="listPreferredItemPaddingRight">24dip</item>
+        <item name="android:listDivider">@null</item>
+        <item name="android:windowCloseOnTouchOutside">@bool/abc_config_closeDialogWhenTouchOutside</item>
+    </style>
+    <style name="Dialog.Dark" parent="Theme.EDS.Dark">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowTitleStyle">@style/RtlOverlay.DialogWindowTitle.AppCompat</item>
+        <item name="android:windowTitleBackgroundStyle">@style/Base.DialogWindowTitleBackground.AppCompat</item>
+        <item name="android:windowBackground">@color/gray_dark2</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:textAppearance">@android:style/TextAppearance.Holo</item>
+        <item name="android:textAppearanceInverse">@android:style/TextAppearance.Holo.Inverse</item>
+
+        <item name="android:listPreferredItemPaddingLeft">16dip</item>
+        <item name="android:listPreferredItemPaddingRight">16dip</item>
+        <item name="android:listPreferredItemPaddingStart">16dip</item>
+        <item name="android:listPreferredItemPaddingEnd">16dip</item>
+        <item name="android:windowAnimationStyle">@style/Animation.AppCompat.Dialog</item>
+    </style>
+    <style name="ActionBar" parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@android:color/black</item>
+        <item name="android:backgroundStacked" tools:ignore="NewApi">@android:color/black</item>
+    </style>
+    <style name="ActionBar.Dark" parent="android:Widget.Holo.ActionBar.Solid">
+    </style>
+    <style name="ActionMode" parent="android:Widget.Holo.Light.ActionMode.Inverse">
+        <item name="android:background">@android:color/black</item>
+    </style>
+    <style name="ActionMode.Dark" parent="android:Widget.Holo.ActionMode">
+    </style>
+    <style name="OverflowButtonStyle" parent="android:Widget.Holo.Light.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_menu_more</item>
+    </style>
+    <style name="OverflowButtonStyle.Dark" parent="android:Widget.Holo.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_menu_more</item>
+    </style>
+    <style name="ActionBarTitleTextStyle" parent="android:TextAppearance.Holo.Widget.ActionBar.Title.Inverse">
+        <item name="android:textSize">14sp</item>        
+    </style>
+    <style name="ActionBarTitleTextStyle.Dark" parent="android:TextAppearance.Holo.Widget.ActionBar.Title">
+        <item name="android:textSize">14sp</item>
+    </style>
+    <style name="Button"  parent="android:Widget.Holo.Light.Button">
+        <item name="android:background">@drawable/button</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:minWidth">20dp</item>
+        <item name="android:minHeight">20dp</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+    <style name="Button.Dark"  parent="android:Widget.Holo.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:minWidth">20dp</item>
+        <item name="android:minHeight">20dp</item>
+    </style>
+    <style name="CheckboxStyle" parent="android:Widget.Holo.Light.CompoundButton.CheckBox">
+        <item name="android:button">@drawable/checkbox</item>
+        <item name="android:textColor">?attr/mainTextColor</item>
+    </style>
+    <style name="CheckboxStyle.Dark" parent="android:Widget.Holo.CompoundButton.CheckBox">
+        <item name="android:textColor">?attr/mainTextColor</item>
+    </style>
+    <style name="RadioButtonStyle" parent="android:Widget.Holo.Light.CompoundButton.RadioButton">
+        <item name="android:button">@drawable/radio</item>
+        <item name="android:textColor">?attr/mainTextColor</item>
+    </style>
+    <style name="RadioButtonStyle.Dark" parent="android:Widget.Holo.CompoundButton.RadioButton">
+        <item name="android:textColor">?attr/mainTextColor</item>
+    </style>
+    <style name="LeftDrawer" parent="android:Widget.Holo.Light.ListView">
+        <item name="android:layout_width">240dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_gravity">start</item>
+        <item name="android:choiceMode">singleChoice</item>
+        <item name="android:background">?attr/drawerBackground</item>
+    </style>
+    <style name="LeftDrawer.Dark" parent="android:Widget.Holo.ListView">
+        <item name="android:layout_width">240dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_gravity">start</item>
+        <item name="android:choiceMode">singleChoice</item>
+        <item name="android:background">?attr/drawerBackground</item>
+    </style>
+    <style name="DrawerRow">
+        <item name="android:background">?attr/drawerRowBackground</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/drawer_list_row_height</item>
+        <item name="android:padding">5dp</item>
+        <item name="android:minHeight">?android:attr/listPreferredItemHeight</item>
+    </style>
+    <style name="DrawerMainIcon">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+    <style name="DrawerMainTitle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">?attr/drawerMenuTitleTextColor</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+    <style name="DrawerCloseLocationIcon">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+    <style name="DrawerRow.Sub" />
+    <style name="DrawerMainIcon.Sub" />
+    <style name="DrawerMainTitle.Sub">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">?attr/drawerMenuItemTextColor</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle" />
+    </style>
+    <style name="EmptyListText">
+        <item name="android:id">@id/android:empty</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:inputType">none</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:layout_gravity">center</item>
+    </style>
+    <style name="LocationListRow">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minHeight">?android:attr/listPreferredItemHeight</item>
+    </style>
+    <style name="LocationListText">
+        <item name="android:textSize">14sp</item>
+        <item name="android:layout_gravity">center_vertical</item>
+    </style>
+    <style name="LocationListIcon">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+      xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/fullScreenModeMenuItem" android:title="@string/enable_full_screen_mode" android:checkable="true" android:showAsAction="ifRoom" android:icon="@drawable/ic_menu_fullscreen"
+          tools:ignore="AppCompatResource"/>
+</menu>

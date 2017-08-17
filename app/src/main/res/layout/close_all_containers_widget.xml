@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="45dp"
+    android:layout_height="45dp"
+    android:layout_margin="1dp"
+    android:layout_gravity="center"
+    android:background="@drawable/widget_background">
+    <ImageButton
+        android:id="@+id/containersClosedImageButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/widget_locked_all"
+        android:scaleType="fitCenter"
+        android:contentDescription="@string/close_all_containers"
+        android:layout_gravity="center"/>
+</FrameLayout>

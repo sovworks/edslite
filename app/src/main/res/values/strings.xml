@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="http://schemas.android.com/tools">
+    <string name="add_container">Add existing container</string>
+	<string name="eds" translatable="false"><xliff:g id="program_name">EDS</xliff:g></string>
+    <string name="ok">OK</string>
+	<string name="enter_password">Enter password:</string>
+	<string name="select">Select</string>
+	<string name="enter_new_folder_name">Enter new folder name</string>
+	<string name="new_file">New file</string>
+	<string name="new_dir">New folder</string>
+	<string name="remove_from_list">Remove from the list</string>
+	<string name="processing_file"><xliff:g id="filename" example="/sdcard/data.txt">%1$s</xliff:g> (<xliff:g id="number of files processed">%2$d</xliff:g> of <xliff:g id="total_number_of_files">%3$d</xliff:g>)</string>
+	<string name="copying_files">Copying files</string>
+	<string name="copy_failed">Copy failed</string>
+	<string name="move_failed">Move failed</string>
+	<string name="delete">Delete</string>
+	<string name="deleting_files">Deleting files</string>
+	<string name="delete_failed">Delete failed</string>
+	<string name="rename">Rename</string>
+	<string name="enter_new_file_name">Enter new file name</string>
+	<string name="settings">Settings</string>
+	<string name="bad_container_file_or_wrong_password">Wrong password or unsupported container format</string>
+	<string name="main_settings">Main settings</string>
+	<string name="eds_shortcut"><xliff:g id="program_name">EDS</xliff:g> shortcut</string>
+	<string name="enter_widget_title">Enter widget title</string>	
+	<string name="select_path">Select path</string>
+	<string name="container_size">Container size</string>
+	<string name="container_size_desc">Enter the size of the container in megabytes</string>
+	<string name="container_password">Container password</string>
+	<string name="create_new_container">Create new container</string>
+	<string name="cancel_task_confirmation">Are you sure you want to cancel current task?</string>
+	<string name="yes">Yes</string>
+	<string name="no">No</string>
+	<string name="skip">Skip</string>
+	<string name="overwrite">Overwrite</string>
+	<string name="file_already_exists">File <xliff:g id="filename" example="example.txt">%1$s</xliff:g> already exists at <xliff:g id="directory" example="/sdcard">%2$s</xliff:g>.</string>
+	<string name="size">Size</string>
+	<string name="number_of_files">Number of files</string>
+	<string name="properties">Properties</string>
+	<string name="total_space">Total space</string>
+	<string name="free_space">Free space</string>
+	<string name="use_password">Use password</string>
+	<string name="saving_changes">Saving changes</string>
+	<string name="preparing_file">Preparing files</string>
+	<string name="eds_service_is_running"><xliff:g id="program_name">EDS</xliff:g> service is running</string>
+	<string name="stop_service_and_exit">Stop service and exit</string>
+	<string name="send_files_to">Send files to</string>
+	<string name="send">Send</string>
+	<string name="max_temporary_file_size">Maximum temporary file size</string>
+	<string name="overwrite_temp_files_with_random_data">Overwrite temporary files with random data</string>
+	<string name="err_target_container_is_closed">Target container is closed</string>
+	<string name="err_failed_opening_container">Failed opening container</string>
+	<string name="err_input_output">Failed reading or writing data</string>
+	<string name="err_temp_file_is_too_big">File is too large. You can copy it manually or increase maximum temporary file size in the program settings.</string>
+	<string name="err_external_storage_is_not_available">External storage is not available</string>
+	<string name="err_container_size_is_too_small">Specified container size is too small</string>
+	<string name="err_failed_processing_settings_file">Failed processing the settings file</string>
+	<string name="err_failed_creating_container">Failed creating container</string>
+	<string name="about_message" translatable="false"><xliff:g id="copyright">\u00A9</xliff:g> 2012–2017, <xliff:g id="dev_name">sovworks</xliff:g></string>
+	<string name="about">About</string>
+	<string name="opening_container">Opening</string>
+	<string name="decrypt_to_temp_folder">Decrypt to the temporary folder</string>
+	<string name="container_file_name_is_not_specified">The file name of the container is not specified</string>
+	<string name="do_you_want_to_overwrite_existing_file">Do you want to overwrite existing file?</string>
+	<string name="enter_file_name">Enter the filename</string>
+	<string name="save_changes">Save changes</string>
+	<string name="do_you_want_to_save_changes">Do you want to save changes?</string>
+	<string name="select_image">Select an image</string>
+	<string name="do_you_really_want_to_delete_selected_files">Do you really want to delete selected files?</string>
+	<string name="wiping_files">Wiping files</string>
+	<string name="creating_container">Creating container</string>
+	<string name="err_failed_saving_changes">Failed to save changes. Try saving the file again or copy the file manually. See the program log file for details.</string>
+	<string name="help">Help</string>
+	<string name="select_file">Select file</string>
+	<string name="file_not_found">Specified path doesn\'t exist</string>
+	<string name="select_all">Select all</string>
+	<string name="apply_to_all">Apply to all</string>		
+	<string name="closing">Closing</string>
+	<string-array name="image_viewer_use_mode">
+		<item >Never</item>
+		<item >For all but the local unencrypted files</item>
+		<item >Always</item>
+	</string-array>
+	<string name="image_viewer">Image viewer</string>
+	<string name="loading">Loading</string>
+	<string name="last_modified">Last modified</string>
+	<string name="path">Path</string>
+	<string name="always_force_close_containers">Always force close containers</string>
+	<string name="show_previews">Show previews in the file manager</string>
+	<string name="open_read_only">Open in read only mode</string>
+	<string name="disable_wide_screen_layouts">Disable landscape layout</string>
+	<string name="close_all_containers">Close all <xliff:g id="program_name">EDS</xliff:g> containers</string>
+	<string name="fill_free_space_with_random_data">Fill free space with random data</string>
+	<string name="ascending">Ascending</string>
+	<string name="descending">Descending</string>
+	<string-array name="sort_mode">
+		<item >By filename</item>
+		<item >By modification date</item>
+		<item >By size</item>
+	</string-array>
+	<string name="sort">Sort</string>
+	<string name="zoom_in">Zoom in</string>
+	<string name="zoom_out">Zoom out</string>
+	<string name="next_image">Next image</string>
+	<string name="previous_image">Previous image</string>
+	<string name="rotate_left">Rotate left</string>
+	<string name="rotate_right">Rotate right</string>
+	<string name="encryption_algorithm">Encryption algorithm</string>
+	<string name="hash_algorithm">Hash algorithm</string>
+	<string name="version_history">Version history</string>
+	<string name="containers">Containers</string>
+	<string name="close">Close</string>
+	<string name="target_path">Target path</string>
+	<string name="device">Device</string>
+	<string name="username">Username</string>
+	<string name="password">Password</string>
+	<string name="title">Title</string>
+	<string name="open">Open</string>
+	<string name="disable_wide_screen_layouts_desc">This option disables the preview panel in landscape mode</string>
+	<string name="temp_data_path">Temporary data path</string>
+	<string name="temp_data_path_desc">This path will be used if a container is opened in non mounted mode to store temporary files. Leave the field empty to use the default path.</string>
+	<string name="max_temporary_file_size_desc">If a container is opened in non mounted mode then in order to open a file with an external tool, this file has to be decrypted to the temporary location. This option sets the maximum size of a file that can be decrypted automatically (in megabytes).</string>
+	<string name="overwrite_temp_files_with_random_data_desc">If this option is enabled then a temporary file will be overwritten with random data before it is deleted.</string>
+	<string name="auto_close_container">Auto-close containers</string>
+	<string name="auto_close_container_desc">Auto-close container after no data has been read/written to it for the specified amount of time (in minutes).</string>
+	<string name="extension_mime_override">Override the mime type of a file based on its extension.</string>
+	<string name="extension_mime_override_desc">You should enter one mime type per line. Eg, <xliff:g id="example">txt text/plain</xliff:g>.</string>
+	<string name="internal_image_viewer_mode">Built-in image viewer mode</string>
+	<string name="internal_image_viewer_mode_desc">Select when you want to use the built-in image viewer</string>
+	<string name="always_force_close_containers_desc">Force close containers without request. You may lose unsaved data.</string>
+	<string name="path_to_container">Path to container</string>
+	<string name="internal_container_settings">Internal container settings</string>
+	<string name="internal_container_settings_desc">You have to open the container to access these settings</string>
+	<string name="change_container_password">Change container password</string>
+	<string name="enter_new_password">Enter new password</string>
+	<string name="repeat_password">Repeat password</string>
+	<string name="password_does_not_match">Password does not match</string>
+	<string name="save_password">Remember password</string>
+	<string name="save_password_desc">Save the password of the container. Saving a password may be insecure.</string>
+	<string name="enable_full_screen_mode">Enable full screen mode</string>
+	<string name="never_save_history">Never save links to containers</string>
+	<string name="never_save_history_desc">A link to the new container will be removed after you close <xliff:g id="program_name">EDS</xliff:g></string>
+	<string name="contact_support">Contact support</string>
+	<string name="no_free_space_left">No free space left</string>
+	<string name="speed">Current speed: <xliff:g id="current_speed">%1$.1f</xliff:g> Mb/s</string>
+	<string name="container_format">Container format</string>
+	<string name="container_format_desc">You can specify the format of the container in order to speed up container opening</string>
+	<string name="encryption_alg_desc">You can specify the encryption algorithm in order to speed up container opening</string>
+	<string name="hash_alg_desc">You can specify the hashing algorithm in order to speed up container opening</string>
+	<string name="working">Working</string>	
+	<string name="generic_error_message">An error occurred. You can get the details from the program log file.</string>
+	<string name="err_no_application_found">No application found to handle this type of file. You can override the mime type of a file from the main settings screen.</string>
+	<string name="disable_modified_files_backup">Disable backup copy of modified files</string>
+    <string name="invalid_master_password">Invalid master password</string>
+    <string name="enter_master_password">Enter master password</string>
+    <string name="master_password">Master password</string>
+    <string name="location_type">location type</string>
+    <string name="drawer_open">Drawer open</string>
+    <string name="drawer_close">Drawer close</string>
+    <string name="open_file">Open file</string>
+	<string name="add_new">Add new</string>
+	<string name="create_new_container_or_add_existing_container">Would you like to create a new container or to add an existing container?</string>
+	<string name="changing_password">Changing password</string>
+	<string name="choose_files_to_copy_or_move">Choose files to copy or move…</string>
+	<string name="manage_containers">Manage containers</string>
+	<string name="local_files">Local files</string>
+	<string name="built_in_memory_card">Built-in memory card</string>
+	<string name="force_close_request">Can\'t close the container <xliff:g id="path_to_container">\"%1$s\"</xliff:g>. Do you want to force close it?</string>
+	<string name="debug_log">Debug log</string>
+	<string name="edit">Edit</string>
+	<string name="external_storage">External storage</string>
+	<string name="content_provider" translatable="false">Content provider</string>
+	<string name="manage_local_storages">Manage local storages</string>
+	<string name="container_info_summary">Free space: <xliff:g id="free_space" example="10Mb">%1$s</xliff:g>; Total space: <xliff:g id="total_space" example="100Mb">%2$s</xliff:g>.</string>
+	<string name="disable">Disable</string>
+	<string name="copy_here">Copy here</string>
+	<string name="move_here">Move here</string>
+	<string name="storage_permission_desc">Storage access permission is required in order to access memory cards and usb storages</string>
+	<string name="ext_storage_write_permission_request">Would you like to grant external storage write access permission to EDS?</string>
+	<string name="grant">Grant</string>
+	<string name="number_of_kdf_iterations_veracrypt_descr">Enter the <xliff:g id="key_derivation_function">KDF</xliff:g> iterations multiplier (<xliff:g id="pim">PIM</xliff:g>). The greater value you choose the longer it will take to open the container. Enter 0 to use the default value. Check <xliff:g id="url">https://veracrypt.codeplex.com/wikipage?title=Personal%20Iterations%20Multiplier%20(PIM)</xliff:g> for details.</string>
+	<string name="kdf_iterations_multiplier"><xliff:g id="key_derivation_function">KDF</xliff:g> iterations multiplier (<xliff:g id="pim">PIM</xliff:g>)</string>
+	<string name="container_format_is"><xliff:g id="formatting">&lt;p&gt;</xliff:g>Container format is <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="container_format" example="VeraCrypt">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.<xliff:g id="formatting">&lt;/p&gt;</xliff:g></string>
+	<string name="encryption_alg_is"><xliff:g id="formatting">&lt;p&gt;</xliff:g>Encryption algorithm is <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="encryption_algorithm_name" example="AES">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.<xliff:g id="formatting">&lt;/p&gt;</xliff:g></string>
+	<string name="kdf_base_hash_func_is"><xliff:g id="key_derivation_function">KDF</xliff:g> base hash function is <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="hash_algorithm_name" example="SHA-256">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.</string>
+	<string name="hidden">hidden</string>
+	<string name="value_has_been_copied">The field value has been copied to the clipboard</string>
+	<string name="overwrite_and_delete">Overwrite and delete</string>
+	<string name="list_is_empty">The list is empty</string>
+	<string name="hide_eds_screen_from_other_apps">Hide <xliff:g id="program_name">EDS</xliff:g> screen from other applications</string>
+	<string name="toggle_auto_zoom">Toggle auto zoom</string>
+	<string name="change">Change</string>
+	<string name="do_you_really_want_to_remove_from_the_list">Do you really want to remove <xliff:g id="title">\"%1$s\"</xliff:g> from the list?</string>
+	<string name="toggle_display_password">Toggle display password</string>
+	<string name="file_operation_started">File operation started</string>
+	<string name="open_file_as_container">Open file as container</string>
+	<string name="remember_kdf_iterations_multiplier">Remember KDF iterations multiplier</string>
+	<string name="default_theme">Default</string>
+	<string name="dark_theme">Dark</string>
+	<string name="theme">Theme</string>
+	<string name="theme_desc">Restart the program to apply changes</string>
+	<string name="use_external_file_manager">External file manager</string>
+	<string name="use_external_file_manager_desc">Open an external file manager once the container has been mounted</string>
+	<string name="builtin_file_manager">Built-in file manager</string>
+	<string name="dont_use_content_provider">Don\'t use EDS content provider to open decrypted files in other applications.</string>
+    <string name="dont_use_content_provider_desc">Some applications can\'t work with content providers.</string>
+    <string name="uri_of_the_container">URI of the container</string>
+    <string name="text_has_been_copied">Text has been copied to the clipboard</string>
+	<string name="select_root_folder_tip">Please open root folder of the external storage and press \"Select\"</string>
+	<string name="wrong_encfs_root_path">Wrong <xliff:g id="encfs">EncFs</xliff:g> root path</string>
+	<string name="filename_encryption_algorithm">Filename encryption algorithm</string>
+	<string name="key_size">Key size</string>
+	<string name="key_size_descr">Please select a key size in bits.</string>
+	<string name="block_size">Block size</string>
+	<string name="block_size_descr">Select a file block size in bytes</string>
+	<string name="enable_per_file_iv">Enable per-file initialization vectors?</string>
+	<string name="enable_per_file_iv_descr">This adds about 8 bytes per file to the storage requirements. It should not affect performance except possibly with applications which rely on block-aligned file io for performance.</string>
+	<string name="enable_filename_iv_chain">Enable filename initialization vector chaining</string>
+	<string name="enable_filename_iv_chain_descr">This makes filename encoding dependent on the complete path, rather then encoding each path element individually.</string>
+	<string name="enable_filename_to_file_iv_chain">Enable filename to <xliff:g id="initializing_vector">IV</xliff:g> header chaining?</string>
+	<string name="enable_filename_to_file_iv_chain_descr">This makes file data encoding dependent on the complete file path.</string>
+	<string name="allow_empty_blocks">Allow empty blocks</string>
+	<string name="allow_empty_blocks_descr">This avoids writing encrypted blocks in sparse files.</string>
+	<string name="mac_bytes_per_block">Enable block authentication code headers on every block in a file?</string>
+	<string name="mac_bytes_per_block_descr">This adds about 12 bytes per block to the storage requirements for a file, and significantly affects performance but it also means [almost] any modifications or errors within a block will be caught and will cause a read error.</string>
+	<string name="add_rand_bytes">Add random bytes to each block header?</string>
+	<string name="add_rand_bytes_descr">This adds a performance penalty, but ensures that blocks have different authentication codes.  Note that you can have the same benefits by enabling per-file initialization vectors, which does not come with as great of performance penalty. Select a number of bytes, from 1 to 8.</string>
+	<string name="number_of_kdf_iterations">Number of <xliff:g id="key_derivation_function">KDF</xliff:g> iterations</string>
+	<string name="number_of_kdf_iterations_descr">Enter the number of iterations for the key derivation function. The greater value you choose the longer it will take to open the container.</string>
+    <string name="install_exfat_module">Install <xliff:g id="exfat">ExFAT</xliff:g> module</string>
+    <string name="install_exfat_module_desc">In order to open an <xliff:g id="exfat">ExFAT</xliff:g> formatted container, you can install an additional <xliff:g id="exfat">ExFAT</xliff:g> file system module. The open source module can be downloaded from <xliff:g id="exfat_module_link">%s</xliff:g>.</string>
+	<string name="module_has_been_installed">The module has been installed</string>
+    <string name="file_system_type">File system type</string>
+	<string name="file_system_type_desc">You can download an additional open source <xliff:g id="exfat">ExFAT</xliff:g> file system module from the following page: <xliff:g id="exfat_module_link">%s</xliff:g>.</string>
+    <string name="get_program_log">Debug log</string>
+	<string name="save_log_file_to">Save the log file to...</string>
+</resources>

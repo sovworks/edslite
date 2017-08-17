@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:descendantFocusability="blocksDescendants"
+	style="@style/PropertyRow">
+	<LinearLayout
+		android:id="@+id/title_layout"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal">
+		<TextView
+			android:id="@+id/title_edit"
+			android:layout_width="0dp"
+			android:layout_weight="1"
+			style="@style/PropertyTitle"/>
+		<Button
+			android:id="@android:id/button1"
+			android:text="@string/edit"
+			style="?attr/propertyButtonStyle"/>
+		<Button
+			android:id="@android:id/button2"
+			android:text="@string/select_path"
+			style="?attr/propertyButtonStyle"/>
+	</LinearLayout>
+	<TextView
+		android:id="@+id/desc"
+		style="@style/PropertyDesc"
+		android:layout_below="@id/title_layout"/>
+	<TextView
+		android:id="@android:id/text1"
+		android:layout_below="@id/desc"
+		android:layout_marginTop="4dp"
+		android:textStyle="bold"
+		style="@style/PropertyDesc" />
+</RelativeLayout>

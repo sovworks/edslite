@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="4dp">
+    	<LinearLayout
+    	    android:id="@+id/fullPathLayout"
+		    android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:orientation="horizontal">	        				
+ 				<TextView 
+		   			android:text="@string/path"
+		   			android:layout_width="130dp"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" 
+		   			android:layout_margin="2dp" 
+ 
+		   			android:textStyle="bold"/>
+ 				<TextView
+ 				    android:id="@+id/fullPathTextView"			        			
+		   			android:layout_width="wrap_content"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" 
+		   			android:layout_margin="2dp" />   		
+ 		</LinearLayout>
+ 		<LinearLayout
+		    android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:orientation="horizontal">	        				
+ 				<TextView 
+		   			android:text="@string/last_modified"
+		   			android:layout_width="130dp"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" 
+		   			android:layout_margin="2dp" 
+ 
+		   			android:textStyle="bold"/>
+ 				<TextView
+ 				    android:id="@+id/lastModifiedTextView"			        			
+		   			android:layout_width="wrap_content"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" 
+		   			android:layout_margin="2dp" 
+/>   		
+ 		</LinearLayout>    	        	
+		<LinearLayout
+		    android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:orientation="horizontal">	        				
+ 				<TextView 
+		   			android:text="@string/size"
+		   			android:layout_width="130dp"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" 
+		   			android:layout_margin="2dp" 
+ 
+		   			android:textStyle="bold"/>
+ 				<TextView
+ 				    android:id="@+id/selectionPropertiesSizeTextView"			        			
+		   			android:layout_width="wrap_content"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" 
+		   			android:layout_margin="2dp" 
+/>   		
+ 		</LinearLayout>	        		
+ 		<LinearLayout
+		    android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:orientation="horizontal">	        				
+ 				<TextView 
+		   			android:text="@string/number_of_files"
+		   			android:layout_width="130dp"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" android:layout_margin="2dp" android:textStyle="bold"/>
+ 				<TextView
+ 				    android:id="@+id/selectionPropertiesNumberOfFilesTextView"
+		   			android:layout_width="wrap_content"
+		   			android:layout_height="wrap_content"
+		   			android:inputType="none" 
+		   			android:layout_gravity="center_vertical" android:layout_margin="2dp"/>   		
+ 		</LinearLayout>  
+</LinearLayout>

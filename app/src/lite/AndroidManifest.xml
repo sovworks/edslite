@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.sovworks.eds.android">
+    <application
+        tools:replace="android:label"
+        android:label="@string/eds"
+        android:theme="@style/Theme.EDS">
+        <provider android:authorities="com.sovworks.eds.android.providers.main.lite"
+                  android:exported="true"
+                  android:name=".providers.MainContentProvider"
+                  tools:ignore="ExportedContentProvider">
+            <grant-uri-permission android:path="selection" />
+        </provider>
+        <provider android:authorities="com.sovworks.eds.android.providers.documents.lite"
+                  android:exported="true"
+                  android:name=".providers.ContainersDocumentProvider"
+                  android:grantUriPermissions="true"
+                  android:permission="android.permission.MANAGE_DOCUMENTS"
+                  android:enabled="@bool/atLeastKitKat"
+                  tools:ignore="ExportedContentProvider">
+            <!--suppress AndroidElementNotAllowed -->
+            <intent-filter>
+                <!--suppress AndroidElementNotAllowed -->
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+    </application>
+</manifest> 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="gray_light">#9D9F93</color>
+    <color name="gray_medium">#4D4E48</color>
+    <color name="gray_dark">#A04D4E48</color>
+    <color name="gray_dark2">#353535</color>
+    <color name="darker_gray">#a0a0a0</color>
+    <color name="blue">#0090DE</color>
+    <color name="blue2">#009ce6</color>
+    <color name="almost_white">#e0e0e0</color>
+    <color name="widget_background">#ff000000</color>
+    <color name="beige">#B6B6A6</color>
+</resources>

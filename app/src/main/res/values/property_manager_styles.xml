@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <style name="PropertyRow">
+        <item name="android:background">?attr/settingsBackground</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">?android:attr/listPreferredItemHeight</item>
+        <item name="android:padding">4dp</item>
+    </style>
+    <style name="PropertyTitle" parent="android:TextAppearance.Holo.Medium">
+        <item name="android:text">Title</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">4dp</item>
+        <item name="android:layout_marginBottom">3dp</item>
+        <item name="android:textSize">@dimen/main_text</item>
+        <item name="android:textColor">?attr/mainTextColor</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="PropertyDesc"  parent="android:TextAppearance.Holo.Small">
+        <item name="android:text">Description</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">4dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/secTextColor</item>
+    </style>
+    <style name="PropertyEditText" parent="android:TextAppearance.Holo.Medium">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">4dp</item>
+        <item name="android:textSize">@dimen/main_text</item>
+        <item name="android:textColor">?attr/mainTextColor</item>
+        <item name="android:inputType">text</item>
+        <item name="android:maxLines">1</item>
+    </style>
+    <style name="PropertyCategory" parent="android:TextAppearance.Holo.Medium">
+        <item name="android:text">Title</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">?attr/propertyCatTextColor</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="PropertyCategoryIcon">
+        <item name="android:layout_width">50dp</item>
+        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:scaleType">center</item>
+    </style>
+    <style name="Button.Property">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:minWidth">100dp</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/properties_button_text</item>
+        <item name="android:layout_gravity">end</item>
+    </style>
+    <style name="Button.Property.Dark" parent="Button.Dark">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:minWidth">100dp</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/properties_button_text</item>
+        <item name="android:layout_gravity">end</item>
+    </style>
+    <style name="CheckboxStyle.Property">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/secTextColor</item>
+    </style>
+    <style name="CheckboxStyle.Dark.Property">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/secTextColor</item>
+    </style>
+    <style name="RadioButtonStyle.Property">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/secTextColor</item>
+    </style>
+    <style name="RadioButtonStyle.Dark.Property">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/secTextColor</item>
+    </style>
+</resources>

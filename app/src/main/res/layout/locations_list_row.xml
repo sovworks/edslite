@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="horizontal"
+	android:background="@android:drawable/list_selector_background"
+	style="@style/LocationListRow"
+	tools:ignore="RtlSymmetry,UseCompoundDrawables" >
+		<ImageView
+			android:id="@android:id/icon"
+			style="@style/LocationListIcon"
+			android:contentDescription="@string/location_type"/>
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@android:id/text1"
+			style="@style/LocationListText"/>
+</LinearLayout>

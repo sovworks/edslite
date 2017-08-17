@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+  <string name="add_container">Ajouter un container</string>
+  <string name="ok">OK</string>
+  <string name="enter_password">Entrez le mot de passe du container:</string>
+  <string name="select">Sélectionner</string>
+  <string name="new_file">Nouveau fichier</string>
+  <string name="new_dir">Nouveau dossier</string>
+  <string formatted="false" name="processing_file">%1$s (%2$d de %3$d).</string>
+  <string name="copying_files">Copie des fichiers</string>
+  <string formatted="false" name="copy_failed">Échec de la copie</string>
+  <string name="move_failed">Échec du déplacement</string>
+  <string name="delete">Effacer</string>
+  <string name="deleting_files">Effacement des fichiers</string>
+  <string name="delete_failed">Échec de la suppression</string>
+  <string name="rename">Renommer</string>
+  <string name="enter_new_file_name">Entrez un nouveau nom de fichier</string>
+  <string name="settings">Réglages</string>
+  <string name="bad_container_file_or_wrong_password">Mauvais fichier container ou mauvais mot de passe</string>
+  <string name="main_settings">Réglages généraux</string>
+  <string name="eds_shortcut">Raccourci EDS</string>
+  <string name="enter_widget_title">Entrez le titre du widget</string>
+  <string name="select_path">Choix du chemin</string>
+  <string name="container_size">Taille du container</string>
+  <string name="container_password">Mot de passe du container</string>
+  <string name="create_new_container">Créer un nouveau container</string>
+  <string name="cancel_task_confirmation">Êtes-vous surs de vouloir annuler la tâche en cours?</string>
+  <string name="yes">Oui</string>
+  <string name="no">Non</string>
+  <string name="skip">Sauter</string>
+  <string name="overwrite">Écraser</string>
+  <string name="size">Taille</string>
+  <string name="number_of_files">Nombre de fichiers</string>
+  <string name="properties">Propriétés</string>
+  <string name="total_space">Espace total</string>
+  <string name="free_space">Espace libre</string>
+  <string name="use_password">Utiliser mot de passe</string>
+  <string name="saving_changes">Sauvegarde des changements</string>
+  <string name="preparing_file">Préparation des fichiers</string>
+  <string name="eds_service_is_running">Le service Eds est en cours</string>
+  <string name="stop_service_and_exit">Arrêter le service et quitter</string>
+  <string name="send_files_to">Envoyer les fichiers à</string>
+  <string name="send">Envoyer</string>
+  <string name="max_temporary_file_size">Taille maximum du fichier temporaire</string>
+  <string name="overwrite_temp_files_with_random_data">Écraser les fichiers temporaires avec des données aléatoires.</string>
+  <string name="err_target_container_is_closed">Le container cible est fermé</string>
+  <string name="err_failed_opening_container">Échec de l\'ouverture du container</string>
+  <string name="err_input_output">Echec de lecture ou d\'écriture de données</string>
+  <string name="err_temp_file_is_too_big">Le fichier est trop gros. Vous pouvez le copier manuellement ou bien augmenter la taille maximum des fichiers temporaires dans les paramètres du programme.</string>
+  <string name="err_external_storage_is_not_available">Le support de stockage externe n\'est pas disponible.</string>
+  <string name="err_container_size_is_too_small">La taille du container spécifié est trop petite.</string>
+  <string name="err_failed_processing_settings_file">Échec de la lecture du fichier de configuration</string>
+  <string name="err_failed_creating_container">Échec de la création du container</string>
+  <string name="about">A propos</string>
+  <string name="opening_container">Ouverture</string>
+  <string name="decrypt_to_temp_folder">Décrypter vers le dossier temporaire</string>
+  <string name="container_file_name_is_not_specified">Le nom de fichier du container n\'est pas spécifié</string>
+  <string name="do_you_want_to_overwrite_existing_file">Voulez-vous écraser le fichier existant?</string>
+  <string name="enter_file_name">Entrez un nom de fichier</string>
+  <string name="save_changes">Sauvegarder les changements</string>
+  <string name="do_you_want_to_save_changes">Voulez vous sauvegarder les changements ?</string>
+  <string name="select_image">Sélectionnez une image</string>
+  <string name="do_you_really_want_to_delete_selected_files">Voulez-vous réellement effacer les fichiers sélectionnés ?</string>
+  <string name="wiping_files">Effacement des fichiers</string>
+  <string name="creating_container">Création du container en cours</string>
+  <string name="err_failed_saving_changes">Échec de la sauvegarde des changements. Essayez de sauvegarder de nouveau ou bien copiez manuellement le fichier. Voir le log pour plus de détails.</string>
+  <string name="help">Aide</string>
+  <string name="select_file">Sélectionner un fichier</string>
+  <string name="file_not_found">Le chemin d\'accès spécifié n\'existe pas</string>
+  <string name="select_all">Sélectionner tout</string>
+  <string name="apply_to_all">Appliquer à tous</string>
+  <string name="closing">Fermeture du container</string>
+  <string-array name="image_viewer_use_mode">
+    <item>Jamais</item>
+    <item>Pour éviter l\'usage des fichiers temporaires</item>
+    <item>Toujours</item>
+  </string-array>
+  <string name="image_viewer">Visionneuse d\'image</string>
+  <string name="loading">Chargement</string>
+  <string name="last_modified">Dernière modification</string>
+  <string name="path">Chemin</string>
+  <string name="always_force_close_containers">Toujours forcer la fermeture des containers</string>
+  <string name="show_previews">Afficher la prévisualisation dans le gestionnaire de fichier</string>
+  <string name="open_read_only">Ouvrir en lecture seule</string>
+  <string name="disable_wide_screen_layouts">Désactiver le layout écrans larges</string>
+  <string name="close_all_containers">Fermer tous les containers EDS</string>
+  <string name="fill_free_space_with_random_data">Remplir l\'espace libre avec des données aléatoires.</string>
+  <string name="ascending">Croissant</string>
+  <string name="descending">Décroissant</string>
+  <string-array name="sort_mode">
+    <item>Par nom de fichier</item>
+    <item>Par date de modification</item>
+    <item>Par taille</item>
+  </string-array>
+  <string name="sort">Tri</string>
+  <string name="zoom_in">Zoomer</string>
+  <string name="zoom_out">Dézoomer</string>
+  <string name="next_image">Image suivante</string>
+  <string name="previous_image">Image précédente</string>
+  <string name="rotate_left">Rotation vers la gauche</string>
+  <string name="rotate_right">Rotation vers la droite</string>
+  <string name="encryption_algorithm">Algorithme d\'encryptage</string>
+  <string name="hash_algorithm">Algorithme d\'hashage</string>
+  <string name="containers">Containers</string>
+  <string name="close">Fermer</string>
+  <string name="target_path">Chemin de destination</string>
+  <string name="device">Appareil</string>
+  <string name="username">Nom d\'utilisateur</string>
+  <string name="password">Mot de passe</string>
+  <string name="title">Titre</string>
+  <string name="open">Ouvrir</string>
+  <string name="disable_wide_screen_layouts_desc">Cette option désactive la prévisualisation des panels sur les appareils avec un écran large.</string>
+  <string name="temp_data_path">Chemin des données temporaires</string>
+  <string name="temp_data_path_desc">Ce chemin sera utilisé si un container est ouvert dans un mode "non monté" pour stocker les fichiers de manière temporaire. Laisser vide pour chemin par défaut.</string>
+  <string name="max_temporary_file_size_desc">Si un container est ouvert en mode "non-monté", pour pouvoir ouvrir un fichier avec une application externe, ce fichier devra être décrypté vers un emplacement temporaire. Cette option détermine la taille maximum du fichier qui sera décrypté automatiquement (en megabytes).</string>
+  <string name="overwrite_temp_files_with_random_data_desc">Si cette option est activée, alors un fichier temporaire sera remplacé par des données aléatoires avant qu\'il soit effacé.</string>
+  <string name="auto_close_container">Fermeture automatique container</string>
+  <string name="auto_close_container_desc">Fermeture automatique du container après qu\'aucune donnée n\'y ait été lue/écrite pendant un temps spécifié (en minutes).</string>
+  <string name="extension_mime_override">	Forcer le type mime du fichier en se basant sur son extension.</string>
+  <string name="extension_mime_override_desc">Vous devez entrer un type mimi par ligne. Ex, \"txt text/plain\".</string>
+  <string name="internal_image_viewer_mode">Visionneuse d\'image interne</string>
+  <string name="internal_image_viewer_mode_desc">Sélectionnez quand vous voulez utiliser la visionneuse d\'image interne.</string>
+  <string name="always_force_close_containers_desc">Forcer la fermeture des containers sans confirmation. Vous pouvez perdre des données non sauvegardées.</string>
+  <string name="path_to_container">Chemin vers le container</string>
+  <string name="internal_container_settings">Paramètres de container interne</string>
+  <string name="internal_container_settings_desc">Vous devez ouvrir le container pour accéder à ses paramètres</string>
+  <string name="change_container_password">Changer le mot de passe du container</string>
+  <string name="enter_new_password">Entrez le nouveau mot de passe</string>
+  <string name="repeat_password">Répétez le mot de passe</string>
+  <string name="password_does_not_match">Les mots de passe ne correspondent pas</string>
+  <string name="save_password">Se souvenir du mot de passe</string>
+  <string name="save_password_desc">Sauvegarder le mot de passe du container. Sauvegarder un mot de passe peut ne pas être sécurisé.</string>
+  <string name="enable_full_screen_mode">Activer le mode plein écran</string>
+  <string name="never_save_history">Ne jamais sauvegarder les liens vers les containers</string>
+  <string name="never_save_history_desc">Les liens vers les nouveaux containers vont être retirés après avoir fermé EDS</string>
+  <string name="use_external_file_manager">Gestionnaire de fichier externe</string>
+  <string name="use_external_file_manager_desc">Ouvrir le gestionnaire de fichier externe quand un container est monté.</string>
+</resources>

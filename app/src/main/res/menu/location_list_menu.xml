@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="@string/add_new" android:id="@+id/add" android:icon="@drawable/ic_menu_add" android:showAsAction="ifRoom"
+          tools:ignore="AppCompatResource"/>
+</menu>

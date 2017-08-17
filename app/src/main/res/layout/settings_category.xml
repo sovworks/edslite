@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:descendantFocusability="blocksDescendants"
+	style="@style/PropertyRow">
+	<ImageView
+		android:id="@android:id/icon"
+		android:layout_alignParentRight="true"
+		android:layout_alignParentEnd="true"
+		android:layout_centerVertical="true"
+		android:src="?attr/collapseIcon"
+		style="@style/PropertyCategoryIcon" />
+	<TextView
+		android:id="@id/title_edit"
+		android:layout_alignParentStart="true"
+		android:layout_alignParentLeft="true"
+		android:layout_centerVertical="true"
+		android:layout_toLeftOf="@android:id/icon"
+		android:layout_toStartOf="@android:id/icon"
+		style="@style/PropertyCategory" />
+	<TextView
+		android:id="@+id/desc"
+		android:layout_alignParentStart="true"
+		android:layout_alignParentLeft="true"
+		android:layout_toLeftOf="@android:id/icon"
+		android:layout_toStartOf="@android:id/icon"
+		android:layout_below="@id/title_edit"
+		style="@style/PropertyDesc"/>
+</RelativeLayout>
