@@ -2,6 +2,7 @@ package com.sovworks.eds.android.fs;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -99,6 +100,12 @@ public class DocumentTreeFS implements FileSystem
         public Date getLastModified() throws IOException
         {
             return _path.getLastModified();
+        }
+
+        @Override
+        public void setLastModified(Date dt) throws IOException
+        {
+            _path.setLastModified(dt);
         }
 
         @Override
@@ -208,6 +215,12 @@ public class DocumentTreeFS implements FileSystem
         public Date getLastModified() throws IOException
         {
             return _path.getLastModified();
+        }
+
+        @Override
+        public void setLastModified(Date dt) throws IOException
+        {
+            _path.setLastModified(dt);
         }
 
         @Override
@@ -339,6 +352,22 @@ public class DocumentTreeFS implements FileSystem
         public Date getLastModified() throws IOException
         {
             return new Date(queryForLong(getDocumentUri(), DocumentsContract.Document.COLUMN_LAST_MODIFIED, 0));
+        }
+
+        public void setLastModified(Date dt) throws IOException
+        {
+            final ContentResolver resolver = _context.getContentResolver();
+            ContentValues cv = new ContentValues();
+            cv.put(DocumentsContract.Document.COLUMN_LAST_MODIFIED, dt.getTime());
+            try
+            {
+                if (resolver.update(getDocumentUri(), cv, null, null) == 0)
+                    throw new IOException("Failed setting last modified time");
+            }
+            catch (UnsupportedOperationException e)
+            {
+                throw new IOException("Failed setting last modified time", e);
+            }
         }
 
         public long getBytesAvailable() throws IOException

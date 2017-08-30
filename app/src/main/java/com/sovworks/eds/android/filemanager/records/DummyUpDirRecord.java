@@ -2,10 +2,10 @@ package com.sovworks.eds.android.filemanager.records;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.util.TypedValue;
 
 import com.sovworks.eds.android.R;
+import com.sovworks.eds.android.filemanager.fragments.FileListDataFragment;
 
 import java.io.IOException;
 import java.util.Stack;
@@ -45,7 +45,7 @@ public class DummyUpDirRecord extends FolderRecord
 	public boolean open() throws Exception
 	{
         super.open();
-		Stack<Uri> nh = _host.getFileListDataFragment().getNavigHistory();
+		Stack<FileListDataFragment.HistoryItem> nh = _host.getFileListDataFragment().getNavigHistory();
 		if(!nh.empty())
 			nh.pop();
 		return true;

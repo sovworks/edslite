@@ -29,6 +29,7 @@ import com.sovworks.eds.android.locations.activities.CreateLocationActivity;
 import com.sovworks.eds.android.locations.activities.LocationSettingsActivity;
 import com.sovworks.eds.android.locations.closer.fragments.LocationCloserBaseFragment;
 import com.sovworks.eds.android.locations.dialogs.RemoveLocationConfirmationDialog;
+import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
 
@@ -169,6 +170,7 @@ public abstract class LocationListBaseFragment extends ListFragment
     public void removeLocation(Location loc)
     {
         LocationsManager.getLocationsManager(getActivity()).removeLocation(loc);
+        UserSettings.getSettings(getActivity()).setLocationSettingsString(loc.getId(), null);
         LocationsManager.broadcastLocationRemoved(getActivity(), loc);
     }
 
@@ -300,7 +302,7 @@ public abstract class LocationListBaseFragment extends ListFragment
     {
         Location sl = selectedLocationInfo.location;
         MenuItem mi = menu.findItem(R.id.close);
-        boolean closeVisible = LocationsManager.isOpenableOpen(sl);
+        boolean closeVisible = LocationsManager.isOpenableAndOpen(sl);
         mi.setVisible(closeVisible);
         mi = menu.findItem(R.id.remove);
         mi.setVisible(!closeVisible && selectedLocationInfo.allowRemove());

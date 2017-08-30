@@ -2,12 +2,14 @@ package com.sovworks.eds.fs.exfat;
 
 import android.annotation.SuppressLint;
 
+import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.settings.SystemConfig;
 import com.sovworks.eds.fs.FileSystem;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.RandomAccessIO;
 import com.sovworks.eds.fs.util.FileStat;
 import com.sovworks.eds.fs.util.Util;
+import com.sovworks.eds.settings.GlobalConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +26,7 @@ public class ExFat implements FileSystem
     }
 
     private static final byte[] EXFAT_SIGN = new byte[]{'E', 'X', 'F', 'A', 'T', ' ', ' ', ' '};
+    private static final int MIN_COMPATIBLE_NATIVE_MODULE_VERSION = 1001;
 
     public static void makeNewFS(RandomAccessIO img) throws IOException
     {
@@ -69,18 +72,49 @@ public class ExFat implements FileSystem
         }
     }
 
+    public long getFreeSpaceVolumeStartOffset()
+    {
+        return getFreeSpaceStartOffset();
+    }
+
+    public void overwriteFreeSpace() throws IOException
+    {
+        int res = randFreeSpace();
+        if(res != 0)
+            throw new IOException("Failed overwriting the free space. code " + res);
+
+    }
+
+
     private static final String MODULE_NAME = "edsexfat";
     private static final String LIB_NAME = "lib" + MODULE_NAME + ".so";
+
+    private enum ModuleState
+    {
+        Unknown,
+        Absent,
+        Incompatible,
+        Installed
+    }
+
     public static boolean isModuleInstalled()
     {
-        return _isModuleInstalled > 0;
+        return _nativeModuleState == ModuleState.Installed;
+    }
+
+    public static boolean isModuleIncompatible()
+    {
+        return _nativeModuleState == ModuleState.Incompatible;
     }
 
     @SuppressLint("UnsafeDynamicallyLoadedCode")
     public static void loadNativeLibrary()
     {
         System.load(getModulePath().getAbsolutePath());
-        _isModuleInstalled = 1;
+        if(getVersion() < MIN_COMPATIBLE_NATIVE_MODULE_VERSION)
+            throw new RuntimeException("Incompatible native exfat module version");
+        Logger.debug("External exFAT module has been loaded.");
+        _nativeModuleState = ModuleState.Installed;
     }
 
     public static File getModulePath()
@@ -88,24 +122,36 @@ public class ExFat implements FileSystem
         return new File(SystemConfig.getInstance().getFSMFolderPath(), LIB_NAME);
     }
 
-    private static int _isModuleInstalled = -1;
+    private static ModuleState _nativeModuleState = ModuleState.Unknown;
     static
     {
-        if(_isModuleInstalled < 0)
+        if(_nativeModuleState == ModuleState.Unknown)
         {
+            if(getModulePath().exists())
+            {
+                Logger.debug("Module file exists");
+                try
+                {
+                    loadNativeLibrary();
+                }
+                catch (Throwable e)
+                {
+                    Logger.debug("Failed loading external exFAT module");
+                    if(GlobalConfig.isDebug())
+                        Logger.log(e);
+                    _nativeModuleState = ModuleState.Incompatible;
+                }
+            }
+            else
             try
             {
-                if(getModulePath().exists())
-                    loadNativeLibrary();
-                else
-                {
-                    System.loadLibrary(MODULE_NAME);
-                    _isModuleInstalled = 1;
-                }
+                System.loadLibrary(MODULE_NAME);
+                Logger.debug("Built-in exFAT module has been loaded.");
+                _nativeModuleState = ModuleState.Installed;
             }
             catch (Throwable e)
             {
-                _isModuleInstalled = 0;
+                _nativeModuleState = ModuleState.Absent;
             }
         }
     }
@@ -136,4 +182,8 @@ public class ExFat implements FileSystem
     native int flush(long handle);
     native long openFS(boolean readOnly);
     native int closeFS();
+    native long getFreeSpaceStartOffset();
+    native int randFreeSpace();
+    native int updateTime(String path, long time);
+    native static int getVersion();
 }

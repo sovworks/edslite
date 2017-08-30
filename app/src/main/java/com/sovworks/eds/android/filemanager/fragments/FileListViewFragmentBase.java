@@ -44,6 +44,7 @@ import com.sovworks.eds.android.filemanager.tasks.CreateNewFileAndSelectTask;
 import com.sovworks.eds.android.filemanager.tasks.CreateNewFileTask;
 import com.sovworks.eds.android.filemanager.tasks.OpenAsContainerTask;
 import com.sovworks.eds.android.filemanager.tasks.PrepareToSendTask;
+import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
 import com.sovworks.eds.android.filemanager.tasks.RenameFileTask;
 import com.sovworks.eds.android.fragments.TaskFragment;
 import com.sovworks.eds.android.fs.ContentResolverFs;
@@ -120,7 +121,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState)
     {
         View view = inflater.inflate(R.layout.file_list_view_fragment, container, false);
-        _selectedFileEditText = (EditText) view.findViewById(R.id.selected_file_edit_text);
+        _selectedFileEditText = view.findViewById(R.id.selected_file_edit_text);
         if(showSelectedFilenameEditText())
         {
             _selectedFileEditText.setVisibility(View.VISIBLE);
@@ -159,7 +160,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         }
         else
             _selectedFileEditText.setVisibility(View.GONE);
-        _currentPathTextView = (TextView) view.findViewById(R.id.current_path_text);
+        _currentPathTextView = view.findViewById(R.id.current_path_text);
         return view;
     }
 
@@ -275,7 +276,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         super.onDestroy();
     }
 
-    @SuppressLint("CommitPrefEdits")
+    @SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
     @Override
     public void applySort(int sortMode)
     {
@@ -446,12 +447,14 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
             _isReadingLocation = true;
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public void onResumeUI(Bundle args)
         {
             getActivity().setProgressBarIndeterminateVisibility(true);
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public void onSuspendUI(Bundle args)
         {
@@ -467,6 +470,19 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
                 onReadingCompleted();
                 if(!result.isCancelled())
                 {
+                    int scrollPosition = args.getInt(ReadDirTask.ARG_SCROLL_POSITION, 0);
+                    if(scrollPosition > 0)
+                    {
+                        ListView lv = getListView();
+                        if(lv.getFirstVisiblePosition() == 0)
+                        {
+                            int num = lv.getCount();
+                            if(scrollPosition >= num)
+                                scrollPosition = num - 1;
+                            if(scrollPosition >= 0)
+                                lv.smoothScrollToPosition(scrollPosition);
+                        }
+                    }
                     BrowserRecord startRecord = (BrowserRecord) result.getResult();
                     if(startRecord!=null)
                         startRecord.open();
@@ -494,7 +510,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     @Override
     public void onTargetLocationOpened(Bundle openerArgs, Location location)
     {
-        FileManagerActivity.openFileManager((FileManagerActivity)getActivity(), location);
+        FileManagerActivity.openFileManager((FileManagerActivity)getActivity(), location, 0);
     }
 
     @Override
@@ -503,10 +519,10 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
 
     }
 
-    protected static class MenuHandlerInfo
+    static class MenuHandlerInfo
     {
-        public int menuItemId;
-        public boolean clearSelection;
+        int menuItemId;
+        boolean clearSelection;
     }
 
     protected FileListViewAdapter getAdapter()

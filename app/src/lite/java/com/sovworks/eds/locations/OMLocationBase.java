@@ -29,7 +29,7 @@ public abstract class OMLocationBase extends LocationBase implements OMLocation,
 		@Override
 		public void setPassword(byte[] password)
 		{
-			_pass = password == null || password.length == 0 ? null : encryptAndEncode(password);
+			_pass = password == null ? null : encryptAndEncode(password);
 		}
 
 		@Override
@@ -222,7 +222,10 @@ public abstract class OMLocationBase extends LocationBase implements OMLocation,
 			if (pb != null && pb.length > 0)
 				return pb;
 		}
-		return getExternalSettings().getPassword();
+		byte[] res = getExternalSettings().getPassword();
+		if(res == null)
+			res = new byte[0];
+		return res;
 	}
 
 	protected int getSelectedKDFIterations()

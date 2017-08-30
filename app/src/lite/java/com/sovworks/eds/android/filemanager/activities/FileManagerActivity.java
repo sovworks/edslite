@@ -5,9 +5,9 @@ import com.sovworks.eds.locations.Location;
 
 public class FileManagerActivity extends FileManagerActivityBase
 {
-    public static void openFileManager(FileManagerActivity fm, Location location)
+    public static void openFileManager(FileManagerActivity fm, Location location, int scrollPosition)
     {
-        fm.goTo(location);
+        fm.goTo(location, scrollPosition);
     }
 
     @Override

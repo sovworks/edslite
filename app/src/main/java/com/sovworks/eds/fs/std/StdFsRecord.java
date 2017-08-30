@@ -1,14 +1,14 @@
 package com.sovworks.eds.fs.std;
 
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-
 import com.sovworks.eds.fs.Directory;
 import com.sovworks.eds.fs.FSRecord;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.PathUtil;
+
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 public abstract class StdFsRecord implements FSRecord
 {	
@@ -18,7 +18,14 @@ public abstract class StdFsRecord implements FSRecord
 		Calendar cal = new GregorianCalendar();
 		cal.setTimeInMillis(_path.getJavaFile().lastModified());
 		return cal.getTime();
-	}	
+	}
+
+	@Override
+	public void setLastModified(Date dt) throws IOException
+	{
+		if(!_path.getJavaFile().setLastModified(dt.getTime()))
+			throw new IOException("Failed setting last modified date");
+	}
 
 	@Override
 	public Path getPath()

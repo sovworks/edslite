@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 
 import com.sovworks.eds.android.Logger;
+import com.sovworks.eds.android.errors.UserException;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.crypto.SecureBuffer;
 import com.sovworks.eds.fs.FileSystem;
@@ -186,7 +187,14 @@ public abstract class EDSLocationBase extends OMLocationBase implements Cloneabl
 			if (!isOpenOrMounted())
 				throw new IOException("Cannot access closed container.");
 			boolean readOnly = getExternalSettings().shouldOpenReadOnly();
-			getSharedData().fs = createFS(readOnly);
+			try
+			{
+				getSharedData().fs = createFS(readOnly);
+			}
+			catch (UserException e)
+			{
+				throw new RuntimeException(e);
+			}
 			try
 			{
 				readInternalSettings();
@@ -319,7 +327,7 @@ public abstract class EDSLocationBase extends OMLocationBase implements Cloneabl
 
 	protected static final String LOCATION_URI_PARAM = "location";
 
-	protected abstract FileSystem createBaseFS(boolean readOnly) throws IOException;
+	protected abstract FileSystem createBaseFS(boolean readOnly) throws IOException, UserException;
 
 	@Override
 	protected SharedData getSharedData()
@@ -370,7 +378,7 @@ public abstract class EDSLocationBase extends OMLocationBase implements Cloneabl
 		return ub;
 	}
 
-	protected FileSystem createFS(boolean readOnly) throws IOException
+	protected FileSystem createFS(boolean readOnly) throws IOException, UserException
 	{
 		FileSystem baseFS = createBaseFS(readOnly);
 		return new ContainerFSWrapper(baseFS);

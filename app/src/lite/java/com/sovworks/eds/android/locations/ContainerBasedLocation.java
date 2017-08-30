@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 
 import com.sovworks.eds.android.Logger;
+import com.sovworks.eds.android.errors.UserException;
 import com.sovworks.eds.android.errors.WrongPasswordOrBadContainerException;
 import com.sovworks.eds.android.helpers.ContainerOpeningProgressReporter;
 import com.sovworks.eds.android.settings.UserSettings;
@@ -308,7 +309,7 @@ public class ContainerBasedLocation extends EDSLocationBase implements Container
 			byte[] tmp = pass;
 			pass = new byte[MAX_PASSWORD_LENGTH];
 			System.arraycopy(tmp, 0, pass, 0, MAX_PASSWORD_LENGTH);
-			Arrays.fill(tmp, (byte)0);
+			SecureBuffer.eraseData(tmp);
 		}
 		return pass;
 	}
@@ -337,7 +338,7 @@ public class ContainerBasedLocation extends EDSLocationBase implements Container
     }
 
 	@Override
-	protected FileSystem createBaseFS(boolean readOnly) throws IOException
+	protected FileSystem createBaseFS(boolean readOnly) throws IOException, UserException
 	{
 		return getSharedData().container.getEncryptedFS(readOnly);
 	}

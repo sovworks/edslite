@@ -67,9 +67,12 @@ public class TempFilesMonitor
 		Location loc = monitored ?
 				FileOpsService.getMonitoredMirrorLocation(workDir, context, rootLocation.getId()) :
 				FileOpsService.getNonMonitoredMirrorLocation(workDir, context, rootLocation.getId());
-		Path mp = loc.getCurrentPath().combine(SimpleCrypto.calcStringMD5(path.getPathString()));
-		loc.setCurrentPath(mp);
-		PathUtil.makeFullPath(mp);
+		loc.setCurrentPath(
+				PathUtil.getDirectory(
+						loc.getCurrentPath(),
+						SimpleCrypto.calcStringMD5(path.getPathString())
+				).getPath()
+		);
 		return loc;
 	}
 

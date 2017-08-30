@@ -71,11 +71,10 @@ public class FormatInfo implements ContainerFormatInfo
 	public void formatContainer(RandomAccessIO io, VolumeLayout layout, FileSystemInfo fsInfo) throws IOException, ApplicationException
 	{
 		com.sovworks.eds.luks.VolumeLayout vl = ((com.sovworks.eds.luks.VolumeLayout)layout);
-		io.seek(vl.getEncryptedDataSize(io.length()) + vl.getEncryptedDataOffset() - 1);
-		io.write(0);			
+		long len = vl.getEncryptedDataSize(io.length()) + vl.getEncryptedDataOffset();
+		io.setLength(len);
 		SecureRandom sr = new SecureRandom();
 		prepareHeaderLocations(sr, io, vl);
-		
 		vl.writeHeader(io);
 		EncryptedFile et = new EncryptedFileWithCache(io, vl);
 		vl.formatFS(et, fsInfo);

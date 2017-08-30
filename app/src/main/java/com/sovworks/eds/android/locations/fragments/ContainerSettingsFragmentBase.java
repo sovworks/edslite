@@ -62,6 +62,7 @@ public class ContainerSettingsFragmentBase extends EDSLocationSettingsFragment
     protected Bundle getChangePasswordTaskArgs(PasswordDialog dlg)
     {
         final Bundle args = new Bundle();
+        args.putAll(dlg.getOptions());
         args.putParcelable(Openable.PARAM_PASSWORD, new SecureBuffer(dlg.getPassword()));
         LocationsManager.storePathsInBundle(args, getLocation(), null);
         return args;

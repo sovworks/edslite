@@ -1,6 +1,8 @@
 package com.sovworks.eds.android.settings.fragments;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.sovworks.eds.android.EdsApplication;
@@ -8,6 +10,7 @@ import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.dialogs.MasterPasswordDialog;
 import com.sovworks.eds.android.dialogs.PasswordDialog;
+import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
 import com.sovworks.eds.android.fragments.PropertiesFragmentBase;
 import com.sovworks.eds.android.settings.ButtonPropertyEditor;
 import com.sovworks.eds.android.settings.CategoryPropertyEditor;
@@ -20,8 +23,9 @@ import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.android.settings.program.ExtFileManagerPropertyEditor;
 import com.sovworks.eds.android.settings.program.InstallExFatModulePropertyEditor;
 import com.sovworks.eds.crypto.SecureBuffer;
-import com.sovworks.eds.fs.std.StdFs;
 import com.sovworks.eds.fs.util.PathUtil;
+import com.sovworks.eds.locations.Location;
+import com.sovworks.eds.locations.LocationsManager;
 import com.sovworks.eds.settings.Settings;
 
 import java.io.IOException;
@@ -228,19 +232,37 @@ public abstract class ProgramSettingsFragmentBase extends PropertiesFragmentBase
             @Override
             protected void saveText(String text)
             {
-                try
+                if (text.trim().length() > 0)
                 {
-                    if (text.length() > 0)
+                    try
                     {
-                        PathUtil.makeFullPath(StdFs.getStdFs().getPath(text));
+                        Location loc = LocationsManager.getLocationsManager(getActivity()).
+                                getLocation(Uri.parse(text));
+                        PathUtil.makeFullPath(loc.getCurrentPath());
                         editSettings().putString(WORK_DIR, text).commit();
-                    } else
-                        editSettings().remove(WORK_DIR).commit();
-                }
-                catch (IOException e)
-                {
-                    Logger.showAndLog(getActivity(), e);
-                }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.showAndLog(getActivity(), e);
+                    }
+                } else
+                    editSettings().remove(WORK_DIR).commit();
+            }
+
+            @Override
+            protected Intent getSelectPathIntent() throws IOException
+            {
+                Intent i = FileManagerActivity.getSelectPathIntent(
+                        getHost().getContext(),
+                        null,
+                        false,
+                        false,
+                        true,
+                        true,
+                        true,
+                        false);
+                i.putExtra(FileManagerActivity.EXTRA_ALLOW_BROWSE_DOCUMENT_PROVIDERS,false);
+                return i;
             }
         }));
         commonPropertiesIds.add(getPropertiesView().addProperty(new ExtFileManagerPropertyEditor(this)));

@@ -6,6 +6,8 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.filemanager.DirectorySettings;
@@ -29,6 +31,7 @@ import com.sovworks.eds.locations.LocationsManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Stack;
 
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_DATE_ASC;
@@ -151,6 +154,9 @@ public class FileListDataFragment extends Fragment
             ArrayList<Path> selectedPaths = getSelectedPaths();
             LocationsManager.storePathsInBundle(state, _location, selectedPaths);
         }
+        FileListViewFragment fl = getFilesListViewFragment();
+        if(fl != null)
+            state.putInt(ReadDirTask.ARG_SCROLL_POSITION, fl.getListView().getLastVisiblePosition());
         state.putParcelableArrayList(STATE_NAVIG_HISTORY, new ArrayList<>(_navigHistory));
     }
 
@@ -257,15 +263,25 @@ public class FileListDataFragment extends Fragment
     }
 
 
-    public void goTo(Location location)
+    public void goTo(Location location, int scrollPosition)
     {
         Location prevLocation = getLocation();
-		readLocation(location);
+        int prevScrollPosition = 0;
+        FileListViewFragment fl = getFilesListViewFragment();
+        if(fl!=null)
+            prevScrollPosition = fl.getListView().getLastVisiblePosition();
+		readLocation(location, scrollPosition);
 		if(prevLocation!=null)
         {
             Uri uri = prevLocation.getLocationUri();
-            if(_navigHistory.empty() || !_navigHistory.lastElement().equals(uri))
-			    _navigHistory.push(uri);
+            if(_navigHistory.empty() || !_navigHistory.lastElement().locationUri.equals(uri))
+            {
+                HistoryItem hi = new HistoryItem();
+                hi.locationUri = uri;
+                hi.scrollPosition = prevScrollPosition;
+                hi.locationId = prevLocation.getId();
+                _navigHistory.push(hi);
+            }
         }
     }
 
@@ -273,13 +289,14 @@ public class FileListDataFragment extends Fragment
 	{
 		while(!_navigHistory.isEmpty())
         {
-            Uri uri  = _navigHistory.pop();
+            HistoryItem hi = _navigHistory.pop();
+            Uri uri  = hi.locationUri;
             try
             {
                 Location loc = _locationsManager.getLocation(uri);
                 if(loc!=null && LocationsManager.isOpen(loc))
                 {
-                    readLocation(loc);
+                    readLocation(loc, hi.scrollPosition);
                     break;
                 }
             }
@@ -307,10 +324,14 @@ public class FileListDataFragment extends Fragment
 
     public void rereadCurrentLocation()
     {
-        readLocation(getLocation());
+        int scrollPosition = 0;
+        FileListViewFragment fl = getFilesListViewFragment();
+        if(fl!=null)
+            scrollPosition = fl.getListView().getLastVisiblePosition();
+        readLocation(getLocation(), scrollPosition);
     }
 
-    public void readLocation(Location location)
+    public void readLocation(Location location, int scrollPosition)
     {
         cancelReadDirTask();
         clearCurrentFiles();
@@ -328,7 +349,8 @@ public class FileListDataFragment extends Fragment
                                 getBooleanExtra(
                                         FileManagerActivity.EXTRA_ALLOW_SELECT_ROOT_FOLDER,
                                         act.isSelectAction() && act.allowFolderSelect()
-                                )
+                                ),
+                        scrollPosition
                 ),
                 ReadDirTask.TAG
         ).commitAllowingStateLoss();
@@ -343,14 +365,71 @@ public class FileListDataFragment extends Fragment
         }
     }
 
-    public Stack<Uri> getNavigHistory()
+    public Stack<HistoryItem> getNavigHistory()
     {
         return _navigHistory;
+    }
+
+    public void removeLocationFromHistory(Location loc)
+    {
+        String id = loc.getId();
+        if(id!=null)
+        {
+            List<HistoryItem> cur = new ArrayList<>(_navigHistory);
+            for(HistoryItem hi: cur)
+                if(id.equals(hi.locationId))
+                    _navigHistory.remove(hi);
+        }
     }
 
     public DirectorySettings getDirectorySettings()
     {
         return _directorySettings;
+    }
+
+    public static class HistoryItem implements Parcelable
+    {
+        public static final Creator<HistoryItem> CREATOR = new Creator<HistoryItem>()
+        {
+            @Override
+            public HistoryItem createFromParcel(Parcel in)
+            {
+                return new HistoryItem(in);
+            }
+
+            @Override
+            public HistoryItem[] newArray(int size)
+            {
+                return new HistoryItem[size];
+            }
+        };
+
+        @Override
+        public int describeContents()
+        {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel parcel, int flags)
+        {
+            parcel.writeParcelable(locationUri, flags);
+            parcel.writeInt(scrollPosition);
+            parcel.writeString(locationId);
+        }
+
+        HistoryItem(){}
+
+        public Uri locationUri;
+        public int scrollPosition;
+        public String locationId;
+
+        HistoryItem(Parcel p)
+        {
+            locationUri = p.readParcelable(ClassLoader.getSystemClassLoader());
+            scrollPosition = p.readInt();
+            locationId = p.readString();
+        }
     }
 
     private static final String STATE_NAVIG_HISTORY = "com.sovworks.eds.android.PATH_HISTORY";
@@ -364,7 +443,7 @@ public class FileListDataFragment extends Fragment
     private BrowserRecord _currentPathRecord;
     private DirectorySettings _directorySettings;
     private final ArrayList<BrowserRecord> _fileList = new ArrayList<>();
-    private final Stack<Uri> _navigHistory = new Stack<>();
+    private final Stack<HistoryItem> _navigHistory = new Stack<>();
     private final ActivityResultHandler _resHandler = new ActivityResultHandler();
     private void cancelReadDirTask()
     {
@@ -377,7 +456,7 @@ public class FileListDataFragment extends Fragment
 	{
         if (state.containsKey(STATE_NAVIG_HISTORY))
         {
-            ArrayList<Uri> l = state.getParcelableArrayList(STATE_NAVIG_HISTORY);
+            ArrayList<HistoryItem> l = state.getParcelableArrayList(STATE_NAVIG_HISTORY);
             if(l!=null)
                 _navigHistory.addAll(l);
         }
@@ -406,7 +485,7 @@ public class FileListDataFragment extends Fragment
             startActivityForResult(i, REQUEST_CODE_OPEN_LOCATION);
 		}
 		else if(savedState == null)
-            readLocation(loc);
+            readLocation(loc, 0);
         else
             restoreState(savedState);
 	}

@@ -192,10 +192,15 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 
     public void goTo(Location location)
     {
+        goTo(location, 0);
+    }
+
+    public void goTo(Location location, int scrollPosition)
+    {
         closeIntegratedViewer();
         FileListDataFragment f = getFileListDataFragment();
         if(f!=null)
-            f.goTo(location);
+            f.goTo(location, scrollPosition);
     }
 
     public void goTo(Path path) throws IOException
@@ -614,24 +619,29 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         {
             if(isFinishing())
                 return;
-            Location loc = getRealLocation();
-            if(loc!=null)
+
+            try
             {
-                try
+                Uri locUri = intent.getParcelableExtra(LocationsManager.PARAM_LOCATION_URI);
+                if(locUri!=null)
                 {
-                    Uri locUri = intent.getParcelableExtra(LocationsManager.PARAM_LOCATION_URI);
-                    if(locUri!=null)
+                    Location changedLocation = LocationsManager.getLocationsManager(getApplicationContext()).getLocation(locUri);
+                    if(changedLocation!=null)
                     {
-                        Location closedLocation = LocationsManager.getLocationsManager(getApplicationContext()).getLocation(locUri);
-                        if(closedLocation!=null && closedLocation.getId().equals(loc.getId()))
+                        Location loc = getRealLocation();
+                        if(loc!=null && changedLocation.getId().equals(loc.getId()))
                             checkIfCurrentLocationIsStillOpen();
+
+                        FileListDataFragment f = getFileListDataFragment();
+                        if(f!=null && !LocationsManager.isOpen(changedLocation))
+                            f.removeLocationFromHistory(changedLocation);
                     }
                 }
-                catch(Exception e)
-                {
-                    Logger.showAndLog(context, e);
-                    finish();
-                }
+            }
+            catch(Exception e)
+            {
+                Logger.showAndLog(context, e);
+                finish();
             }
         }
     };
@@ -643,6 +653,27 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         {
             if(isFinishing())
                 return;
+            if(LocationsManager.BROADCAST_LOCATION_REMOVED.equals(intent.getAction()))
+            {
+                try
+                {
+                    Uri locUri = intent.getParcelableExtra(LocationsManager.PARAM_LOCATION_URI);
+                    if(locUri!=null)
+                    {
+                        Location changedLocation = LocationsManager.getLocationsManager(getApplicationContext()).getLocation(locUri);
+                        if(changedLocation!=null)
+                        {
+                            FileListDataFragment f = getFileListDataFragment();
+                            if(f!=null)
+                                f.removeLocationFromHistory(changedLocation);
+                        }
+                    }
+                }
+                catch(Exception e)
+                {
+                    Logger.showAndLog(context, e);
+                }
+            }
             getDrawerController().reloadItems();
         }
     };

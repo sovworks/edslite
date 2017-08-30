@@ -233,5 +233,7 @@
     <string name="file_system_type">File system type</string>
 	<string name="file_system_type_desc">You can download an additional open source <xliff:g id="exfat">ExFAT</xliff:g> file system module from the following page: <xliff:g id="exfat_module_link">%s</xliff:g>.</string>
     <string name="get_program_log">Debug log</string>
-	<string name="save_log_file_to">Save the log file to...</string>
+	<string name="save_log_file_to">Save the log file to…</string>
+    <string name="update_exfat_module">Please update the <xliff:g id="exfat">exFAT</xliff:g> module</string>
+	<string name="exfat_module_required">Please install the <xliff:g id="exfat">exFAT</xliff:g> module</string>
 </resources>

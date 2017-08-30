@@ -5,10 +5,11 @@ import android.content.Context;
 public class EdsApplication extends EdsApplicationBase
 {
 
-    public static void stopProgram(Context context)
+    public static void stopProgram(Context context, boolean exitProcess)
     {
-        stopProgramBase(context);
-        exitProcess();
+        stopProgramBase(context, exitProcess);
+        if(exitProcess)
+            exitProcess();
     }
 
 }

@@ -34,10 +34,11 @@ public class EdsApplicationBase extends Application
 {
 	public static final String BROADCAST_EXIT = "com.sovworks.eds.android.BROADCAST_EXIT";
 
-	public static void stopProgramBase(Context context)
+	public static void stopProgramBase(Context context, boolean removeNotifications)
 	{
 		LocalBroadcastManager.getInstance(context).sendBroadcastSync(new Intent(BROADCAST_EXIT));
-		((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE)).cancelAll();
+		if(removeNotifications)
+			((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE)).cancelAll();
 		setMasterPassword(null);
 		LocationsManager.setGlobalLocationsManager(null);
 		UserSettings.closeSettings();

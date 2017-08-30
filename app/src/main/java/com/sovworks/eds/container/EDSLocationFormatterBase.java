@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Parcel;
 
+import com.sovworks.eds.android.errors.UserException;
 import com.sovworks.eds.android.filemanager.DirectorySettings;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.crypto.SecureBuffer;
@@ -115,7 +116,7 @@ public abstract class EDSLocationFormatterBase
 	protected ProgressReporter _progressReporter;
 	protected Context _context;
 
-	protected abstract EDSLocation createLocation(Location location) throws IOException, ApplicationException;
+	protected abstract EDSLocation createLocation(Location location) throws IOException, ApplicationException, UserException;
 
 	protected void addLocationToList(EDSLocation loc) throws Exception
 	{

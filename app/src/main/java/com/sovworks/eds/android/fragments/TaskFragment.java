@@ -19,7 +19,7 @@ public abstract class TaskFragment extends Fragment
 {
 	public static final String ARG_HOST_FRAGMENT = "com.sovworks.eds.android.HOST_FRAGMENT_TAG";
 
-	public static void addEventListener(EventListener listener)
+	public static synchronized void addEventListener(EventListener listener)
 	{
 		if(GlobalConfig.isDebug())
 			_eventListeners.add(new WeakReference<>(listener));
@@ -32,15 +32,17 @@ public abstract class TaskFragment extends Fragment
 		Removed
 	}
 
-	public static void onEvent(EventType eventType, TaskFragment tf)
+	public static synchronized void onEvent(EventType eventType, TaskFragment tf)
 	{
 		if(GlobalConfig.isDebug())
-			for(WeakReference<EventListener> wr: _eventListeners)
+		{
+			for (WeakReference<EventListener> wr : _eventListeners)
 			{
 				EventListener el = wr.get();
-				if(el!=null)
+				if (el != null)
 					el.onEvent(eventType, tf);
 			}
+		}
 	}
 
 	private static List<WeakReference<EventListener>> _eventListeners;

@@ -1,12 +1,12 @@
 package com.sovworks.eds.fs.fat;
 
-import java.io.IOException;
-import java.util.Date;
-
 import com.sovworks.eds.fs.File;
 import com.sovworks.eds.fs.File.AccessMode;
 import com.sovworks.eds.fs.fat.FatFS.ClusterChainIO;
 import com.sovworks.eds.fs.fat.FatFS.FatPath;
+
+import java.io.IOException;
+import java.util.Date;
 
 public class FileIO extends ClusterChainIO
 {
@@ -57,14 +57,33 @@ public class FileIO extends ClusterChainIO
 	private final FatPath _basePath;
 	private final DirEntry _fileEntry;
 	private final Object _opTag;
-	
+
+	@Override
+	protected void writeBuffer() throws IOException
+	{
+		super.writeBuffer();
+		_fileEntry.lastModifiedDateTime = new Date();
+	}
+
 	private void updateFileEntry() throws IOException
 	{
 		if(_mode == AccessMode.Read)
 			return;		
 		_fileEntry.startCluster = _clusterChain.isEmpty() ? FatFS.LAST_CLUSTER : _clusterChain.get(0);
-		_fileEntry.lastModifiedDateTime = new Date();
 		_fileEntry.fileSize = _maxStreamPosition;
-		_fileEntry.writeEntry(_fat, _basePath,_opTag);							
+		_fileEntry.writeEntry(_fat, _basePath,_opTag);
+		if(!_basePath.isRootDirectory())
+		{
+			FatPath parentPath = (FatPath) _basePath.getParentPath();
+			if(parentPath!=null)
+			{
+				DirEntry entry = _fat.getDirEntry(_basePath, _opTag);
+				if(entry!=null)
+				{
+					entry.lastModifiedDateTime = _fileEntry.lastModifiedDateTime;
+					entry.writeEntry(_fat, parentPath, _opTag);
+				}
+			}
+		}
 	}
 }

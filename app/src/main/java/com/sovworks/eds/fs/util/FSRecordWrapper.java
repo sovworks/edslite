@@ -41,6 +41,12 @@ public abstract class FSRecordWrapper implements FSRecord
 	}
 
 	@Override
+	public void setLastModified(Date dt) throws IOException
+	{
+		_base.setLastModified(dt);
+	}
+
+	@Override
 	public void delete() throws IOException
 	{
 		_base.delete();

@@ -2,6 +2,7 @@ package com.sovworks.eds.android.service;
 
 import android.content.Intent;
 
+import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.activities.AskOverwriteActivity;
 import com.sovworks.eds.android.fs.DocumentTreeFS;
@@ -22,6 +23,7 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.concurrent.CancellationException;
 
 class CopyFilesTask extends FileOperationTaskBase
@@ -225,6 +227,7 @@ class CopyFilesTask extends FileOperationTaskBase
 
 	protected boolean copyFile(File srcFile, File dstFile) throws IOException
 	{
+		Date srcDate = srcFile.getLastModified();
 		InputStream fin = null;
 		OutputStream fout = null;
 		final byte[] buffer = new byte[8*1024];
@@ -244,6 +247,14 @@ class CopyFilesTask extends FileOperationTaskBase
 		{
 			if (fin != null) fin.close();
 			if (fout != null) fout.close();
+		}
+		try
+		{
+			dstFile.setLastModified(srcDate);
+		}
+		catch (IOException e)
+		{
+			Logger.log(e);
 		}
         return true;
 	}

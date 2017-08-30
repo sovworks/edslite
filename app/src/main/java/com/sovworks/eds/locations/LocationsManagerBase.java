@@ -514,26 +514,38 @@ public abstract class LocationsManagerBase
 	
 	public List<Location> getLoadedLocations(final boolean onlyVisible)
 	{
-		return new FilteredList<Location>()
+		synchronized (_currentLocations)
 		{
-			@Override
-			protected boolean isValid(Location l)
-			{
-				return !onlyVisible || l.getExternalSettings().isVisibleToUser();
-			}
-		};
+			return new ArrayList<>(
+					new FilteredList<Location>()
+					{
+						@Override
+						protected boolean isValid(Location l)
+						{
+							return !onlyVisible || l.getExternalSettings().isVisibleToUser();
+						}
+					}
+			);
+
+
+		}
 	}
 
 	public List<EDSLocation> getLoadedEDSLocations(final boolean onlyVisible)
 	{
-		return new FilteredList<EDSLocation>()
+		synchronized (_currentLocations)
 		{
-			@Override
-			protected boolean isValid(Location l)
-			{
-				return l instanceof EDSLocation && (!onlyVisible || l.getExternalSettings().isVisibleToUser());
-			}			
-		};
+			return new ArrayList<>(
+				new FilteredList<EDSLocation>()
+				{
+					@Override
+					protected boolean isValid(Location l)
+					{
+						return l instanceof EDSLocation && (!onlyVisible || l.getExternalSettings().isVisibleToUser());
+					}
+				}
+			);
+		}
 	}
 
 	public boolean hasOpenLocations()

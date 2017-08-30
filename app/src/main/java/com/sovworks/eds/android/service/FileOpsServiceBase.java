@@ -16,9 +16,10 @@ import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.errors.InputOutputException;
 import com.sovworks.eds.android.errors.UserException;
+import com.sovworks.eds.android.providers.MainContentProvider;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.fs.Path;
-import com.sovworks.eds.fs.std.StdFs;
+import com.sovworks.eds.fs.util.PathUtil;
 import com.sovworks.eds.fs.util.SrcDstCollection;
 import com.sovworks.eds.fs.util.StringPathUtil;
 import com.sovworks.eds.locations.DeviceBasedLocation;
@@ -46,28 +47,49 @@ public abstract class FileOpsServiceBase extends IntentService
 
 	public static Location getSecTempFolderLocation(String workDir, Context context) throws IOException
 	{
-		File extDir = null;
+		Location res = null;
 		if(workDir!=null && !workDir.isEmpty())
 		{
-			extDir = new File(workDir);
-			if(!extDir.isDirectory() || !extDir.canWrite())
-				extDir = null;
+			try
+			{
+				res = LocationsManager.getLocationsManager(context).getLocation(Uri.parse(workDir));
+				if(!res.getCurrentPath().isDirectory())
+					res = null;
+			}
+			catch (Exception e)
+			{
+				Logger.log(e);
+				res = null;
+			}
 		}
-		if (extDir == null) extDir = context.getExternalFilesDir(null);
-		if (extDir == null) extDir = context.getFilesDir();
-		if (extDir == null) extDir = context.getCacheDir();
-
-		return new DeviceBasedLocation(
-				UserSettings.getSettings(context),
-				StdFs.makePath(extDir.getAbsolutePath(), "temp")
+		if(res == null)
+		{
+			File extDir = context.getExternalFilesDir(null);
+			if (extDir == null) extDir = context.getFilesDir();
+			if (extDir == null) extDir = context.getCacheDir();
+			res = new DeviceBasedLocation(
+					UserSettings.getSettings(context),
+					extDir.getAbsolutePath()
+			);
+		}
+		res.setCurrentPath(
+				PathUtil.getDirectory(res.getCurrentPath(), "temp").getPath()
 		);
+
+		return res;
 	}
 
 	public static Location getMirrorLocation(String workDir, Context context,
 											 String locationId) throws IOException
 	{
 		Location secTempLocation = getSecTempFolderLocation(workDir, context);
-		secTempLocation.setCurrentPath(secTempLocation.getCurrentPath().combine("mirror").combine(locationId));
+		secTempLocation.setCurrentPath(
+				PathUtil.getDirectory(
+						secTempLocation.getCurrentPath(),
+						"mirror",
+						locationId
+				).getPath()
+		);
 		return secTempLocation;
 	}
 
@@ -75,7 +97,9 @@ public abstract class FileOpsServiceBase extends IntentService
 			String locationId) throws IOException
 	{
 		Location mirrorLocation = getMirrorLocation(workDir, context, locationId);
-		mirrorLocation.setCurrentPath(mirrorLocation.getCurrentPath().combine("mon"));
+		mirrorLocation.setCurrentPath(
+				PathUtil.getDirectory(mirrorLocation.getCurrentPath(), "mon").getPath()
+		);
 		return mirrorLocation;
 	}
 
@@ -83,7 +107,9 @@ public abstract class FileOpsServiceBase extends IntentService
 											 String locationId) throws IOException
 	{
 		Location mirrorLocation = getMirrorLocation(workDir, context, locationId);
-		mirrorLocation.setCurrentPath(mirrorLocation.getCurrentPath().combine("nomon"));
+		mirrorLocation.setCurrentPath(
+				PathUtil.getDirectory(mirrorLocation.getCurrentPath(), "nomon").getPath()
+		);
 		return mirrorLocation;
 	}
 
@@ -131,12 +157,19 @@ public abstract class FileOpsServiceBase extends IntentService
 		return PendingIntent.getService(context, taskId, i, PendingIntent.FLAG_ONE_SHOT);
 	}
 
-	public static void startFileViewer(Context context, Path path)
+	public static void startFileViewer(Context context, Location fileLocation)
 			throws UserException
 	{
 		try
 		{
-			FileOpsService.startFileViewer(context, Uri.fromFile(new File(path.toString())), getMimeTypeFromExtension(context, path.getFile()));
+			Uri uri = fileLocation.getDeviceAccessibleUri(fileLocation.getCurrentPath());
+			if(uri == null)
+				uri = MainContentProvider.getContentUriFromLocation(fileLocation);
+			FileOpsService.startFileViewer(
+					context,
+					uri,
+					getMimeTypeFromExtension(context, fileLocation.getCurrentPath().getFile())
+			);
 		}
 		catch (IOException e)
 		{

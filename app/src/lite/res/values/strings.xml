@@ -3,6 +3,14 @@
     xmlns:xliff="http://schemas.android.com/tools">
     <string name="eds" translatable="false"><xliff:g id="program_name">EDS Lite</xliff:g></string>
     <string name="changes_text" translatable="false"><![CDATA[<font color="black">
+        <b>2.0.0.206</b>:
+	    <ul>
+	        <li>"last modified" timestamp of a file is restored after a copy/move operation.</li>
+	        <li>Improved file manager: previously opened folder and scroll position are restored when switching between the containers and/or memory cards</li>
+	        <li>Fixed: password dialog freezes on some systems.</li>
+	    	<li>Fixed: in some cases the remembered password is not working</li>
+	    	<li>Other minor fixes</li>
+		</ul>
         <b>2.0.0.202</b>:
 	    <ul>
 	    	<li>Added an option to install additional file system modules. Currently ExFAT module is supported which allows to open containers with ExFAT file system.</li>

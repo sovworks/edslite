@@ -65,6 +65,7 @@ public class DrawerExitMenuItem extends DrawerMenuItemBase
         private void exit()
         {
             FileOpsService.clearTempFolder(getActivity().getApplicationContext(), true);
+            getActivity().finish();
         }
     }
 

@@ -480,6 +480,31 @@ public class FatFS implements FileSystem
 			return entry!=null ? entry.lastModifiedDateTime : new Date();
 		}
 
+		@Override
+		public void setLastModified(Date dt) throws IOException
+		{
+			if(_readOnlyMode)
+				throw new IOException(String.format("Can't update file %s: file system is opened in read only mode",_path.getPathString()));
+
+			FatPath parentPath = (FatPath) _path.getParentPath();
+			if(parentPath == null)
+				throw new IOException("Can't update last modified time of the root directory");
+
+			Object tag = lockPath(_path, AccessMode.Write);
+			try
+			{
+				DirEntry entry = _path.getEntry(tag);
+				if (entry == null)
+					throw new IOException("setLastModified error: failed opening source path: " + _path);
+				entry.lastModifiedDateTime = dt;
+				entry.writeEntry(FatFS.this, parentPath, tag);
+			}
+			finally
+			{
+				releasePathLock(_path);
+			}
+		}
+
 		@SuppressWarnings("unused")
         public Date getAccessDate() throws IOException
 		{
@@ -1237,6 +1262,7 @@ public class FatFS implements FileSystem
 		entry.name = name;
 		entry.setDir(false);
 		entry.writeEntry(this, parentPath, opTag);
+		updateModTime(parentPath, opTag);
 		FatPath newPath = (FatPath) parentPath.combine(name);
 		cacheDirEntry(newPath, entry);
 		return entry;
@@ -1248,6 +1274,7 @@ public class FatFS implements FileSystem
 		entry.name = name;
 		entry.setDir(true);		
 		entry.writeEntry(this, parentPath,opTag);
+		updateModTime(parentPath, opTag);
 		FatPath newPath = (FatPath) parentPath.combine(name);
 		cacheDirEntry(newPath, entry);
 
@@ -1278,6 +1305,21 @@ public class FatFS implements FileSystem
 		}
 		return entry;
 	}
+
+	private void updateModTime(FatPath path, Object tag) throws IOException
+	{
+		FatPath parentPath = (FatPath) path.getParentPath();
+		if(parentPath!=null)
+		{
+			DirEntry entry = getDirEntry(path, tag);
+			if(entry!=null)
+			{
+				entry.lastModifiedDateTime = new Date();
+				entry.writeEntry(this, parentPath, tag);
+			}
+		}
+	}
+
 
 	protected int getClusterIndexPosition(int clusterIndex)
 	{

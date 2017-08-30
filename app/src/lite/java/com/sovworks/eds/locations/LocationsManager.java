@@ -11,7 +11,7 @@ public class LocationsManager extends LocationsManagerBase
         return !(loc instanceof Openable) || ((Openable) loc).isOpen();
     }
 
-    public static boolean isOpenableOpen(Location loc)
+    public static boolean isOpenableAndOpen(Location loc)
     {
         return loc instanceof Openable && isOpen(loc);
     }

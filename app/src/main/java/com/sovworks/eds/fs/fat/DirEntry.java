@@ -1,5 +1,18 @@
 package com.sovworks.eds.fs.fat;
 
+import android.annotation.SuppressLint;
+
+import com.sovworks.eds.android.Logger;
+import com.sovworks.eds.fs.DataInput;
+import com.sovworks.eds.fs.DataOutput;
+import com.sovworks.eds.fs.File.AccessMode;
+import com.sovworks.eds.fs.RandomAccessIO;
+import com.sovworks.eds.fs.RandomStorageAccess;
+import com.sovworks.eds.fs.fat.FatFS.FatPath;
+import com.sovworks.eds.fs.util.RandomAccessInputStream;
+import com.sovworks.eds.fs.util.RandomAccessOutputStream;
+import com.sovworks.eds.fs.util.Util;
+
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
@@ -10,19 +23,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
-
-import android.annotation.SuppressLint;
-
-import com.sovworks.eds.android.Logger;
-import com.sovworks.eds.fs.DataInput;
-import com.sovworks.eds.fs.DataOutput;
-import com.sovworks.eds.fs.RandomAccessIO;
-import com.sovworks.eds.fs.RandomStorageAccess;
-import com.sovworks.eds.fs.File.AccessMode;
-import com.sovworks.eds.fs.fat.FatFS.FatPath;
-import com.sovworks.eds.fs.util.RandomAccessInputStream;
-import com.sovworks.eds.fs.util.RandomAccessOutputStream;
-import com.sovworks.eds.fs.util.Util;
 
 @SuppressLint("DefaultLocale")
 class DirEntry
@@ -260,7 +260,12 @@ class DirEntry
 			FileName fn = new FileName(name);			
 			if(dosName == null)
 				initDosName(fn,fat, basePath, opTag);
-			if (offset < 0)						
+			if(offset >= 0 && numLFNRecords == 0 && fn.isLFN)
+			{
+				deleteEntry(fat, basePath, opTag);
+				offset = -1;
+			}
+			if (offset < 0)
 				isLast = getFreeDirEntryOffset(fat, basePath, fn.isLFN ? (getNumLFNRecords() + 1) : 1,opTag);
 			
 			DirWriter os = fat.getDirWriter(basePath,opTag);

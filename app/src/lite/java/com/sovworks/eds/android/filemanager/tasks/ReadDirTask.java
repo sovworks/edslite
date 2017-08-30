@@ -43,12 +43,14 @@ public class ReadDirTask extends ReadDirTaskBase
 				new ExecutableFileRecord(context);
 	}
 
-	public static ReadDirTask newInstance(Location target, boolean addShowRootFolderLinks)
+	public static ReadDirTask newInstance(Location target, boolean addShowRootFolderLinks, int scrollPosition)
 	{
 		Bundle args = new Bundle();
 		args.putParcelable(LocationsManager.PARAM_LOCATION_URI, target.getLocationUri());
 		if(addShowRootFolderLinks)
 			args.putBoolean(ARG_SHOW_ROOT_FOLDER_LINK, true);
+		if(scrollPosition > 0)
+			args.putInt(ARG_SCROLL_POSITION, scrollPosition);
 		ReadDirTask f = new ReadDirTask();
 		f.setArguments(args);
 		return f;

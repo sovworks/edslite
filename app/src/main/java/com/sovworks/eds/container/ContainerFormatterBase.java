@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Parcel;
 
+import com.sovworks.eds.android.errors.UserException;
 import com.sovworks.eds.android.locations.ContainerBasedLocation;
 import com.sovworks.eds.android.locations.LUKSLocation;
 import com.sovworks.eds.android.locations.TrueCryptLocation;
@@ -148,7 +149,7 @@ public abstract class ContainerFormatterBase extends EDSLocationFormatter
 	protected int _numKDFIterations;
 
 	@Override
-	protected EDSLocation createLocation(Location location) throws IOException, ApplicationException
+	protected EDSLocation createLocation(Location location) throws IOException, ApplicationException, UserException
 	{
 		if(_containerFormat == null)
 			throw new IllegalStateException("Container format is not specified");
@@ -223,8 +224,8 @@ public abstract class ContainerFormatterBase extends EDSLocationFormatter
 		return new EdsContainer(pathToContainer, _containerFormat, layout);
 	}
 	
-	protected void format(RandomAccessIO io, VolumeLayout layout) throws IOException, ApplicationException
-	{
+	protected void format(RandomAccessIO io, VolumeLayout layout) throws IOException, ApplicationException, UserException
+    {
 		if(layout instanceof StdLayout)
 			formatTCBasedContainer(
 					io,
@@ -306,8 +307,9 @@ public abstract class ContainerFormatterBase extends EDSLocationFormatter
 		}
 		else
 		{
-			io.seek(containerSize - 1);
-			io.write(0);
+			io.setLength(containerSize);
+			//io.seek(containerSize - 1);
+			//io.write(0);
 		}			
 		layout.setContainerSize(containerSize);
 		layout.initNew();

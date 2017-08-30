@@ -16,7 +16,7 @@ allprojects {
     repositories {
         jcenter()
         maven {
-            url "http://JRAF.org/static/maven/2"
+            url "https://maven.google.com"
         }
     }
 }

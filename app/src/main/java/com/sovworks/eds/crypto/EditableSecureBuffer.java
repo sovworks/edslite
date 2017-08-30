@@ -1,5 +1,6 @@
 package com.sovworks.eds.crypto;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.Editable;
@@ -301,7 +302,9 @@ public class EditableSecureBuffer implements Editable
     @Override
     public String toString()
     {
-        return "";
+        char[] cs = new char[length()];
+        Arrays.fill(cs, ' ');
+        return new String(cs);
     }
 
     // Documentation from interface
@@ -573,8 +576,9 @@ public class EditableSecureBuffer implements Editable
     }
 
     // Documentation from interface
+    @SuppressLint("DefaultLocale")
     public EditableSecureBuffer replace(final int start, final int end,
-                                          CharSequence tb, int tbstart, int tbend) {
+                                        CharSequence tb, int tbstart, int tbend) {
         if(VERBOSE_LOG) Logger.debug(TAG + ": in replace 2");
         checkRange("replace", start, end);
 
@@ -639,6 +643,7 @@ public class EditableSecureBuffer implements Editable
             }
         }
 
+        if(VERBOSE_LOG) Logger.debug(String.format("before send text changed: start=%d origLen=%d newLen=%d", start, origLen, newLen));
         sendTextChanged(textWatchers, start, origLen, newLen);
         sendAfterTextChanged(textWatchers);
 
@@ -1245,7 +1250,14 @@ public class EditableSecureBuffer implements Editable
 
         mTextWatcherDepth++;
         for (int i = 0; i < n; i++) {
-            watchers[i].beforeTextChanged(this, start, before, after);
+            try
+            {
+                watchers[i].beforeTextChanged(this, start, before, after);
+            }
+            catch (Throwable e)
+            {
+                Logger.log(e);
+            }
         }
         mTextWatcherDepth--;
     }
@@ -1256,7 +1268,14 @@ public class EditableSecureBuffer implements Editable
 
         mTextWatcherDepth++;
         for (int i = 0; i < n; i++) {
-            watchers[i].onTextChanged(this, start, before, after);
+            try
+            {
+                watchers[i].onTextChanged(this, start, before, after);
+            }
+            catch (Throwable e)
+            {
+                Logger.log(e);
+            }
         }
         mTextWatcherDepth--;
     }
@@ -1267,7 +1286,14 @@ public class EditableSecureBuffer implements Editable
 
         mTextWatcherDepth++;
         for (int i = 0; i < n; i++) {
-            watchers[i].afterTextChanged(this);
+            try
+            {
+                watchers[i].afterTextChanged(this);
+            }
+            catch (Throwable e)
+            {
+                Logger.log(e);
+            }
         }
         mTextWatcherDepth--;
     }
@@ -1278,7 +1304,14 @@ public class EditableSecureBuffer implements Editable
         int n = recip.length;
 
         for (int i = 0; i < n; i++) {
-            recip[i].onSpanAdded(this, what, start, end);
+            try
+            {
+                recip[i].onSpanAdded(this, what, start, end);
+            }
+            catch (Throwable e)
+            {
+                Logger.log(e);
+            }
         }
     }
 
@@ -1288,7 +1321,14 @@ public class EditableSecureBuffer implements Editable
         int n = recip.length;
 
         for (int i = 0; i < n; i++) {
-            recip[i].onSpanRemoved(this, what, start, end);
+            try
+            {
+                recip[i].onSpanRemoved(this, what, start, end);
+            }
+            catch (Throwable e)
+            {
+                Logger.log(e);
+            }
         }
     }
 
@@ -1300,7 +1340,14 @@ public class EditableSecureBuffer implements Editable
                 Math.min(Math.max(oldEnd, end), length()), SpanWatcher.class);
         int n = spanWatchers.length;
         for (int i = 0; i < n; i++) {
-            spanWatchers[i].onSpanChanged(this, what, oldStart, oldEnd, start, end);
+            try
+            {
+                spanWatchers[i].onSpanChanged(this, what, oldStart, oldEnd, start, end);
+            }
+            catch (Throwable e)
+            {
+                Logger.log(e);
+            }
         }
     }
 

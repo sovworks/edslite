@@ -80,7 +80,7 @@ JNIEXPORT jint JNICALL Java_com_sovworks_eds_fs_util_FDRandomAccessIO_ftruncate(
     jint fd, 
     jlong newLength)
 {
-    return ftruncate (fd, newLength);
+    return ftruncate64 (fd, newLength);
 }
 
 JNIEXPORT jlong JNICALL Java_com_sovworks_eds_fs_util_FDRandomAccessIO_getSize(

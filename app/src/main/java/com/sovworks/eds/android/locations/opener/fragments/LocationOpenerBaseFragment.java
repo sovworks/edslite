@@ -80,6 +80,8 @@ public class LocationOpenerBaseFragment extends Fragment
                 Location location = getTargetLocation();
                 procLocation(taskState, location, getArguments());
                 LocationsService.startService(_context);
+                if(location.isFileSystemOpen() && !location.getCurrentPath().exists())
+                    location.setCurrentPath(location.getFS().getRootPath());
                 taskState.setResult(location);
             }
             finally
@@ -103,8 +105,18 @@ public class LocationOpenerBaseFragment extends Fragment
 
         protected void procLocation(TaskState state, Location location, Bundle param) throws Exception
         {
-            openFS(location, param);
+            Exception err = null;
+            try
+            {
+                openFS(location, param);
+            }
+            catch (Exception e)
+            {
+               err = e;
+            }
             LocationsManager.broadcastLocationChanged(_context, location);
+            if(err!=null)
+                throw err;
         }
 
         protected void openFS(Location location, Bundle param) throws IOException

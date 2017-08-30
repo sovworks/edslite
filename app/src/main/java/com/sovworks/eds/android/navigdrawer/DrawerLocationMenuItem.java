@@ -8,11 +8,15 @@ import android.widget.ImageView;
 
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
+import com.sovworks.eds.android.filemanager.fragments.FileListDataFragment;
+import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
 import com.sovworks.eds.android.locations.activities.LocationSettingsActivity;
 import com.sovworks.eds.android.locations.closer.fragments.LocationCloserBaseFragment;
 import com.sovworks.eds.android.locations.opener.fragments.LocationOpenerBaseFragment;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
+
+import java.util.Stack;
 
 public class DrawerLocationMenuItem extends DrawerMenuItemBase
 {
@@ -52,10 +56,10 @@ public class DrawerLocationMenuItem extends DrawerMenuItemBase
     public void updateView(View view, @SuppressWarnings("UnusedParameters") int position)
     {
         super.updateView(view, position);
-        ImageView iv = (ImageView) view.findViewById(R.id.close);
+        ImageView iv = view.findViewById(R.id.close);
         if(iv!=null)
         {
-            if(LocationsManager.isOpenableOpen(_location))
+            if(LocationsManager.isOpenableAndOpen(_location))
             {
                 iv.setVisibility(View.VISIBLE);
                 iv.setOnClickListener(_closeIconClickListener);
@@ -126,7 +130,14 @@ public class DrawerLocationMenuItem extends DrawerMenuItemBase
     protected Bundle getOpenerArgs()
     {
         Bundle b = new Bundle();
-        LocationsManager.storePathsInBundle(b,_location, null);
+        FileListDataFragment.HistoryItem hi = findPrevLocation(_location);
+        if(hi == null)
+            LocationsManager.storePathsInBundle(b,_location, null);
+        else
+        {
+            b.putParcelable(LocationsManager.PARAM_LOCATION_URI, hi.locationUri);
+            b.putInt(ReadDirTask.ARG_SCROLL_POSITION, hi.scrollPosition);
+        }
         return b;
     }
 
@@ -158,4 +169,25 @@ public class DrawerLocationMenuItem extends DrawerMenuItemBase
             closeLocation();
         }
     };
+
+    private FileListDataFragment.HistoryItem findPrevLocation(Location loc)
+    {
+        FileListDataFragment df = (FileListDataFragment) getDrawerController().
+                getMainActivity().
+                getFragmentManager().
+                findFragmentByTag(FileListDataFragment.TAG);
+        if(df!=null)
+        {
+            Stack<FileListDataFragment.HistoryItem> hist = df.getNavigHistory();
+            String locId = loc.getId();
+            if(locId != null)
+                for(int i = hist.size() - 1;i>=0;i--)
+                {
+                    FileListDataFragment.HistoryItem hi = hist.get(i);
+                    if(locId.equals(hi.locationId))
+                        return hi;
+                }
+        }
+        return null;
+    }
 }

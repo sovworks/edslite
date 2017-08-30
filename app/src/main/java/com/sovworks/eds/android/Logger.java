@@ -81,6 +81,8 @@ public class Logger implements UncaughtExceptionHandler
 
 	public static String getExceptionMessage(Context context,Throwable err)
 	{
+		if(err instanceof UserException)
+			((UserException)err).setContext(context);
 		String msg = err.getLocalizedMessage();
 		if(msg == null)
 		{
@@ -94,10 +96,13 @@ public class Logger implements UncaughtExceptionHandler
 
 	public static void showErrorMessage(Context context, Throwable err)
 	{
-		String errm = (err instanceof UserException) ?
-				getExceptionMessage(context, err)
-			:
-				context.getString(R.string.generic_error_message);
+		String errm;
+		if(err instanceof UserException)
+			errm = getExceptionMessage(context, err);
+		else if(err.getCause() instanceof UserException)
+			errm = getExceptionMessage(context, err.getCause());
+		else
+			errm = context.getString(R.string.generic_error_message);
 		Toast.makeText(context,errm, Toast.LENGTH_LONG).show();
 	}
 

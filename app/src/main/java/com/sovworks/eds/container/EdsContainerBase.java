@@ -2,6 +2,8 @@ package com.sovworks.eds.container;
 
 
 import com.sovworks.eds.android.Logger;
+import com.sovworks.eds.android.R;
+import com.sovworks.eds.android.errors.UserException;
 import com.sovworks.eds.android.helpers.ContainerOpeningProgressReporter;
 import com.sovworks.eds.crypto.EncryptedFileWithCache;
 import com.sovworks.eds.crypto.EncryptionEngine;
@@ -41,6 +43,24 @@ public abstract class EdsContainerBase implements Closeable
 		return null;
 	}
 
+	public static FileSystem loadFileSystem(RandomAccessIO io, boolean isReadOnly) throws IOException, UserException
+	{
+		if(ExFat.isExFATImage(io))
+		{
+			if(ExFat.isModuleInstalled())
+				return new ExFat(io, isReadOnly);
+			if(ExFat.isModuleIncompatible())
+				throw new UserException("Please update the exFAT module.", R.string.update_exfat_module);
+			throw new UserException("Please install the exFAT module", R.string.exfat_module_required);
+		}
+
+		FatFS fs = FatFS.getFat(io);
+		if (isReadOnly)
+			fs.setReadOnlyMode(true);
+		return fs;
+	}
+
+
 	public EdsContainerBase(Path path, ContainerFormatInfo containerFormat, VolumeLayout layout)
 	{			
 		_pathToContainer = path;
@@ -75,7 +95,7 @@ public abstract class EdsContainerBase implements Closeable
 		throw new WrongFileFormatException();
 	}
 	
-	public FileSystem getEncryptedFS() throws IOException
+	public FileSystem getEncryptedFS() throws IOException, UserException
 	{
 		return getEncryptedFS(false);
 	}
@@ -91,20 +111,12 @@ public abstract class EdsContainerBase implements Closeable
 				new EncryptedFileWithCache(_pathToContainer,isReadOnly ? AccessMode.Read : AccessMode.ReadWrite,_layout);
 	}
 
-	public synchronized FileSystem getEncryptedFS(boolean isReadOnly) throws IOException
+	public synchronized FileSystem getEncryptedFS(boolean isReadOnly) throws IOException, UserException
 	{
 		if(_fileSystem == null)
 		{
 			RandomAccessIO io = getEncryptedFile(isReadOnly);
-			if(ExFat.isModuleInstalled() && ExFat.isExFATImage(io))
-				_fileSystem = new ExFat(io, isReadOnly);
-			else
-			{
-				FatFS fs = FatFS.getFat(io);
-				if (isReadOnly)
-					fs.setReadOnlyMode(true);
-				_fileSystem = fs;
-			}
+			_fileSystem = loadFileSystem(io, isReadOnly);
 		}
 		return _fileSystem;
 	}
@@ -170,6 +182,13 @@ public abstract class EdsContainerBase implements Closeable
 		_progressReporter = r;
 	}
 
+	public RandomAccessIO getEncryptedFile(boolean isReadOnly) throws IOException
+	{
+		if(_encryptedFile == null)
+			_encryptedFile = initEncryptedFile(isReadOnly);
+		return  _encryptedFile;
+	}
+
 	protected FileSystem _fileSystem;
 	protected RandomAccessIO _encryptedFile;
 	protected int _numKDFIterations;
@@ -178,6 +197,7 @@ public abstract class EdsContainerBase implements Closeable
 	protected final Path _pathToContainer;
 	protected ContainerOpeningProgressReporter _progressReporter;
 	protected FileEncryptionEngine _encryptionEngine;
+
 	protected MessageDigest _messageDigest;
 
 	protected abstract List<ContainerFormatInfo> getFormats();
@@ -185,13 +205,6 @@ public abstract class EdsContainerBase implements Closeable
 	protected RandomAccessIO openFile() throws IOException
 	{
 		return _pathToContainer.getFile().getRandomAccessIO(AccessMode.Read);
-	}
-
-	protected RandomAccessIO getEncryptedFile(boolean isReadOnly) throws IOException
-	{
-		if(_encryptedFile == null)
-			_encryptedFile = initEncryptedFile(isReadOnly);
-		return  _encryptedFile;
 	}
 
 	protected boolean tryLayout(RandomAccessIO containerFile, byte[] password, boolean isHidden) throws IOException, ApplicationException

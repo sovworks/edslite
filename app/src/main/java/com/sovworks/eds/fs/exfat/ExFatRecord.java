@@ -46,6 +46,12 @@ abstract class ExFatRecord implements FSRecord
     }
 
     @Override
+    public void setLastModified(Date dt) throws IOException
+    {
+        _exFat.updateTime(_path.getPathString(), dt.getTime());
+    }
+
+    @Override
     public void moveTo(Directory newParent) throws IOException
     {
         StringPathUtil oldPath = getPath().getPathUtil();

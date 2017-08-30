@@ -1,6 +1,7 @@
 package com.sovworks.eds.android.fs;
 
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -140,7 +141,7 @@ public class ContentResolverFs implements FileSystem
                 {
                     int columnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED);
                     if(columnIndex>=0)
-                        return new Date(cursor.getInt(columnIndex));
+                        return new Date(cursor.getLong(columnIndex));
                 }
                 finally
                 {
@@ -153,6 +154,13 @@ public class ContentResolverFs implements FileSystem
 				return new Date(f.lastModified());
 			}
 			return new Date();
+		}
+
+		public void setLastModified(Date dt) throws IOException
+		{
+			ContentValues cv = new ContentValues();
+			cv.put(MediaStore.Images.Media.DATE_MODIFIED, dt.getTime());
+			_contentResolver.update(_uri, cv, null, null);
 		}
 
 		public Cursor queryPath()
@@ -330,6 +338,12 @@ public class ContentResolverFs implements FileSystem
 		}
 
 		@Override
+		public void setLastModified(Date dt) throws IOException
+		{
+			_path.setLastModified(dt);
+		}
+
+		@Override
 		public void delete() throws IOException
 		{
 			_contentResolver.delete(_path.getUri(),null,null);
@@ -441,6 +455,12 @@ public class ContentResolverFs implements FileSystem
 		public Date getLastModified() throws IOException
 		{
 			return _path.getLastModified();
+		}
+
+		@Override
+		public void setLastModified(Date dt) throws IOException
+		{
+			_path.setLastModified(dt);
 		}
 
 		@Override

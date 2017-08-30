@@ -231,4 +231,6 @@
   <string name="file_system_type_desc">Вы можете загрузить дополнительный модуль файловой системы ExFAT, пройдя по следующей ссылке: %s.</string>
   <string name="get_program_log">Отладочный журнал</string>
   <string name="save_log_file_to">Сохранить отладочный журнал</string>
+  <string name="update_exfat_module">Модуль exFAT необходимо обновить.</string>
+  <string name="exfat_module_required">Необходимо установить модуль exFAT</string>
 </resources>

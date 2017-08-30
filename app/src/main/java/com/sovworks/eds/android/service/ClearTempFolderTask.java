@@ -97,16 +97,17 @@ public class ClearTempFolderTask extends WipeFilesTask
 			{
 				removeNotification();
 				result.getResult();
-				EdsApplication.stopProgram(_context);
+				EdsApplication.stopProgram(_context, true);
 			}
 			catch(CancellationException ignored)
 			{
-
 			}
 			catch (Throwable e)
 			{
 				reportError(e);
+				EdsApplication.stopProgram(_context, false);
 			}
+
 		}
 		else
 			super.onCompleted(result);

@@ -32,6 +32,7 @@ public abstract class ReadDirTaskBase extends TaskFragment
 	public static final String TAG = "ReadDirTask";
 
 	public static final String ARG_SHOW_ROOT_FOLDER_LINK = "com.sovworks.eds.android.SHOW_ROOT_FOLDER_LINK";
+	public static final String ARG_SCROLL_POSITION = "com.sovworks.eds.android.SCROLL_POSITION";
 
 	public static BrowserRecord getBrowserRecordFromFsRecord(Context context, Location loc, Path path, DirectorySettings directorySettings) throws IOException, ApplicationException
 	{
@@ -70,9 +71,7 @@ public abstract class ReadDirTaskBase extends TaskFragment
 		}
 		catch (JSONException e)
 		{
-			IOException e1 = new IOException();
-			e1.initCause(e);
-			throw e1;
+			throw new IOException(e);
 		}
 	}
 
