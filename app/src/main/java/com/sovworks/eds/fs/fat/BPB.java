@@ -1,11 +1,11 @@
 package com.sovworks.eds.fs.fat;
 
-import java.io.EOFException;
-import java.io.IOException;
-
 import com.sovworks.eds.fs.RandomAccessIO;
 import com.sovworks.eds.fs.errors.WrongImageFormatException;
 import com.sovworks.eds.fs.util.Util;
+
+import java.io.EOFException;
+import java.io.IOException;
 
 /**
  * Fat Bios Parameter Block structure

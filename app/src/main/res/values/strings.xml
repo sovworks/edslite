@@ -236,4 +236,5 @@
 	<string name="save_log_file_to">Save the log file to…</string>
     <string name="update_exfat_module">Please update the <xliff:g id="exfat">exFAT</xliff:g> module</string>
 	<string name="exfat_module_required">Please install the <xliff:g id="exfat">exFAT</xliff:g> module</string>
+    <string name="restart_application">Please restart EDS</string>
 </resources>

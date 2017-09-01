@@ -67,7 +67,14 @@ public class InstallExFatModulePropertyEditor extends ButtonPropertyEditor
                     moduleLocation.getCurrentPath().getFile(),
                     targetFolderPath.getDirectory(),
                     targetPath.getName());
-            ExFat.loadNativeLibrary();
+            if(!ExFat.isModuleInstalled() && !ExFat.isModuleIncompatible())
+            {
+                ExFat.loadNativeLibrary();
+                uiUpdater.setResult(true);
+            }
+            else
+                uiUpdater.setResult(false);
+
         }
 
         @Override
@@ -80,8 +87,10 @@ public class InstallExFatModulePropertyEditor extends ButtonPropertyEditor
                 {
                     try
                     {
-                        result.getResult();
-                        Toast.makeText(activity, R.string.module_has_been_installed, Toast.LENGTH_LONG).show();
+                        if((Boolean)result.getResult())
+                            Toast.makeText(activity, R.string.module_has_been_installed, Toast.LENGTH_LONG).show();
+                        else
+                            Toast.makeText(activity, R.string.restart_application, Toast.LENGTH_LONG).show();
                     }
                     catch (Throwable e)
                     {

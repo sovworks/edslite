@@ -110,11 +110,15 @@ public class ExFat implements FileSystem
     @SuppressLint("UnsafeDynamicallyLoadedCode")
     public static void loadNativeLibrary()
     {
-        System.load(getModulePath().getAbsolutePath());
-        if(getVersion() < MIN_COMPATIBLE_NATIVE_MODULE_VERSION)
-            throw new RuntimeException("Incompatible native exfat module version");
-        Logger.debug("External exFAT module has been loaded.");
-        _nativeModuleState = ModuleState.Installed;
+        if(_nativeModuleState == ModuleState.Absent || _nativeModuleState == ModuleState.Unknown)
+        {
+            System.load(getModulePath().getAbsolutePath());
+            _nativeModuleState = ModuleState.Incompatible;
+            if (getVersion() < MIN_COMPATIBLE_NATIVE_MODULE_VERSION)
+                throw new RuntimeException("Incompatible native exfat module version");
+            Logger.debug("External exFAT module has been loaded.");
+            _nativeModuleState = ModuleState.Installed;
+        }
     }
 
     public static File getModulePath()
@@ -139,7 +143,6 @@ public class ExFat implements FileSystem
                     Logger.debug("Failed loading external exFAT module");
                     if(GlobalConfig.isDebug())
                         Logger.log(e);
-                    _nativeModuleState = ModuleState.Incompatible;
                 }
             }
             else

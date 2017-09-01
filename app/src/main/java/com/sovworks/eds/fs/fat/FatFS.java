@@ -42,6 +42,32 @@ public class FatFS implements FileSystem
 {
 	public static final int SECTOR_SIZE = 512;
 
+	public static boolean isFAT(RandomAccessIO f)
+	{
+		byte[] cmp = new byte[] {'F', 'A', 'T'};
+		byte[] buf = new byte[3];
+		try
+		{
+			f.seek(0x036);
+			if(Util.readBytes(f, buf) == buf.length)
+			{
+				if(!Arrays.equals(cmp, buf))
+				{
+					f.seek(0x052);
+					if(Util.readBytes(f, buf) == buf.length)
+						return Arrays.equals(cmp, buf);
+				}
+				else
+					return true;
+			}
+
+		}
+		catch (IOException ignored) {}
+
+		return false;
+	}
+
+
     public static final String TAG = "FatFS";
     public static final boolean LOG_ACQUIRE = false;
     private static int logAquiring(String tag)

@@ -233,4 +233,5 @@
   <string name="save_log_file_to">Сохранить отладочный журнал</string>
   <string name="update_exfat_module">Модуль exFAT необходимо обновить.</string>
   <string name="exfat_module_required">Необходимо установить модуль exFAT</string>
+  <string name="restart_application">Пожалуйста, перезапустите программу.</string>
 </resources>
