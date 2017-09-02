@@ -435,7 +435,10 @@ public abstract class UserSettingsCommon implements SettingsCommon
 					_prefs.edit().putString(
 							SETTINGS_PROTECTION_KEY_USER,
 							SimpleCrypto.encryptWithPassword(pass, key)
-					).commit();
+					).
+							remove(SETTINGS_PROTECTION_KEY_AUTO).
+							remove(SETTINGS_PROTECTION_KEY_OLD).
+							commit();
 				}
 				finally
 				{
@@ -450,7 +453,10 @@ public abstract class UserSettingsCommon implements SettingsCommon
 					_prefs.edit().putString(
 							SETTINGS_PROTECTION_KEY_AUTO,
 							SimpleCrypto.encryptWithPassword(pass, key)
-					).commit();
+					).
+							remove(SETTINGS_PROTECTION_KEY_USER).
+							remove(SETTINGS_PROTECTION_KEY_OLD).
+							commit();
 				}
 				finally
 				{

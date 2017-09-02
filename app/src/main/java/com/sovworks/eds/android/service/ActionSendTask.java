@@ -6,9 +6,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 
+import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
+import com.sovworks.eds.android.providers.MainContentProvider;
+import com.sovworks.eds.locations.Location;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -39,14 +42,24 @@ public class ActionSendTask extends PrepareTempFilesTask
 		private final String _mimeType;
 	}
 
-    public static void sendFiles(Context context, List<com.sovworks.eds.fs.File> files, String mimeType)
+    public static void sendFiles(Context context, List<Location> files, String mimeType)
 	{
 		if(files == null || files.isEmpty())
 			return;
 
 		ArrayList<Uri> uris = new ArrayList<>();
-		for (com.sovworks.eds.fs.File r : files)
-			uris.add(Uri.fromFile(new File(r.getPath().getPathString())));
+		for (Location l : files)
+			try
+			{
+				Uri uri = l.getDeviceAccessibleUri(l.getCurrentPath());
+				if(uri == null)
+					uri = MainContentProvider.getContentUriFromLocation(l);
+				uris.add(uri);
+			}
+			catch (IOException e)
+			{
+				Logger.log(e);
+			}
 		sendFiles(context, uris, mimeType, null);
 	}
 
@@ -83,7 +96,7 @@ public class ActionSendTask extends PrepareTempFilesTask
 	{
 		try
 		{
-			@SuppressWarnings("unchecked") List<com.sovworks.eds.fs.File> tmpFilesList = (List<com.sovworks.eds.fs.File>) result.getResult();
+			@SuppressWarnings("unchecked") List<Location> tmpFilesList = (List<Location>) result.getResult();
 			sendFiles(_context, tmpFilesList, getParam().getMimeType());
 		}
 		catch(CancellationException ignored)

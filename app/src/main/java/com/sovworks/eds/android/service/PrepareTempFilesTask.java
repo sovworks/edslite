@@ -87,7 +87,7 @@ class PrepareTempFilesTask extends CopyFilesTask
 	protected long _fileSizeLimit;
 	protected boolean _wipe;
 	protected String _workDir;
-	protected final List<File> _tempFilesList = new ArrayList<>();
+	protected final List<Location> _tempFilesList = new ArrayList<>();
 	
 	@Override
 	protected FilesTaskParam initParam(Intent i)
@@ -107,10 +107,12 @@ class PrepareTempFilesTask extends CopyFilesTask
 		if(super.copyFile(record))
 		{
 			Location srcLoc = record.getSrcLocation().copy();
-			Path tmpPath = calcDstPath(srcLoc.getCurrentPath().getFile(), record.getDstLocation().getCurrentPath().getDirectory());
+			Location dstLoc = record.getDstLocation().copy();
+			Path tmpPath = calcDstPath(srcLoc.getCurrentPath().getFile(), dstLoc.getCurrentPath().getDirectory());
 			srcLoc.setCurrentPath(srcLoc.getCurrentPath().getParentPath());
+			dstLoc.setCurrentPath(tmpPath);
 			addFileToMonitor(srcLoc, tmpPath);
-			_tempFilesList.add(tmpPath.getFile());
+			_tempFilesList.add(dstLoc);
 			return true;
 		}
 		return false;
