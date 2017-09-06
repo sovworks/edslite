@@ -1,19 +1,19 @@
 package com.sovworks.eds.android.helpers;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Environment;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.errors.ExternalStorageNotAvailableException;
 import com.sovworks.eds.android.errors.UserException;
 import com.sovworks.eds.android.service.FileOpsService;
-import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.crypto.SimpleCrypto;
 import com.sovworks.eds.fs.Directory;
+import com.sovworks.eds.fs.File;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.PathUtil;
 import com.sovworks.eds.fs.util.SrcDstSingle;
-import com.sovworks.eds.locations.DeviceBasedLocation;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.Openable;
 
@@ -86,7 +86,7 @@ public class TempFilesMonitor
 	
 	private static TempFilesMonitor _instance;
 	
-	public TempFilesMonitor(Context context)
+	private TempFilesMonitor(Context context)
 	{
 		_context = context;
 		_syncObject = new Object();
@@ -104,28 +104,30 @@ public class TempFilesMonitor
 		decryptAndStartFile(fileLocation);
 	}
 
-	public void addFileToMonitor(Location srcLocation, Path devicePath) throws IOException
+	public void addFileToMonitor(Location srcLocation, Location devicePath) throws IOException
 	{
 		OpenFileInfo ofi = new OpenFileInfo();
 		ofi.srcLocation = srcLocation;
 		ofi.devicePath = devicePath;
-		ofi.lastModified = devicePath.getFile().getLastModified().getTime();
+		File f = devicePath.getCurrentPath().getFile();
+		ofi.lastModified = f.getLastModified().getTime();
+		ofi.prevSize = f.getSize();
 		addFileToMonitor(ofi);
 	}
 	
-	public void addFileToMonitor(OpenFileInfo fileInfo)
+	private void addFileToMonitor(OpenFileInfo fileInfo)
 	{
 		synchronized(_syncObject)
 		{			
-			_openedFiles.put(fileInfo.devicePath, fileInfo);								
+			_openedFiles.put(fileInfo.devicePath.getLocationUri(), fileInfo);
 		}
 	}
 	
-	public void removeFileFromMonitor(Path tmpPath)
+	public void removeFileFromMonitor(Location tmpPath)
 	{
 		synchronized (_syncObject)
 		{			
-			_openedFiles.remove(tmpPath);			
+			_openedFiles.remove(tmpPath.getLocationUri());
 		}
 	}
 	
@@ -164,13 +166,13 @@ public class TempFilesMonitor
 			{
 				synchronized (_syncObject) 
 				{
-					Iterator<Map.Entry<Path,OpenFileInfo>> iter = _openedFiles.entrySet().iterator();
+					Iterator<Map.Entry<Uri,OpenFileInfo>> iter = _openedFiles.entrySet().iterator();
 					while(iter.hasNext())
 					{
 						OpenFileInfo fileInfo = iter.next().getValue();	
 						try
 						{
-							if(!fileInfo.devicePath.exists() || 
+							if(!fileInfo.devicePath.getCurrentPath().exists() ||
 									( 
 											fileInfo.srcLocation instanceof Openable && 
 											!((Openable)fileInfo.srcLocation).isOpen() 
@@ -180,10 +182,13 @@ public class TempFilesMonitor
 							else
 							{							
 								//long lastModified = fileInfo.devicePath.getAbsoluteFile().lastModified(); //fileInfo.devicePath.lastModified();
-								long lastModified = fileInfo.devicePath.getFile().getLastModified().getTime();
-								if(fileInfo.lastModified != lastModified)
+								File f = fileInfo.devicePath.getCurrentPath().getFile();
+								long lastModified = f.getLastModified().getTime();
+								long prevSize = f.getSize();
+								if(fileInfo.lastModified != lastModified || fileInfo.prevSize != prevSize)
 								{	
 									fileInfo.lastModified = lastModified;
+									fileInfo.prevSize = prevSize;
 									saveChangedFile(fileInfo.srcLocation,fileInfo.devicePath);																		
 								}
 							}
@@ -216,7 +221,7 @@ public class TempFilesMonitor
 	
 
 	private final Object _syncObject;
-	private final TreeMap<Path,OpenFileInfo> _openedFiles = new TreeMap<>();
+	private final TreeMap<Uri,OpenFileInfo> _openedFiles = new TreeMap<>();
 	private final Context _context;	
 	private ModificationCheckingTask _modCheckTask;
 
@@ -228,9 +233,9 @@ public class TempFilesMonitor
 		FileOpsService.startTempFile(_context, srcLocation);		
 	}	
 	
-	private void saveChangedFile(Location srcLocation, Path tmpPath) throws IOException, UserException
+	private void saveChangedFile(Location srcLocation, Location tmpPath) throws IOException, UserException
 	{		
-		FileOpsService.saveChangedFile(_context, new SrcDstSingle(new DeviceBasedLocation(UserSettings.getSettings(_context), tmpPath), srcLocation) );
+		FileOpsService.saveChangedFile(_context, new SrcDstSingle(tmpPath, srcLocation) );
 	}
 	
 	private boolean isTempDirWriteable()

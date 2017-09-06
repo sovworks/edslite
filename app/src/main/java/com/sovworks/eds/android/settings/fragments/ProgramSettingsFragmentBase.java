@@ -261,7 +261,7 @@ public abstract class ProgramSettingsFragmentBase extends PropertiesFragmentBase
                         true,
                         true,
                         false);
-                i.putExtra(FileManagerActivity.EXTRA_ALLOW_BROWSE_DOCUMENT_PROVIDERS,false);
+                i.putExtra(FileManagerActivity.EXTRA_ALLOW_BROWSE_DOCUMENT_PROVIDERS,true);
                 return i;
             }
         }));

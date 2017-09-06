@@ -5,6 +5,7 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
@@ -25,6 +26,7 @@ import android.util.Base64;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.helpers.TempFilesMonitor;
+import com.sovworks.eds.android.helpers.WipeFilesTask;
 import com.sovworks.eds.android.locations.PathsStore;
 import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.android.settings.UserSettings;
@@ -121,21 +123,25 @@ public abstract class MainContentProviderBase extends ContentProvider
         return Uri.parse(new String(locationUriBytes, Charset.defaultCharset()));
     }
 
-    public static ParcelFileDescriptor getParcelFileDescriptor(final ContentProvider cp, Uri srcUri, final Location loc, String accessMode, Bundle opts)
+    public static ParcelFileDescriptor getParcelFileDescriptor(final ContentProvider cp, Uri srcUri, final Location loc, String accessMode, final Bundle opts)
     {
         try
         {
-            File f = loc.getCurrentPath().getFile();
+            final File f = loc.getCurrentPath().getFile();
             File.AccessMode am = Util.getAccessModeFromString(accessMode);
             ParcelFileDescriptor fd = f.getFileDescriptor(am);
             if(fd!=null)
                 return fd;
-            /*if("r".equals(accessMode))
+            if(am == File.AccessMode.Read)
+            //    return writeToPipe(f, opts == null ? new Bundle() : opts);
             {
                 String mime = FileOpsService.getMimeTypeFromExtension(cp.getContext(), loc.getCurrentPath());
-                // Start a new thread that pipes the stream data back to the caller.
-                return cp.openPipeHelper(srcUri, mime, opts, f, "r".equals(accessMode) ? new PipeWriter() : new PipeReader());
-            }*/
+                return cp.openPipeHelper(srcUri, mime, opts, f, new PipeWriter());
+            }
+            else if(am == File.AccessMode.Write)
+                return readFromPipe(f, opts == null ? new Bundle() : opts);
+
+
 
             Path parentPath = loc.getCurrentPath();
             try
@@ -143,68 +149,33 @@ public abstract class MainContentProviderBase extends ContentProvider
                 parentPath = parentPath.getParentPath();
             }
             catch (IOException ignored){}
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+            int mode = Util.getParcelFileDescriptorModeFromAccessMode(am);
+            final Location tmpLocation = copyFileToTmpLocation(loc, parentPath, f, mode, cp);
+            Uri u = tmpLocation.getDeviceAccessibleUri(tmpLocation.getCurrentPath());
+            if(u != null && ContentResolver.SCHEME_FILE.equalsIgnoreCase(u.getScheme()))
             {
-                int mode = Util.getParcelFileDescriptorModeFromAccessMode(am);
-                final Location tmpLocation = TempFilesMonitor.getTmpLocation(
-                        loc,
-                        parentPath,
-                        cp.getContext(), UserSettings.getSettings(cp.getContext()).getWorkDir(),
-                        false
-                );
-                File dst;
-                if(mode != ParcelFileDescriptor.MODE_WRITE_ONLY && mode != ParcelFileDescriptor.MODE_TRUNCATE)
-                    dst = Util.copyFile(f, tmpLocation.getCurrentPath().getDirectory(), f.getName());
-                else
-                {
-                    Path p = PathUtil.buildPath(tmpLocation.getCurrentPath(), f.getName());
-                    if (p!=null && p.isFile())
-                        p.getFile().delete();
-                    dst = tmpLocation.getCurrentPath().getDirectory().createFile(f.getName());
-                }
-                tmpLocation.setCurrentPath(dst.getPath());
-                loc.setCurrentPath(parentPath);
-                return "r".equals(accessMode) ?
-                        ParcelFileDescriptor.open(
-                            new java.io.File(dst.getPath().getPathString()),
-                            Util.getParcelFileDescriptorModeFromAccessMode(am)
-                        ) :
-                        ParcelFileDescriptor.open(
-                            new java.io.File(dst.getPath().getPathString()),
-                            Util.getParcelFileDescriptorModeFromAccessMode(am),
-                            new Handler(Looper.getMainLooper()),
-                            new ParcelFileDescriptor.OnCloseListener()
-                            {
-                                @Override
-                                public void onClose(IOException e)
+                java.io.File jf = new java.io.File(u.getPath());
+                return mode == ParcelFileDescriptor.MODE_READ_ONLY || Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT ?
+                        ParcelFileDescriptor.open(jf, mode) :
+                        ParcelFileDescriptor.open(jf, mode, new Handler(Looper.getMainLooper()),
+                                new ParcelFileDescriptor.OnCloseListener()
                                 {
-                                    if (e != null)
-                                        Logger.showAndLog(cp.getContext(), e);
-                                    else
-                                        FileOpsService.saveChangedFile(
-                                                cp.getContext(),
-                                                new SrcDstSingle(tmpLocation, loc)
-                                        );
+                                    @Override
+                                    public void onClose(IOException e)
+                                    {
+                                        if (e != null)
+                                            Logger.showAndLog(cp.getContext(), e);
+                                        else
+                                            FileOpsService.saveChangedFile(
+                                                    cp.getContext(),
+                                                    new SrcDstSingle(tmpLocation, loc)
+                                            );
+                                    }
                                 }
-                            }
                         );
+
             }
-            else
-            {
-                Location tmpLocation = TempFilesMonitor.getTmpLocation(
-                        loc,
-                        parentPath,
-                        cp.getContext(), UserSettings.getSettings(cp.getContext()).getWorkDir(),
-                        true
-                );
-                File dst = Util.copyFile(f, tmpLocation.getCurrentPath().getDirectory(), f.getName());
-                loc.setCurrentPath(parentPath);
-                TempFilesMonitor.getMonitor(cp.getContext()).addFileToMonitor(loc, dst.getPath());
-                return ParcelFileDescriptor.open(
-                        new java.io.File(dst.getPath().getPathString()),
-                        Util.getParcelFileDescriptorModeFromAccessMode(am)
-                );
-            }
+            return tmpLocation.getCurrentPath().getFile().getFileDescriptor(am);
         }
         catch(IOException e)
         {
@@ -213,21 +184,122 @@ public abstract class MainContentProviderBase extends ContentProvider
         }
     }
 
-    public interface PathChecker
+    private static Location copyFileToTmpLocation(Location srcLoc, Path parentPath, File srcFile, int mode, ContentProvider cp) throws IOException
+    {
+
+        final Location tmpLocation = TempFilesMonitor.getTmpLocation(
+                srcLoc,
+                parentPath,
+                cp.getContext(),
+                UserSettings.getSettings(cp.getContext()).getWorkDir(),
+                mode != ParcelFileDescriptor.MODE_READ_ONLY
+        );
+        File dst;
+        if(mode != ParcelFileDescriptor.MODE_WRITE_ONLY && mode != ParcelFileDescriptor.MODE_TRUNCATE)
+            dst = Util.copyFile(srcFile, tmpLocation.getCurrentPath().getDirectory(), srcFile.getName());
+        else
+        {
+            Path p = PathUtil.buildPath(tmpLocation.getCurrentPath(), srcFile.getName());
+            if (p!=null && p.isFile())
+                WipeFilesTask.wipeFileRnd(p.getFile());
+            dst = tmpLocation.getCurrentPath().getDirectory().createFile(srcFile.getName());
+        }
+        tmpLocation.setCurrentPath(dst.getPath());
+        srcLoc.setCurrentPath(parentPath);
+        if(mode != ParcelFileDescriptor.MODE_READ_ONLY)
+        {
+            Uri u = tmpLocation.getDeviceAccessibleUri(dst.getPath());
+            if(u == null || !ContentResolver.SCHEME_FILE.equalsIgnoreCase(u.getScheme()))
+                TempFilesMonitor.getMonitor(cp.getContext()).addFileToMonitor(srcLoc, tmpLocation);
+        }
+        return tmpLocation;
+    }
+
+    private static ParcelFileDescriptor readFromPipe(final File targetFile, final Bundle opts) throws IOException
+    {
+        final ParcelFileDescriptor[] pfds = ParcelFileDescriptor.createPipe();
+        new Thread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    FileInputStream fin = new FileInputStream(pfds[0].getFileDescriptor());
+                    try
+                    {
+                        Util.copyFileFromInputStream(
+                                fin,
+                                targetFile,
+                                opts.getLong(OPTION_OFFSET, 0),
+                                opts.getLong(OPTION_NUM_BYTES, -1),
+                                null
+                        );
+                    }
+                    finally
+                    {
+                        fin.close();
+                    }
+                }
+                catch (IOException e)
+                {
+                    Logger.log(e);
+                }
+            }
+        }).start();
+        return pfds[1];
+    }
+
+    private static ParcelFileDescriptor writeToPipe(final File srcFile, final Bundle opts) throws IOException
+    {
+        final ParcelFileDescriptor[] pfds = ParcelFileDescriptor.createPipe();
+        new Thread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    FileOutputStream fout = new FileOutputStream(pfds[1].getFileDescriptor());
+                    try
+                    {
+                        Util.copyFileToOutputStream(
+                                fout,
+                                srcFile,
+                                opts.getLong(OPTION_OFFSET, 0),
+                                opts.getLong(OPTION_NUM_BYTES, -1),
+                                null
+                        );
+                    }
+                    finally
+                    {
+                        fout.close();
+                    }
+                }
+                catch (IOException e)
+                {
+                    Logger.log(e);
+                }
+            }
+        }).start();
+        return pfds[0];
+    }
+
+    interface PathChecker
     {
         boolean checkPath(Path path);
     }
 
-    public interface SearchFilter
+    interface SearchFilter
     {
         String getName();
         PathChecker getChecker(Location location, String arg);
     }
 
 
-    public static class SelectionBuilder
+    static class SelectionBuilder
     {
-        public void addCondition(String filterName, String arg)
+        void addCondition(String filterName, String arg)
         {
             if(_selectionBuilder.length() > 0)
                 _selectionBuilder.append(' ');
@@ -235,12 +307,12 @@ public abstract class MainContentProviderBase extends ContentProvider
             _selectionArgs.add(arg);
         }
 
-        public String getSelectionString()
+        String getSelectionString()
         {
             return _selectionBuilder.toString();
         }
 
-        public String[] getSelectionArgs()
+        String[] getSelectionArgs()
         {
             String[] res = new String[_selectionArgs.size()];
             return _selectionArgs.toArray(res);
@@ -250,9 +322,9 @@ public abstract class MainContentProviderBase extends ContentProvider
         private final ArrayList<String> _selectionArgs = new ArrayList<>();
     }
 
-    public static class SelectionChecker
+    static class SelectionChecker
     {
-        public SelectionChecker(Location location, String selectionString, String[] selectionArgs)
+        SelectionChecker(Location location, String selectionString, String[] selectionArgs)
         {
             _location = location;
             if(selectionString!=null)
@@ -272,7 +344,7 @@ public abstract class MainContentProviderBase extends ContentProvider
             }
         }
 
-        public boolean checkPath(Path path)
+        boolean checkPath(Path path)
         {
             for(PathChecker pc: _filters)
                 if(!pc.checkPath(path))
@@ -281,7 +353,7 @@ public abstract class MainContentProviderBase extends ContentProvider
         }
 
         protected final Location _location;
-        protected final List<PathChecker> _filters = new ArrayList<>();
+        final List<PathChecker> _filters = new ArrayList<>();
 
         private static final SearchFilter[] ALL_FILTERS = new SearchFilter[]{  };
 
@@ -316,7 +388,7 @@ public abstract class MainContentProviderBase extends ContentProvider
 
     public static Uri getContentUriFromLocation(Location loc)
     {
-        Uri uri = getContentUriFromLocationUri(loc.getLocationUri());
+        return getContentUriFromLocationUri(loc.getLocationUri());
         /*try
         {
             if (loc.getCurrentPath().isFile())
@@ -329,8 +401,8 @@ public abstract class MainContentProviderBase extends ContentProvider
         catch (IOException e)
         {
             Logger.log(e);
-        }*/
-        return uri;
+        }
+        return uri;*/
     }
 
     public static Uri getContentUriFromLocationUri(Uri locationUri)
@@ -513,14 +585,17 @@ public abstract class MainContentProviderBase extends ContentProvider
 
     protected static final String META_PATH = "fs";
     protected static final int META_PATH_CODE = 10;
+    @SuppressWarnings("StaticInitializerReferencesSubClass")
     protected static final Uri META_URI = Uri.parse("content://"
             + MainContentProvider.AUTHORITY + "/" + META_PATH);
     protected static final String CONTENT_PATH = "content";
     protected static final int CONTENT_PATH_CODE = 20;
+    @SuppressWarnings("StaticInitializerReferencesSubClass")
     protected static final Uri CONTENT_URI = Uri.parse("content://"
             + MainContentProvider.AUTHORITY + "/" + CONTENT_PATH);
     protected static final String CURRENT_SELECTION_PATH = "selection";
     protected static final int CURRENT_SELECTION_PATH_CODE = 30;
+    @SuppressWarnings("StaticInitializerReferencesSubClass")
     protected static final Uri CURRENT_SELECTION_URI = Uri.parse("content://"
             + MainContentProvider.AUTHORITY + "/" + CURRENT_SELECTION_PATH);
 
@@ -531,12 +606,13 @@ public abstract class MainContentProviderBase extends ContentProvider
     {
         _uriMatcher.addURI(MainContentProvider.AUTHORITY, META_PATH + "/*", META_PATH_CODE);
         _uriMatcher.addURI(MainContentProvider.AUTHORITY, CONTENT_PATH + "/*", CONTENT_PATH_CODE);
+        //noinspection StaticInitializerReferencesSubClass
         _uriMatcher.addURI(MainContentProvider.AUTHORITY, CURRENT_SELECTION_PATH, CURRENT_SELECTION_PATH_CODE);
     }
 
     private PathsStore _currentSelection;
 
-    public static class PipeWriter implements PipeDataWriter<File>
+    private static class PipeWriter implements PipeDataWriter<File>
     {
 
         @Override
@@ -552,31 +628,6 @@ public abstract class MainContentProviderBase extends ContentProvider
                 finally
                 {
                     fout.close();
-                }
-            }
-            catch (IOException e)
-            {
-                Logger.log(e);
-            }
-        }
-    }
-
-    public static class PipeReader implements PipeDataWriter<File>
-    {
-
-        @Override
-        public void writeDataToPipe(@NonNull ParcelFileDescriptor input, @NonNull Uri uri, @NonNull String mimeType, Bundle opts, File file)
-        {
-            try
-            {
-                FileInputStream fin = new FileInputStream(input.getFileDescriptor());
-                try
-                {
-                    Util.copyFileFromInputStream(fin, file, opts.getLong(OPTION_OFFSET, 0), opts.getLong(OPTION_NUM_BYTES, -1), null);
-                }
-                finally
-                {
-                    fin.close();
                 }
             }
             catch (IOException e)

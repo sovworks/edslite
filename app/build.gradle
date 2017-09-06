@@ -9,8 +9,8 @@ android {
         applicationId "com.sovworks.eds.android"
         minSdkVersion 14
         targetSdkVersion 25
-        versionCode 208
-        versionName "2.0.0.208"
+        versionCode 210
+        versionName "2.0.0.210"
 
         ndk {
             // Specifies the ABI configurations of your native

@@ -8,6 +8,7 @@ import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.helpers.TempFilesMonitor;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.fs.Directory;
+import com.sovworks.eds.fs.FSRecord;
 import com.sovworks.eds.fs.File;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.SrcDstCollection;
@@ -104,18 +105,40 @@ class PrepareTempFilesTask extends CopyFilesTask
 	@Override
 	protected boolean copyFile(SrcDst record) throws IOException
 	{
+		Location srcLoc = record.getSrcLocation().copy();
+		Location dstLoc = record.getDstLocation().copy();
+        Path tmpPath = calcDstPath(srcLoc.getCurrentPath().getFile(), dstLoc.getCurrentPath().getDirectory());
+        srcLoc.setCurrentPath(srcLoc.getCurrentPath().getParentPath());
+        if(tmpPath!=null)
+        {
+            dstLoc.setCurrentPath(tmpPath);
+            if (dstLoc.getCurrentPath().exists())
+            {
+                TempFilesMonitor.getMonitor(_context).removeFileFromMonitor(dstLoc);
+                TempFilesMonitor.deleteRecWithWiping(dstLoc.getCurrentPath(), _wipe);
+            }
+        }
+        else
+        {
+            tmpPath = dstLoc.getCurrentPath().getDirectory().createFile(srcLoc.getCurrentPath().getFile().getName()).getPath();
+            dstLoc.setCurrentPath(tmpPath);
+        }
 		if(super.copyFile(record))
 		{
-			Location srcLoc = record.getSrcLocation().copy();
-			Location dstLoc = record.getDstLocation().copy();
-			Path tmpPath = calcDstPath(srcLoc.getCurrentPath().getFile(), dstLoc.getCurrentPath().getDirectory());
-			srcLoc.setCurrentPath(srcLoc.getCurrentPath().getParentPath());
-			dstLoc.setCurrentPath(tmpPath);
-			addFileToMonitor(srcLoc, tmpPath);
+			addFileToMonitor(srcLoc, dstLoc);
 			_tempFilesList.add(dstLoc);
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	protected Path calcDstPath(FSRecord src, Directory dstFolder) throws IOException
+	{
+		Path res = super.calcDstPath(src, dstFolder);
+		if(res == null)
+			res = dstFolder.createFile(src.getName()).getPath();
+		return res;
 	}
 
 	@Override
@@ -134,15 +157,10 @@ class PrepareTempFilesTask extends CopyFilesTask
 		}
 		if (srcFile.getSize() > _fileSizeLimit)
 			throw new IOException(_context.getText(R.string.err_temp_file_is_too_big).toString());
-		if(dstPath!=null && dstPath.exists())
-		{
-			TempFilesMonitor.getMonitor(_context).removeFileFromMonitor(dstPath);
-			TempFilesMonitor.deleteRecWithWiping(dstPath, _wipe);
-		}
 		return super.copyFile(srcFile, targetFolder);
 	}
 
-	protected void addFileToMonitor(Location srcLocation, Path dstFilePath) throws IOException
+	protected void addFileToMonitor(Location srcLocation, Location dstFilePath) throws IOException
 	{
 			TempFilesMonitor.getMonitor(_context).addFileToMonitor(srcLocation, dstFilePath);
 	}
