@@ -22,6 +22,8 @@ public interface SettingsCommon
 	int FB_SORT_SIZE_DESC = 5;
 	int FB_SORT_FILENAME_ASC = 0;
 	int FB_SORT_FILENAME_DESC = 1;
+	int FB_SORT_FILENAME_NUM_ASC = 6;
+	int FB_SORT_FILENAME_NUM_DESC = 7;
 
 	int THEME_DEFAULT = 0;
 	int THEME_DARK = 1;
@@ -150,4 +152,5 @@ public interface SettingsCommon
 	int getCurrentTheme();
 	ExternalFileManagerInfo getExternalFileManagerInfo();
 	boolean dontUseContentProvider();
+	boolean forceTempFiles();
 }

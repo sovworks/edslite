@@ -124,6 +124,8 @@ public abstract class OpenLocationsActivityBase extends Activity
             else
             {
                 Location loc = _targetLocations.get(0);
+                loc.getExternalSettings().setVisibleToUser(true);
+                loc.saveExternalSettings();
                 _targetLocations.remove(0);
                 Bundle args = new Bundle();
                 setOpenerArgs(args, loc);
@@ -135,6 +137,7 @@ public abstract class OpenLocationsActivityBase extends Activity
 
         protected void setOpenerArgs(Bundle args, Location loc)
         {
+            args.putAll(getActivity().getIntent().getExtras());
             args.putString(LocationOpenerBaseFragment.PARAM_RECEIVER_FRAGMENT_TAG, getTag());
             LocationsManager.storePathsInBundle(args, loc, null);
         }

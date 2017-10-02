@@ -97,6 +97,7 @@
 		<item >By filename</item>
 		<item >By modification date</item>
 		<item >By size</item>
+		<item >By filename (numeric)</item>
 	</string-array>
 	<string name="sort">Sort</string>
 	<string name="zoom_in">Zoom in</string>
@@ -237,4 +238,9 @@
     <string name="update_exfat_module">Please update the <xliff:g id="exfat">exFAT</xliff:g> module</string>
 	<string name="exfat_module_required">Please install the <xliff:g id="exfat">exFAT</xliff:g> module</string>
     <string name="restart_application">Please restart EDS</string>
+    <string name="force_temp_files">Force temp files</string>
+	<string name="force_temp_files_desc">Use temp files instead of \"pipes\" even for read-only requests. Some apps can\'t work with \"pipes\".</string>
+	<string name="wrong_path">Wrong path</string>
+	<string name="encfs_config_file_not_found">EncFs config file not found</string>
+    <string name="container_opened_read_only">The container has been opened in read-only mode.</string>
 </resources>

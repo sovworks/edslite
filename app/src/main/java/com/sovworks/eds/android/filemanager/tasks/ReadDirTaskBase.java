@@ -38,7 +38,15 @@ public abstract class ReadDirTaskBase extends TaskFragment
 	{
 		BrowserRecord rec = ReadDirTask.createBrowserRecordFromFile(context, loc, path ,directorySettings);
 		if(rec!=null)
-			rec.init(loc, path);
+			try
+			{
+				rec.init(loc, path);
+			}
+			catch (Exception e)
+			{
+				Logger.log(e);
+				rec = null;
+			}
 		return rec;
 	}
 
@@ -159,6 +167,8 @@ public abstract class ReadDirTaskBase extends TaskFragment
 					return;
 
 				BrowserRecord record = getBrowserRecordFromFsRecord(targetLocation, path, directorySettings);
+				if(record == null)
+					continue;
 				if(path.equals(startPath))
 					startRecord = record;
 				procRecord(state, uiUpdateList, selectedFiles, record, count);
@@ -194,9 +204,17 @@ public abstract class ReadDirTaskBase extends TaskFragment
 		return false;
 	}
 	
-	protected BrowserRecord getBrowserRecordFromFsRecord(Location loc, Path path, DirectorySettings directorySettings) throws IOException, ApplicationException
+	protected BrowserRecord getBrowserRecordFromFsRecord(Location loc, Path path, DirectorySettings directorySettings)
 	{
-		return getBrowserRecordFromFsRecord(_context, loc, path, directorySettings);
+		try
+		{
+			return ReadDirTask.getBrowserRecordFromFsRecord(_context, loc, path, directorySettings);
+		}
+		catch (ApplicationException | IOException e)
+		{
+			Logger.log(e);
+		}
+		return null;
 	}
 
 	//Must be synchronized to support cancelling

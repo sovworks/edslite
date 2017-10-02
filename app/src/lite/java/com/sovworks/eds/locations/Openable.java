@@ -16,6 +16,7 @@ public interface Openable extends Location
 	boolean hasCustomKDFIterations();
 	boolean requireCustomKDFIterations();
 	void setNumKDFIterations(int num);
+	void setOpenReadOnly(boolean readOnly);
 	boolean isOpen();
 	void open() throws Exception;	
 	void close(boolean force) throws IOException;

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.text.Html;
+import android.widget.Toast;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
@@ -405,7 +406,10 @@ public class LocationOpenerBaseFragment extends Fragment
     {
         try
         {
-            finishOpener(true, (Location) result.getResult());
+            Location location = (Location) result.getResult();
+            if(location.isReadOnly())
+                Toast.makeText(getActivity(), R.string.container_opened_read_only, Toast.LENGTH_LONG).show();
+            finishOpener(true, location);
             return;
         }
         catch (CancellationException ignored)

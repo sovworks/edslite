@@ -93,26 +93,73 @@ public class LocationOpenerFragmentCommon extends LocationOpenerBaseFragment imp
     protected void openLocation()
     {
         Openable ol = getTargetLocation();
+        Bundle defaultArgs = getArguments();
+        if(defaultArgs == null)
+            defaultArgs = new Bundle();
         if(ol.isOpen())
             super.openLocation();
-        else if (/*!(ol.hasPassword() && !ol.requirePassword()) && */ol.requirePassword() || ol.requireCustomKDFIterations())
+        else if (needPasswordDialog(ol, defaultArgs))
             askPassword();
         else
             startOpeningTask(initOpenLocationTaskParams(getTargetLocation()));
     }
 
+    @Override
+    protected Bundle initOpenLocationTaskParams(Location location)
+    {
+        Bundle args = super.initOpenLocationTaskParams(location);
+        Bundle defaultArgs = getArguments();
+        if(defaultArgs != null)
+        {
+            if(defaultArgs.containsKey(Openable.PARAM_PASSWORD)
+                    && !args.containsKey(Openable.PARAM_PASSWORD))
+            {
+                String val = defaultArgs.getString(Openable.PARAM_PASSWORD);
+                if(val!=null)
+                    args.putParcelable(
+                            Openable.PARAM_PASSWORD,
+                            new SecureBuffer(val.toCharArray())
+                    );
+            }
+            if(defaultArgs.containsKey(Openable.PARAM_KDF_ITERATIONS)
+                    && !args.containsKey(Openable.PARAM_KDF_ITERATIONS))
+                args.putInt(Openable.PARAM_KDF_ITERATIONS, args.getInt(Openable.PARAM_KDF_ITERATIONS));
+        }
+        return args;
+    }
+
     protected void usePassword(Bundle passwordDialogResultBundle)
 	{
         Bundle args = initOpenLocationTaskParams(getTargetLocation());
-        args.putAll(passwordDialogResultBundle);
+        updateOpenLocationTaskParams(args, passwordDialogResultBundle);
 		startOpeningTask(args);
 	}
+
+	protected void updateOpenLocationTaskParams(Bundle args, Bundle passwordDialogResultBundle)
+    {
+        if(passwordDialogResultBundle.containsKey(Openable.PARAM_PASSWORD))
+        {
+            SecureBuffer sb = passwordDialogResultBundle.getParcelable(Openable.PARAM_PASSWORD);
+            if(sb!=null && (sb.length() > 0 || !args.containsKey(Openable.PARAM_PASSWORD)))
+                args.putParcelable(Openable.PARAM_PASSWORD, sb);
+        }
+        if(passwordDialogResultBundle.containsKey(Openable.PARAM_KDF_ITERATIONS))
+            args.putInt(Openable.PARAM_KDF_ITERATIONS, passwordDialogResultBundle.getInt(Openable.PARAM_KDF_ITERATIONS));
+    }
 
 	protected void askPassword()
     {
         PasswordDialog pd = new PasswordDialog();
         pd.setArguments(getAskPasswordArgs());
         pd.show(getFragmentManager(), PasswordDialog.TAG);
+    }
+
+    protected boolean needPasswordDialog(Openable ol, Bundle defaultArgs)
+    {
+        if(defaultArgs == null)
+            defaultArgs = new Bundle();
+        return (ol.requirePassword() && !defaultArgs.containsKey(Openable.PARAM_PASSWORD)) ||
+                (ol.requireCustomKDFIterations() && !defaultArgs.containsKey(Openable.PARAM_KDF_ITERATIONS));
     }
 
     protected Bundle getPasswordDialogResultBundle(PasswordDialog pd)

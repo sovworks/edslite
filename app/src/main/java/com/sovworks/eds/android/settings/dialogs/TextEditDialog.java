@@ -36,7 +36,6 @@ public class TextEditDialog extends DialogFragment
 		int mid = getArguments().getInt(ARG_MESSAGE_ID);
 		if(mid!=0)
 			alert.setMessage(getString(mid));
-
 		LayoutInflater inflater = LayoutInflater.from(getActivity());
 
 		_input = (EditText) inflater.inflate(getArguments().getInt(ARG_EDIT_TEXT_RES_ID, R.layout.settings_edit_text), null);

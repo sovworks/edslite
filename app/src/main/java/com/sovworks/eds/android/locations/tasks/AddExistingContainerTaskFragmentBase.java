@@ -1,6 +1,8 @@
 package com.sovworks.eds.android.locations.tasks;
 
 import com.sovworks.eds.android.Logger;
+import com.sovworks.eds.android.R;
+import com.sovworks.eds.android.errors.UserException;
 import com.sovworks.eds.android.locations.EncFsLocation;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.container.ContainerFormatter;
@@ -40,11 +42,11 @@ public abstract class AddExistingContainerTaskFragmentBase extends AddExistingED
         {
             Path cfgPath = Config.getConfigFilePath(cp.getDirectory());
             if(cfgPath == null)
-                throw new IllegalArgumentException("EncFs config file doesn't exist");
+                throw new UserException("EncFs config file doesn't exist", R.string.encfs_config_file_not_found);
             isEncFs = true;
         }
         else
-            throw new IllegalArgumentException("Wrong path");
+            throw new UserException("Wrong path", R.string.wrong_path);
 
         if(isEncFs)
             return new EncFsLocation(locationLocation, _context);

@@ -95,6 +95,7 @@
     <item>Por nombre del fichero</item>
     <item>Por fecha de modificación</item>
     <item>Por tamaño</item>
+    <item>By filename (numeric)</item>
   </string-array>
   <string name="sort">Ordenar</string>
   <string name="zoom_in">Acercar</string>

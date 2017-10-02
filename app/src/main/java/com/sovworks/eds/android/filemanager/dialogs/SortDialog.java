@@ -45,8 +45,8 @@ public class SortDialog extends DialogFragment
     public Dialog onCreateDialog(Bundle savedInstanceState)
 	{			
 		@SuppressLint("InflateParams") View v = getActivity().getLayoutInflater().inflate(R.layout.sort_dialog, null);
-		final ListView listView = (ListView) v.findViewById(android.R.id.list);
-        final RadioGroup sortDirection = (RadioGroup) v.findViewById(R.id.sort_group);
+		final ListView listView = v.findViewById(android.R.id.list);
+        final RadioGroup sortDirection = v.findViewById(R.id.sort_group);
 		listView.setAdapter(
             new ArrayAdapter<>(
                 getActivity(),

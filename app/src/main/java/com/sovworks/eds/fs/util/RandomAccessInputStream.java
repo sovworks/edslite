@@ -1,11 +1,11 @@
 package com.sovworks.eds.fs.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import com.sovworks.eds.fs.DataInput;
 import com.sovworks.eds.fs.RandomAccessIO;
 import com.sovworks.eds.fs.RandomStorageAccess;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 public class RandomAccessInputStream extends InputStream implements DataInput, RandomStorageAccess
 {
@@ -48,6 +48,17 @@ public class RandomAccessInputStream extends InputStream implements DataInput, R
 	{
 		return _io.length(); 
 	}
-	
-	private final RandomAccessIO _io;	
+
+	@Override
+	public long skip(long n) throws IOException
+	{
+		long pos = _io.getFilePointer();
+		long left = _io.length() - pos;
+		if(n > left)
+			n = left;
+		seek(pos + n);
+		return n;
+	}
+
+	private final RandomAccessIO _io;
 }

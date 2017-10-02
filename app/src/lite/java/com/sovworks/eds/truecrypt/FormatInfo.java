@@ -47,6 +47,12 @@ public class FormatInfo implements ContainerFormatInfo
 	}
 
 	@Override
+	public int getMaxPasswordLength()
+	{
+		return 64;
+	}
+
+	@Override
 	public VolumeLayout getHiddenVolumeLayout()
 	{
 		return null;

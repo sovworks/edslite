@@ -95,6 +95,7 @@
     <item>По имени файла</item>
     <item>По дате изменения</item>
     <item>По размеру</item>
+    <item>По имени файла (как числа)</item>
   </string-array>
   <string name="sort">Сортировка</string>
   <string name="zoom_in">Увеличить</string>
@@ -234,4 +235,9 @@
   <string name="update_exfat_module">Модуль exFAT необходимо обновить.</string>
   <string name="exfat_module_required">Необходимо установить модуль exFAT</string>
   <string name="restart_application">Пожалуйста, перезапустите программу.</string>
+  <string name="force_temp_files">Всегда использовать временные файлы</string>
+  <string name="force_temp_files_desc">Использовать временные файлы вместо "каналов" даже для передачи файлов в режиме "только для чтения". Некоторые приложения не работают с "каналами".</string>
+  <string name="wrong_path">Указан неверный путь</string>
+  <string name="encfs_config_file_not_found">Не найден файл конфигурации EncFs</string>
+    <string name="container_opened_read_only">Контейнер был открыт в режиме "только для чтения".</string>
 </resources>

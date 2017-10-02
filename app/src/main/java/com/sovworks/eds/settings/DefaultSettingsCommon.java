@@ -76,6 +76,12 @@ public class DefaultSettingsCommon implements SettingsCommon
 	}
 
 	@Override
+	public boolean forceTempFiles()
+	{
+		return true;
+	}
+
+	@Override
 	public boolean disableLargeSceenLayouts()
 	{		
 		return false;

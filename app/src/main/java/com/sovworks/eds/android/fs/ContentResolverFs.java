@@ -116,7 +116,13 @@ public class ContentResolverFs implements FileSystem
 		
 		
 	}
-	
+
+	@Override
+	public boolean isClosed()
+	{
+		return false;
+	}
+
 	public class Path implements com.sovworks.eds.fs.Path
 	{	
 		

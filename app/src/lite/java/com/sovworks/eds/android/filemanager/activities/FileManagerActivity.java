@@ -19,7 +19,7 @@ public class FileManagerActivity extends FileManagerActivityBase
     @Override
     protected void showPromoDialogIfNeeded()
     {
-        if(_settings.getLastViewedPromoVersion() < 199)
+        if(_settings.getLastViewedPromoVersion() < 211)
             super.showPromoDialogIfNeeded();
     }
 }

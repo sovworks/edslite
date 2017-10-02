@@ -43,6 +43,22 @@ public abstract class EdsContainerBase implements Closeable
 		return null;
 	}
 
+	public static byte[] cutPassword(byte[] pass, int maxLength)
+	{
+		if(pass!=null)
+		{
+			if (maxLength > 0 && pass.length > maxLength)
+			{
+				byte[] tmp = pass;
+				pass = new byte[maxLength];
+				System.arraycopy(tmp, 0, pass, 0, maxLength);
+			}
+			else
+				pass = pass.clone();
+		}
+		return pass;
+	}
+
 	public static FileSystem loadFileSystem(RandomAccessIO io, boolean isReadOnly) throws IOException, UserException
 	{
 		if(ExFat.isExFATImage(io))
@@ -249,7 +265,7 @@ public abstract class EdsContainerBase implements Closeable
 		if(_messageDigest!=null)
 			vl.setHashFunc(_messageDigest);
 		
-		vl.setPassword(password == null ? null : password.clone());
+		vl.setPassword(cutPassword(password, cf.getMaxPasswordLength()));
 		if(cf.hasCustomKDFIterationsSupport() && _numKDFIterations > 0)
 			vl.setNumKDFIterations(_numKDFIterations);
 		if(vl.readHeader(containerFile))
@@ -292,6 +308,7 @@ public abstract class EdsContainerBase implements Closeable
 				&& _pathToContainer.getFileSystem() instanceof StdFs
 				&& ((StdFs)_pathToContainer.getFileSystem()).getRootDir().isEmpty();
 	}
+
 }
 
 

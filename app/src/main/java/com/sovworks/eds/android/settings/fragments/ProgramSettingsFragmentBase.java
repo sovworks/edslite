@@ -38,6 +38,7 @@ import static com.sovworks.eds.android.settings.UserSettingsCommon.DISABLE_MODIF
 import static com.sovworks.eds.android.settings.UserSettingsCommon.DISABLE_WIDE_SCREEN_LAYOUTS;
 import static com.sovworks.eds.android.settings.UserSettingsCommon.DONT_USE_CONTENT_PROVIDER;
 import static com.sovworks.eds.android.settings.UserSettingsCommon.EXTENSIONS_MIME;
+import static com.sovworks.eds.android.settings.UserSettingsCommon.FORCE_TEMP_FILES;
 import static com.sovworks.eds.android.settings.UserSettingsCommon.IS_FLAG_SECURE_ENABLED;
 import static com.sovworks.eds.android.settings.UserSettingsCommon.MAX_FILE_SIZE_TO_OPEN;
 import static com.sovworks.eds.android.settings.UserSettingsCommon.NEVER_SAVE_HISTORY;
@@ -396,13 +397,33 @@ public abstract class ProgramSettingsFragmentBase extends PropertiesFragmentBase
             @Override
             protected boolean loadValue()
             {
-                return _settings.dontUseContentProvider();
+                boolean value = _settings.dontUseContentProvider();
+                getPropertiesView().setPropertyState(
+                        R.string.force_temp_files,
+                        getPropertiesView().isPropertyEnabled(getId()) && !value
+                );
+                return value;
             }
 
             @Override
             protected void saveValue(final boolean value)
             {
                 editSettings().putBoolean(DONT_USE_CONTENT_PROVIDER, value).commit();
+                getPropertiesView().setPropertyState(R.string.force_temp_files, !value);
+            }
+        }));
+        commonPropertiesIds.add(getPropertiesView().addProperty(new SwitchPropertyEditor(this, R.string.force_temp_files, R.string.force_temp_files_desc)
+        {
+            @Override
+            protected boolean loadValue()
+            {
+                return _settings.forceTempFiles();
+            }
+
+            @Override
+            protected void saveValue(final boolean value)
+            {
+                editSettings().putBoolean(FORCE_TEMP_FILES, value).commit();
             }
         }));
         commonPropertiesIds.add(getPropertiesView().addProperty(new InstallExFatModulePropertyEditor(this)));

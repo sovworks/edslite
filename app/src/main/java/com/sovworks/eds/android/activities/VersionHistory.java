@@ -43,7 +43,7 @@ public class VersionHistory extends Activity
 		});
 	}
 
-	@SuppressLint("CommitPrefEdits")
+	@SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
 	private void markAsRead()
 	{
 		int vc = 135;

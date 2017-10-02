@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
-import static com.sovworks.eds.android.locations.ContainerBasedLocation.MAX_PASSWORD_LENGTH;
-
 public abstract class ContainerFormatterBase extends EDSLocationFormatter
 {
 	public static ContainerLocation createBaseContainerLocationFromFormatInfo(
@@ -270,14 +268,10 @@ public abstract class ContainerFormatterBase extends EDSLocationFormatter
 		if(_password != null)
 		{
 			byte[] pass = _password.getDataArray();
-			if(pass.length > MAX_PASSWORD_LENGTH)
-			{
-				byte[] tmp = new byte[MAX_PASSWORD_LENGTH];
-				System.arraycopy(pass, 0, tmp, 0, MAX_PASSWORD_LENGTH);
-				SecureBuffer.eraseData(pass);
-				pass = tmp;
-			}
-			layout.setPassword(pass);
+			layout.setPassword(EdsContainerBase.cutPassword(
+					pass, _containerFormat.getMaxPasswordLength()
+			));
+			SecureBuffer.eraseData(pass);
 		}
 		else
 			layout.setPassword(new byte[0]);

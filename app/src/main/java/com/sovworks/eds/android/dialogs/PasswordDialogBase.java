@@ -24,6 +24,8 @@ import com.sovworks.eds.crypto.SecureBuffer;
 import com.sovworks.eds.locations.LocationsManager;
 import com.sovworks.eds.locations.Openable;
 
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+
 public abstract class PasswordDialogBase extends DialogFragment
 {
     public static final String TAG = "com.sovworks.eds.android.dialogs.PasswordDialog";
@@ -107,7 +109,7 @@ public abstract class PasswordDialogBase extends DialogFragment
         if(passwordLayout!=null)
             passwordLayout.setVisibility(hasPassword() ? View.VISIBLE : View.GONE);
 
-        Button b = (Button) v.findViewById(android.R.id.button1);
+        Button b = v.findViewById(android.R.id.button1);
         if(b!=null)
             b.setOnClickListener(new View.OnClickListener()
             {
@@ -118,7 +120,7 @@ public abstract class PasswordDialogBase extends DialogFragment
                 }
             });
 
-        ImageButton ib = (ImageButton) v.findViewById(R.id.toggle_show_pass);
+        ImageButton ib = v.findViewById(R.id.toggle_show_pass);
         if(ib!=null)
         {
             ib.setOnClickListener(new View.OnClickListener()
@@ -185,14 +187,6 @@ public abstract class PasswordDialogBase extends DialogFragment
         }
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState)
-    {
-        super.onSaveInstanceState(outState);
-        if(_options!=null)
-            outState.putAll(_options);
-    }
-
     public char[] getPassword()
     {
         if(hasPassword() && _passwordEditText!=null)
@@ -203,6 +197,14 @@ public abstract class PasswordDialogBase extends DialogFragment
             return res;
         }
         return null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        if(_options!=null)
+            outState.putAll(_options);
     }
 
     public boolean hasPassword()
@@ -238,10 +240,11 @@ public abstract class PasswordDialogBase extends DialogFragment
 
     protected int calcHeight()
     {
-        int height = getResources().getDimensionPixelSize(R.dimen.password_dialog_height);
+        return WRAP_CONTENT;
+        /*int height = getResources().getDimensionPixelSize(R.dimen.password_dialog_height);
         if(isPasswordVerificationRequired())
             height += 80;
-        return height;
+        return height;*/
     }
 
     protected String loadLabel()

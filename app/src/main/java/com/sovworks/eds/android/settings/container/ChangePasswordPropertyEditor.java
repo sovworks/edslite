@@ -9,6 +9,7 @@ import com.sovworks.eds.android.locations.fragments.EDSLocationSettingsFragmentB
 import com.sovworks.eds.android.settings.ButtonPropertyEditor;
 import com.sovworks.eds.android.settings.PropertyEditor;
 import com.sovworks.eds.android.tasks.ChangeContainerPasswordTask;
+import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
 
 public class ChangePasswordPropertyEditor extends ButtonPropertyEditor implements PasswordDialog.PasswordReceiver
@@ -31,7 +32,8 @@ public class ChangePasswordPropertyEditor extends ButtonPropertyEditor implement
         args.putBoolean(PasswordDialog.ARG_HAS_PASSWORD, true);
         args.putBoolean(PasswordDialog.ARG_VERIFY_PASSWORD, true);
         args.putInt(PropertyEditor.ARG_PROPERTY_ID, getId());
-        LocationsManager.storePathsInBundle(args, getHost().getLocation(), null);
+        Location loc = getHost().getLocation();
+        LocationsManager.storePathsInBundle(args, loc, null);
         args.putString(PasswordDialog.ARG_RECEIVER_FRAGMENT_TAG, getHost().getTag());
         PasswordDialog pd = new PasswordDialog();
         pd.setArguments(args);

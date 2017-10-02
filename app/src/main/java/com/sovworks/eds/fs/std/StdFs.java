@@ -59,8 +59,13 @@ public class StdFs implements FileSystem
 	{	
 		
 	}
-		
-	
+
+	@Override
+	public boolean isClosed()
+	{
+		return false;
+	}
+
 	public StringPathUtil getRootDir()
 	{
 		return _rootDir;

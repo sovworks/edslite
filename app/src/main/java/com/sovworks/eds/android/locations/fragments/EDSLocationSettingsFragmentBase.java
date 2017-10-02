@@ -45,9 +45,6 @@ public abstract class EDSLocationSettingsFragmentBase extends PropertiesFragment
         public long freeSpace;
     }
 
-    public static final String OPENER_MODE = "com.sovworks.eds.android.OPENER_MODE";
-    public static final int OPENER_MODE_INT_SETTINGS = 1;
-
     public EDSLocation getLocation()
     {
         return _location;
@@ -65,14 +62,7 @@ public abstract class EDSLocationSettingsFragmentBase extends PropertiesFragment
 
     public void onTargetLocationOpened(Bundle openerArgs, Location location)
     {
-        int mode = openerArgs.getInt(OPENER_MODE);
-        switch (mode)
-        {
-            case OPENER_MODE_INT_SETTINGS:
-                onIntSettingsAvailable((EDSLocation)location);
-                break;
-        }
-
+        onIntSettingsAvailable((EDSLocation)location);
     }
 
     public void onTargetLocationNotOpened(Bundle openerArgs)
@@ -153,7 +143,7 @@ public abstract class EDSLocationSettingsFragmentBase extends PropertiesFragment
             pr.onPasswordNotEntered(dlg);
     }
 
-    protected class LoadLocationInfoTaskCallbacks extends ProgressDialogTaskFragmentCallbacks
+    class LoadLocationInfoTaskCallbacks extends ProgressDialogTaskFragmentCallbacks
     {
         LoadLocationInfoTaskCallbacks()
         {
@@ -354,7 +344,6 @@ public abstract class EDSLocationSettingsFragmentBase extends PropertiesFragment
                 Bundle openerArgs = new Bundle();
                 LocationsManager.storePathsInBundle(openerArgs, _location, null);
                 openerArgs.putString(LocationOpenerBaseFragment.PARAM_RECEIVER_FRAGMENT_TAG, getTag());
-                openerArgs.putInt(OPENER_MODE, OPENER_MODE_INT_SETTINGS);
                 Fragment opener = getLocationOpener();
                 opener.setArguments(openerArgs);
                 getFragmentManager().

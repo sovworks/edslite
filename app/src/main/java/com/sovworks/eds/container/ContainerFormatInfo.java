@@ -13,6 +13,7 @@ public interface ContainerFormatInfo
 	boolean hasHiddenContainerSupport();
 	boolean hasKeyfilesSupport();
 	boolean hasCustomKDFIterationsSupport();
+	int getMaxPasswordLength();
 	VolumeLayout getHiddenVolumeLayout();
 	void formatContainer(RandomAccessIO io, VolumeLayout layout, FileSystemInfo fsInfo) throws IOException, ApplicationException;
 	int getOpeningPriority();

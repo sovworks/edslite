@@ -431,7 +431,7 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
         // FLAG_SUPPORTS_SEARCH allows users to search all documents the application
         // shares.
         int flags = DocumentsContract.Root.FLAG_SUPPORTS_SEARCH;
-        if(!cont.getExternalSettings().shouldOpenReadOnly())
+        if(!cont.isReadOnly())
             flags |= DocumentsContract.Root.FLAG_SUPPORTS_CREATE;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             flags |= DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD;

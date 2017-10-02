@@ -167,18 +167,29 @@ public abstract class OMLocationBase extends LocationBase implements OMLocation,
 		_openingProgressReporter = pr;
 	}
 
+	@Override
+	public boolean isReadOnly()
+	{
+		return getSharedData().isReadOnly;
+	}
+
+	@Override
+	public void setOpenReadOnly(boolean readOnly)
+	{
+		getSharedData().isReadOnly = readOnly;
+	}
 
 	protected ProgressReporter _openingProgressReporter;
 
 	protected static class SharedData extends LocationBase.SharedData
 	{
-
 		protected SharedData(String id)
 		{
 			super(id);
 		}
 		SecureBuffer password;
 		int numKDFIterations;
+		boolean isReadOnly;
 	}
 
 	@Override

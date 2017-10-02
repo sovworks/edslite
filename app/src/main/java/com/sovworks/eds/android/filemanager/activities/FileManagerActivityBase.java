@@ -22,6 +22,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 
 import com.sovworks.eds.android.EdsApplication;
@@ -299,6 +300,12 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
             CompatHelper.setWindowFlagSecure(this);
 	    _isLargeScreenLayout = UserSettings.isWideScreenLayout(_settings, this);
 	    setContentView(R.layout.main_activity);
+        if(!_isLargeScreenLayout && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+        {
+            View secPanel = findViewById(R.id.fragment2);
+            if(secPanel != null)
+                secPanel.setVisibility(View.GONE);
+        }
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(_exitBroadcastReceiver, new IntentFilter(EdsApplication.BROADCAST_EXIT));
         registerReceiver(_locationAddedOrRemovedReceiver, LocationsManager.getLocationAddedIntentFilter());
         registerReceiver(_locationAddedOrRemovedReceiver, LocationsManager.getLocationRemovedIntentFilter());

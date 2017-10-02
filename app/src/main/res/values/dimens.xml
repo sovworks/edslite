@@ -5,7 +5,4 @@
     <dimen name="properties_button_text">12sp</dimen>
     <dimen name="file_list_row_height">60dp</dimen>
     <dimen name="drawer_list_row_height">60dp</dimen>
-    <dimen name="password_dialog_width">300dp</dimen>
-    <dimen name="password_dialog_height">340dp</dimen>
-    <dimen name="password_label_text">14sp</dimen>
 </resources>

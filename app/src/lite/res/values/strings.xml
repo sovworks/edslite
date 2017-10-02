@@ -3,6 +3,15 @@
     xmlns:xliff="http://schemas.android.com/tools">
     <string name="eds" translatable="false"><xliff:g id="program_name">EDS Lite</xliff:g></string>
     <string name="changes_text" translatable="false"><![CDATA[<font color="black">
+        <b>2.0.0.211</b>:
+	    <ul>
+	        <li>Added an option to use temp files instead of pipes even for read-only access.</li>
+	        <li>Added additional parameters to container opening and closing intents (see FAQ).</li>
+	        <li>Added numeric sorting mode to the file manager.</li>
+	        <li>The full version of EDS now has an option to unlock a container using fingerprints.</li>
+	        <li>The full version of EDS now supports opening a LUKS container using a keyfile.</li>
+	        <li>Fixed bugs</li>
+	    </ul>
         <b>2.0.0.206</b>:
 	    <ul>
 	        <li>"last modified" timestamp of a file is restored after a copy/move operation.</li>

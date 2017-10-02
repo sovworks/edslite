@@ -72,6 +72,12 @@ public class ExFat implements FileSystem
         }
     }
 
+    @Override
+    public boolean isClosed()
+    {
+        return _exfatPtr == 0;
+    }
+
     public long getFreeSpaceVolumeStartOffset()
     {
         return getFreeSpaceStartOffset();

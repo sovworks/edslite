@@ -14,6 +14,7 @@ import com.sovworks.eds.android.filemanager.DirectorySettings;
 import com.sovworks.eds.android.filemanager.FileListViewAdapter;
 import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
 import com.sovworks.eds.android.filemanager.comparators.FileNamesComparator;
+import com.sovworks.eds.android.filemanager.comparators.FileNamesNumericComparator;
 import com.sovworks.eds.android.filemanager.comparators.FileSizesComparator;
 import com.sovworks.eds.android.filemanager.comparators.ModDateComparator;
 import com.sovworks.eds.android.filemanager.records.BrowserRecord;
@@ -38,6 +39,8 @@ import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_DATE_ASC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_DATE_DESC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_FILENAME_ASC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_FILENAME_DESC;
+import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_FILENAME_NUM_ASC;
+import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_FILENAME_NUM_DESC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_SIZE_ASC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_SIZE_DESC;
 
@@ -538,6 +541,10 @@ public class FileListDataFragment extends Fragment
 			return new FileNamesComparator(true);
 		case FB_SORT_FILENAME_DESC:
 			return new FileNamesComparator(false);
+        case FB_SORT_FILENAME_NUM_ASC:
+            return new FileNamesNumericComparator(true);
+        case FB_SORT_FILENAME_NUM_DESC:
+            return new FileNamesNumericComparator(false);
 		case FB_SORT_SIZE_ASC:
 			return new FileSizesComparator(true);
 		case FB_SORT_SIZE_DESC:

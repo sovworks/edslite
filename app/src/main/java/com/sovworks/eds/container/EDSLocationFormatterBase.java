@@ -103,15 +103,22 @@ public abstract class EDSLocationFormatterBase
 	public EDSLocation format(Location location) throws Exception
 	{
 		EDSLocation loc = createLocation(location);
-		addLocationToList(loc);
+		if(!_dontReg)
+			addLocationToList(loc);
 		loc.getFS();
 		initLocationSettings(loc);
 		loc.close(false);
-		notifyLocationCreated(loc);
+		if(!_dontReg)
+			notifyLocationCreated(loc);
 		return loc;
 	}
 
-	protected boolean _disableDefaultSettings;
+	public void setDontRegLocation(boolean dontReg)
+	{
+		_dontReg = dontReg;
+	}
+
+	protected boolean _disableDefaultSettings, _dontReg;
 	protected SecureBuffer _password;
 	protected ProgressReporter _progressReporter;
 	protected Context _context;
@@ -146,7 +153,8 @@ public abstract class EDSLocationFormatterBase
 	protected void initLocationSettings(EDSLocation loc) throws IOException, ApplicationException
 	{
 		writeInternalContainerSettings(loc);
-		setExternalContainerSettings(loc);
+		if(!_dontReg)
+			setExternalContainerSettings(loc);
 	}
 	
 	protected void setExternalContainerSettings(EDSLocation loc) throws ApplicationException, IOException

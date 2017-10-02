@@ -1073,6 +1073,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
             );
             FileOpsService.copyFiles(getActivity(), recs, false);
             Toast.makeText(getActivity(), R.string.file_operation_started, Toast.LENGTH_SHORT).show();
+            getActivity().finish();
         }
         catch (IOException e)
         {

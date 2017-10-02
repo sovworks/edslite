@@ -81,7 +81,7 @@ public class CloseLocationsActivity extends Activity
                 if(state == null)
                 {
                     Intent i = getActivity().getIntent();
-                    if(i!=null && i.hasExtra(LocationsManager.PARAM_LOCATION_URIS))
+                    if(i!=null && (i.getData() != null || i.hasExtra(LocationsManager.PARAM_LOCATION_URIS)))
                         _targetLocations = _locationsManager.getLocationsFromIntent(i);
                     else
                     {
@@ -115,6 +115,11 @@ public class CloseLocationsActivity extends Activity
                 Bundle args = new Bundle();
                 args.putString(LocationCloserBaseFragment.PARAM_RECEIVER_FRAGMENT_TAG, getTag());
                 LocationsManager.storePathsInBundle(args, loc, null);
+                Intent i = getActivity().getIntent();
+                if(i.hasExtra(LocationCloserBaseFragment.ARG_FORCE_CLOSE))
+                    args.putBoolean(LocationCloserBaseFragment.ARG_FORCE_CLOSE,
+                            i.getBooleanExtra(LocationCloserBaseFragment.ARG_FORCE_CLOSE, false)
+                    );
                 LocationCloserBaseFragment closer = LocationCloserBaseFragment.getDefaultCloserForLocation(loc);
                 closer.setArguments(args);
                 getFragmentManager().beginTransaction().add(closer, LocationCloserBaseFragment.getCloserTag(loc)).commit();

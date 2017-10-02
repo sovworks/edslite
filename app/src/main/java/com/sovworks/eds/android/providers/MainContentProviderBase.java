@@ -132,16 +132,20 @@ public abstract class MainContentProviderBase extends ContentProvider
             ParcelFileDescriptor fd = f.getFileDescriptor(am);
             if(fd!=null)
                 return fd;
-            if(am == File.AccessMode.Read)
-            //    return writeToPipe(f, opts == null ? new Bundle() : opts);
+            if(am == File.AccessMode.Read || am == File.AccessMode.Write)
             {
-                String mime = FileOpsService.getMimeTypeFromExtension(cp.getContext(), loc.getCurrentPath());
-                return cp.openPipeHelper(srcUri, mime, opts, f, new PipeWriter());
+                UserSettings s = UserSettings.getSettings(cp.getContext());
+                if(!s.forceTempFiles())
+                {
+                    if (am == File.AccessMode.Read)
+                    //    return writeToPipe(f, opts == null ? new Bundle() : opts);
+                    {
+                        String mime = FileOpsService.getMimeTypeFromExtension(cp.getContext(), loc.getCurrentPath());
+                        return cp.openPipeHelper(srcUri, mime, opts, f, new PipeWriter());
+                    } else
+                        return readFromPipe(f, opts == null ? new Bundle() : opts);
+                }
             }
-            else if(am == File.AccessMode.Write)
-                return readFromPipe(f, opts == null ? new Bundle() : opts);
-
-
 
             Path parentPath = loc.getCurrentPath();
             try

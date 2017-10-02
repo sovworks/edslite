@@ -38,5 +38,11 @@ public abstract class FileSystemWrapper implements FileSystem
 		getBase().close(force);
 	}
 
+	@Override
+	public boolean isClosed()
+	{
+		return getBase().isClosed();
+	}
+
 	private final FileSystem _base;
 }

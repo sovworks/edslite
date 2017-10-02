@@ -193,6 +193,9 @@ public abstract class FileOpsServiceBase extends IntentService
 				// | Intent.FLAG_ACTIVITY_NO_HISTORY
 				// | Intent.FLAG_ACTIVITY_CLEAR_TOP
 		);
+		//if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+		//	intent.setClipData(ClipData.newUri(context.getContentResolver(), "", uri));
+
 		try
 		{
 			context.startActivity(intent);

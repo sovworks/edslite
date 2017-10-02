@@ -285,7 +285,7 @@ public abstract class EDSLocationBase extends OMLocationBase implements Cloneabl
 	@Override
 	public boolean isReadOnly()
 	{
-		return getExternalSettings().shouldOpenReadOnly();
+		return super.isReadOnly() || getExternalSettings().shouldOpenReadOnly();
 	}
 
 	@Override

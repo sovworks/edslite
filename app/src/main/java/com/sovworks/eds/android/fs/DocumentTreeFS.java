@@ -71,6 +71,12 @@ public class DocumentTreeFS implements FileSystem
     {
     }
 
+    @Override
+    public boolean isClosed()
+    {
+        return false;
+    }
+
     public class File implements com.sovworks.eds.fs.File
     {
         public File(DocumentPath path)

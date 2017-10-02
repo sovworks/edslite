@@ -91,6 +91,7 @@
     <item>Par nom de fichier</item>
     <item>Par date de modification</item>
     <item>Par taille</item>
+    <item>By filename (numeric)</item>
   </string-array>
   <string name="sort">Tri</string>
   <string name="zoom_in">Zoomer</string>

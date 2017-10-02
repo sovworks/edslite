@@ -301,7 +301,13 @@ public class FatFS implements FileSystem
 			}
 		}
 	}
-	
+
+	@Override
+	public boolean isClosed()
+	{
+		return _isClosing;
+	}
+
 
 	public RandomAccessIO getContainerFile()
 	{

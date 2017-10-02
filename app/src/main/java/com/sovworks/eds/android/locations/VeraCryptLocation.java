@@ -58,7 +58,7 @@ public class VeraCryptLocation extends ContainerBasedLocation
 	}
 
 	@Override
-	protected ContainerFormatInfo getContainerFormatInfo()
+	public ContainerFormatInfo getContainerFormatInfo()
 	{
 		return new FormatInfo();
 	}

@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.TextView;
 
 import com.sovworks.eds.android.Logger;
@@ -32,6 +33,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
+
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
 public abstract class AboutDialogBase extends DialogFragment
 {
@@ -113,6 +116,31 @@ public abstract class AboutDialogBase extends DialogFragment
 			}
 		});
 		return v;
+	}
+
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+		setWidthHeight();
+	}
+
+	protected void setWidthHeight()
+	{
+		Window w = getDialog().getWindow();
+		if(w!=null)
+			w.setLayout(calcWidth(), calcHeight());
+	}
+
+	protected int calcWidth()
+	{
+		return getResources().getDimensionPixelSize(R.dimen.about_dialog_width);
+	}
+
+	protected int calcHeight()
+	{
+		return WRAP_CONTENT;
+		//return getResources().getDimensionPixelSize(R.dimen.about_dialog_heigh);
 	}
 
 	protected String getSubjectString()

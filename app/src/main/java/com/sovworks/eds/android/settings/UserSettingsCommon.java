@@ -50,6 +50,7 @@ public abstract class UserSettingsCommon implements SettingsCommon
 	public static final String THEME = "theme";
 	public static final String EXTERNAL_FILE_MANAGER = "external_file_manager";
 	public static final String DONT_USE_CONTENT_PROVIDER = "dont_use_content_provider";
+	public static final String FORCE_TEMP_FILES = "force_temp_files";
 
 	public static final String SETTINGS_PROTECTION_KEY_CHECK = "protection_key_check";
 
@@ -413,7 +414,13 @@ public abstract class UserSettingsCommon implements SettingsCommon
 		return _prefs.getBoolean(DONT_USE_CONTENT_PROVIDER, _defaultSettings.dontUseContentProvider());
 	}
 
-    public synchronized void saveSettingsProtectionKey() throws InvalidSettingsPassword
+	@Override
+	public boolean forceTempFiles()
+	{
+		return _prefs.getBoolean(FORCE_TEMP_FILES, _defaultSettings.forceTempFiles());
+	}
+
+	public synchronized void saveSettingsProtectionKey() throws InvalidSettingsPassword
     {
         if(_settingsProtectionKey == null)
         {

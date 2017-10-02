@@ -382,6 +382,8 @@ public abstract class LocationsManagerBase
 	public ArrayList<Location> getLocations(Collection<String> uriStrings)
 	{
 		ArrayList<Location> res = new ArrayList<>();
+		if(uriStrings == null)
+			return res;
 		for(String uriString: uriStrings)
 		{
 			Uri uri = Uri.parse(uriString);
