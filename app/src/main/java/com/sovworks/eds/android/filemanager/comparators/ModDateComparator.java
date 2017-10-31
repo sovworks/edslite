@@ -1,11 +1,11 @@
 package com.sovworks.eds.android.filemanager.comparators;
 
-import com.sovworks.eds.android.filemanager.records.BrowserRecord;
+import com.sovworks.eds.android.helpers.CachedPathInfo;
 
 import java.io.IOException;
 import java.util.Date;
 
-public class ModDateComparator extends FileNamesComparator
+public class ModDateComparator<T extends CachedPathInfo> extends FileNamesComparator<T>
 {
 	public ModDateComparator(boolean asc)
 	{
@@ -13,7 +13,7 @@ public class ModDateComparator extends FileNamesComparator
 	}
 
 	@Override
-	protected int compareImpl(BrowserRecord o1, BrowserRecord o2) throws IOException
+	protected int compareImpl(T o1, T o2) throws IOException
 	{
 		Date aDate = o1.getModificationDate();
 		if(aDate == null)

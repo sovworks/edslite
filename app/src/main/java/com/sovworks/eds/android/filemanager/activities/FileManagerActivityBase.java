@@ -58,8 +58,8 @@ import com.sovworks.eds.settings.GlobalConfig;
 import com.sovworks.eds.settings.Settings;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 import static com.sovworks.eds.android.settings.UserSettingsCommon.CURRENT_SETTINGS_VERSION;
 
@@ -228,13 +228,17 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 	}
 
     @Override
-    public List<? extends CachedPathInfo> getCurrentFiles()
+    public NavigableSet<? extends CachedPathInfo> getCurrentFiles()
     {
         FileListDataFragment f = getFileListDataFragment();
-        if(f!=null)
-            return f.getFileList();
-        else
-            return Collections.emptyList();
+        return f!=null ? f.getFileList() : new TreeSet<CachedPathInfo>();
+    }
+
+    @Override
+    public Object getFilesListSync()
+    {
+        FileListDataFragment f = getFileListDataFragment();
+        return f!=null ? f.getFilesListSync() : new Object();
     }
 
     public Location getLocation()
@@ -274,8 +278,8 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 		}
 		else if(!allowInplace)
 		{
-			//showPreviewFragment(contextPath,_isLargeScreenLayout);
-			Intent i = new Intent(this,ImageViewerActivity.class);
+			showPreviewFragment(contextPath);
+			/*Intent i = new Intent(this,ImageViewerActivity.class);
 			LocationsManager.storePathsInIntent(
                     i,
                     getLocation(),
@@ -283,7 +287,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
             );
             if(contextPath!=null)
 			    i.putExtra(ImageViewerActivity.INTENT_PARAM_CURRENT_PATH, contextPath.getPathString());
-			startActivity(i);
+			startActivity(i);*/
 		}
 
 	}
@@ -311,9 +315,28 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         registerReceiver(_locationAddedOrRemovedReceiver, LocationsManager.getLocationRemovedIntentFilter());
         registerReceiver(_locationChangedReceiver, new IntentFilter(LocationsManager.BROADCAST_LOCATION_CHANGED));
         registerReceiver(_locationAddedOrRemovedReceiver, new IntentFilter(LocationsManager.BROADCAST_LOCATION_CHANGED));
+        Logger.debug("Checking master password");
         if(MasterPasswordDialog.checkMasterPasswordIsSet(this, getFragmentManager(), null))
             startAction(savedInstanceState);
 	}
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus)
+    {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus)
+        {
+            PreviewFragment pf = (PreviewFragment) getFragmentManager().findFragmentByTag(PreviewFragment.TAG);
+            if(pf!=null)
+                pf.updateImageViewFullScreen();
+        }
+    }
+
+    @Override
+    public void onToggleFullScreen()
+    {
+
+    }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event)
@@ -490,6 +513,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     @Override
     protected void onPause()
     {
+        Logger.debug("FileManagerActivity onPause");
         _resHandler.onPause();
         super.onPause();
     }
@@ -497,6 +521,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     @Override
 	protected void onResume()
 	{
+        Logger.debug("FileManagerActivity onResume");
 		super.onResume();
         _resHandler.handle();
 	}
@@ -510,6 +535,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         registerReceiver(_updatePathReceiver, new IntentFilter(
                 FileOpsService.BROADCAST_FILE_OPERATION_COMPLETED));
         registerReceiver(_closeAllReceiver, new IntentFilter(LocationsManager.BROADCAST_CLOSE_ALL));
+        Logger.debug("FileManagerActivity has started");
     }
 
     @Override
@@ -518,6 +544,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         unregisterReceiver(_closeAllReceiver);
         unregisterReceiver(_updatePathReceiver);
         super.onStop();
+        Logger.debug("FileManagerActivity has stopped");
     }
 
     protected void convertLegacySettings()
@@ -553,6 +580,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         String action = getIntent().getAction();
         if(action == null)
             action = "";
+        Logger.log("FileManagerActivity action is " + action);
         try
         {
             switch (action)

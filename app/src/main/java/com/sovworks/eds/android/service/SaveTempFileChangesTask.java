@@ -50,7 +50,7 @@ class SaveTempFileChangesTask extends CopyFilesTask
 
 	protected void prepareBackupCopy(File dstFile, Directory targetFolder) throws IOException
 	{
-		if(!UserSettings.getSettings(_context).disableModifiedFilesBackup())
+		if(!UserSettings.getSettings(_context).disableModifiedFilesBackup() && dstFile.getSize() > 0)
 		{
 			String bakName = dstFile.getName() + BAK_EXTENSION;
 			Path bakPath = calcPath(targetFolder, bakName);

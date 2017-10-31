@@ -26,9 +26,22 @@ import java.util.regex.Pattern;
 @SuppressLint("NewApi")
 public abstract class StorageOptionsBase
 {
+    private static String readMounts()
+    {
+        try
+        {
+            return readMountsStd();
+        }
+        catch (IOException e)
+        {
+            Logger.log(e);
+        }
+        return "";
+    }
+
     public static class StorageInfo
     {
-        public String label, path;
+        public String label, path, dev, type, flags[];
         public boolean isExternal, isReadOnly;
     }
 
@@ -39,10 +52,15 @@ public abstract class StorageOptionsBase
         return _storagesList;
     }
 
-    public static void loadStorageList(Context context)
+    public static void reloadStorageList(Context context)
+    {
+        _storagesList = loadStorageList(context);
+    }
+
+    private static List<StorageInfo> loadStorageList(Context context)
     {
         StorageOptionsBase so = new StorageOptions(context);
-        _storagesList = so.buildStoragesList();
+        return so.buildStoragesList();
     }
 
     public static StorageInfo getDefaultDeviceLocation(Context context)
@@ -55,7 +73,7 @@ public abstract class StorageOptionsBase
 
     private static List<StorageInfo> _storagesList;
 
-    public StorageOptionsBase(Context context)
+    StorageOptionsBase(Context context)
     {
         _context = context;
     }
@@ -65,7 +83,7 @@ public abstract class StorageOptionsBase
         return _context;
     }
 
-    public  List<StorageInfo> buildStoragesList()
+    private List<StorageInfo> buildStoragesList()
     {
         ArrayList<StorageInfo> res = new ArrayList<>();
         int extStoragesCounter = 1;
@@ -76,11 +94,16 @@ public abstract class StorageOptionsBase
             if(si.isExternal)
                 extStoragesCounter++;
         }
-        parseMountsFile(res, extStoragesCounter);
+        addFromMountsFile(res, extStoragesCounter);
         return res;
     }
 
-    protected static boolean isStorageAdded(Collection<StorageInfo> storages, String devPath, String mountPath)
+    public List<StorageInfo> readAllMounts()
+    {
+        return parseMountsFile(readMountsFile());
+    }
+
+    private static boolean isStorageAdded(Collection<StorageInfo> storages, String devPath, String mountPath)
     {
         StringPathUtil dpu = new StringPathUtil(devPath);
         StringPathUtil mpu = new StringPathUtil(mountPath);
@@ -97,7 +120,8 @@ public abstract class StorageOptionsBase
         return false;
     }
 
-    protected StorageInfo getDefaultStorage()
+    @SuppressLint("ObsoleteSdkInt")
+    private StorageInfo getDefaultStorage()
     {
         String defPathState = Environment.getExternalStorageState();
         if(Environment.MEDIA_MOUNTED.equals(defPathState) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(defPathState))
@@ -122,18 +146,10 @@ public abstract class StorageOptionsBase
 
     protected String readMountsFile()
     {
-        try
-        {
-            return readMountsStd();
-        }
-        catch (IOException e)
-        {
-            Logger.log(e);
-        }
-        return "";
+        return readMounts();
     }
 
-    protected static String readMountsStd() throws IOException
+    static String readMountsStd() throws IOException
     {
         Logger.debug("StorageOptions: trying to get mounts using std fs.");
         FileInputStream finp = new FileInputStream("/proc/mounts");
@@ -148,40 +164,30 @@ public abstract class StorageOptionsBase
         }
     }
 
-    protected int parseMountsFile(Collection<StorageInfo> storages, int extCounter)
+    private int addFromMountsFile(Collection<StorageInfo> storages, int extCounter)
     {
-        String mountsStr = readMountsFile();
-        if (mountsStr.isEmpty())
+        ArrayList<StorageInfo> mounts = parseMountsFile(readMountsFile());
+        if (mounts.isEmpty())
             return extCounter;
         Settings settings = UserSettings.getSettings(_context);
-        Pattern p = Pattern.compile("^([^\\s]+)\\s+([^\\s+]+)\\s+([^\\s+]+)\\s+([^\\s+]+).*?$", Pattern.MULTILINE);
-        Matcher m = p.matcher(mountsStr);
-        while (m.find())
+        for(StorageInfo si: mounts)
         {
-            String dev = m.group(1);
-            String mountPath = m.group(2);
-            String type = m.group(3);
-            String[] flags = m.group(4).split(",");
-            if (type.equals("vfat") || mountPath.startsWith("/mnt/") || mountPath.startsWith("/storage/"))
+            if (si.type.equals("vfat") || si.path.startsWith("/mnt/") || si.path.startsWith("/storage/"))
             {
-                if (isStorageAdded(storages, dev, mountPath))
+                if (isStorageAdded(storages, si.dev, si.path))
                     continue;
-                if ((dev.startsWith("/dev/block/vold/") &&
-                        (!mountPath.startsWith("/mnt/secure")
-                                && !mountPath.startsWith("/mnt/asec")
-                                && !mountPath.startsWith("/mnt/obb")
-                                && !dev.startsWith("/dev/mapper")
-                                && !type.equals("tmpfs"))
+                if ((si.dev.startsWith("/dev/block/vold/") &&
+                        (!si.path.startsWith("/mnt/secure")
+                                && !si.path.startsWith("/mnt/asec")
+                                && !si.path.startsWith("/mnt/obb")
+                                && !si.dev.startsWith("/dev/mapper")
+                                && !si.type.equals("tmpfs"))
                         ) || (
-                        (dev.startsWith("/dev/fuse") || dev.startsWith("/mnt/media")) && mountPath.startsWith("/storage/") && !mountPath.startsWith("/storage/emulated")
+                        (si.dev.startsWith("/dev/fuse") || si.dev.startsWith("/mnt/media")) && si.path.startsWith("/storage/") && !si.path.startsWith("/storage/emulated")
                         )
                    )
                 {
-                    StorageInfo si = new StorageInfo();
-                    si.path = mountPath;
-                    si.isExternal = true;
                     si.label = _context.getString(R.string.external_storage) + " " + extCounter;
-                    si.isReadOnly = Arrays.asList(flags).contains("ro");
                     if(checkMountPoint(settings, si))
                     {
                         storages.add(si);
@@ -191,6 +197,31 @@ public abstract class StorageOptionsBase
             }
         }
         return extCounter;
+    }
+
+    protected ArrayList<StorageInfo> parseMountsFile(String mountsStr)
+    {
+        ArrayList<StorageInfo> res = new ArrayList<>();
+        if(mountsStr == null || mountsStr.isEmpty())
+            return res;
+        Pattern p = Pattern.compile("^([^\\s]+)\\s+([^\\s+]+)\\s+([^\\s+]+)\\s+([^\\s+]+).*?$", Pattern.MULTILINE);
+        Matcher m = p.matcher(mountsStr);
+        while (m.find())
+        {
+            String dev = m.group(1);
+            String mountPath = m.group(2);
+            String type = m.group(3);
+            String[] flags = m.group(4).split(",");
+            StorageInfo si = new StorageInfo();
+            si.path = mountPath;
+            si.dev = dev;
+            si.type = type;
+            si.flags = flags;
+            si.isExternal = true;
+            si.isReadOnly = Arrays.asList(flags).contains("ro");
+            res.add(si);
+        }
+        return res;
     }
 
     protected boolean checkMountPoint(Settings s, StorageOptionsBase.StorageInfo si)

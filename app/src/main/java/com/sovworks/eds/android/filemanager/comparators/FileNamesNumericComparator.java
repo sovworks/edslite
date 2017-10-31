@@ -1,19 +1,19 @@
 package com.sovworks.eds.android.filemanager.comparators;
 
-import com.sovworks.eds.android.filemanager.records.BrowserRecord;
+import com.sovworks.eds.android.helpers.CachedPathInfo;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FileNamesNumericComparator extends FileNamesComparator
+public class FileNamesNumericComparator<T extends CachedPathInfo> extends FileNamesComparator<T>
 {
 	public FileNamesNumericComparator(boolean asc)
 	{
 		super(asc);
 	}
 
-	protected int compareImpl(BrowserRecord o1, BrowserRecord o2) throws IOException
+	protected int compareImpl(T o1, T o2) throws IOException
 	{
 		String n1 = o1.getName();
 		if(n1 == null)

@@ -90,6 +90,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     @Override
     public void onActivityCreated(Bundle savedInstanceState)
     {
+        Logger.debug(TAG + " onActivityCreated");
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
         _locationsManager = LocationsManager.getLocationsManager(getActivity());
@@ -100,6 +101,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
 
     public void onReadingCompleted()
     {
+        Logger.debug(TAG + " onReadingCompleted");
         Intent i = getActivity().getIntent();
         if(i.getAction() == null || Intent.ACTION_MAIN.equals(i.getAction()))
         {
@@ -120,6 +122,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState)
     {
+        Logger.debug(TAG + " onCreateView");
         View view = inflater.inflate(R.layout.file_list_view_fragment, container, false);
         _selectedFileEditText = view.findViewById(R.id.selected_file_edit_text);
         if(showSelectedFilenameEditText())

@@ -71,6 +71,7 @@ public class Directory extends DirectoryWrapper
         res.getPath().setEncodedPath(newEncodedPath);
         if(decodedPath!=null)
             res.getPath().setDecodedPath(decodedPath);
+        res.getOutputStream().close();
         return res;
     }
 

@@ -114,6 +114,27 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     }
 
     @Override
+    public String getDocumentType(String documentId) throws FileNotFoundException
+    {
+        try
+        {
+            Location loc = getLocationsManager().getLocation(getLocationUriFromDocumentId(documentId));
+            Path path = loc.getCurrentPath();
+            return path.isFile() ?
+                    FileOpsService.getMimeTypeFromExtension(
+                            getContext(),
+                            new StringPathUtil(PathUtil.getNameFromPath(path)).getFileExtension()
+                    ) :
+                    DocumentsContract.Document.MIME_TYPE_DIR;
+        }
+        catch (Exception e)
+        {
+            Logger.log(e);
+            throw new IllegalArgumentException("Wrong document uri", e);
+        }
+    }
+
+    @Override
     public Cursor queryChildDocuments(String parentDocumentId, String[] projection, String sortOrder) throws FileNotFoundException
     {
         checkProjection(projection, ALL_DOCUMENT_COLUMNS);
@@ -185,10 +206,9 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
                 res.setCurrentPath(dest.createDirectory(srcPath.getDirectory().getName()).getPath());
             else if(srcPath.isFile())
                 res.setCurrentPath(Util.copyFile(srcPath.getFile(), dest).getPath());
-            /*Context context = getContext();
+            Context context = getContext();
             if(context!=null)
                 context.getContentResolver().notifyChange(getUriFromLocation(res), null);
-                */
 
             return getDocumentIdFromLocation(res);
         }
@@ -226,13 +246,13 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
                 srcPath.getFile().moveTo(dest);
                 res.setCurrentPath(dest.getPath().combine(name));
             }
-            /*Context context = getContext();
+            Context context = getContext();
             if(context!=null)
             {
                 context.getContentResolver().notifyChange(getUriFromLocation(srcLocation), null);
                 context.getContentResolver().notifyChange(getUriFromLocation(res), null);
             }
-            */
+
             return getDocumentIdFromLocation(res);
         }
         catch (Exception e)
@@ -254,10 +274,10 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
                 srcPath.getFile().delete();
             else if(srcPath.isDirectory())
                 srcPath.getDirectory().delete();
-            /*Context context = getContext();
+            Context context = getContext();
             if(context!=null)
                 context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
-                */
+
         }
         catch (Exception e)
         {
@@ -277,13 +297,12 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
                 srcPath.getDirectory().rename(displayName);
             else if(srcPath.isFile())
                 srcPath.getFile().rename(displayName);
-            /*Context context = getContext();
+            Context context = getContext();
             if(context!=null)
-            {
-                context.getContentResolver().notifyChange(srcUri, null);
                 context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
-            }*/
             loc.setCurrentPath(srcPath);
+            if(context!=null)
+                context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
             return getDocumentIdFromLocation(loc);
         }
         catch (Exception e)
@@ -305,10 +324,10 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
                 res.setCurrentPath(dest.createDirectory(displayName).getPath());
             else
                 res.setCurrentPath(dest.createFile(displayName).getPath());
-            //Context context = getContext();
-            //if(context!=null)
-            //    context.getContentResolver().notifyChange(getUriFromLocation(res), null);
-            return res.getLocationUri().toString();
+            Context context = getContext();
+            if(context!=null)
+                context.getContentResolver().notifyChange(getUriFromLocation(res), null);
+            return getDocumentIdFromLocation(res);
         }
         catch (Exception e)
         {

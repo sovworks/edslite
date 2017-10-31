@@ -4,17 +4,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
+import com.sovworks.eds.android.filemanager.fragments.FileListDataFragment;
 import com.sovworks.eds.android.filemanager.fragments.PreviewFragment;
 import com.sovworks.eds.android.fragments.TaskFragment;
 import com.sovworks.eds.android.fragments.TaskFragment.Result;
@@ -23,16 +18,15 @@ import com.sovworks.eds.android.helpers.CachedPathInfoBase;
 import com.sovworks.eds.android.helpers.CompatHelper;
 import com.sovworks.eds.android.helpers.ProgressDialogTaskFragmentCallbacks;
 import com.sovworks.eds.android.settings.UserSettings;
-import com.sovworks.eds.android.views.GestureImageViewWithFullScreenMode;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.Util;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
+import com.sovworks.eds.settings.Settings;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import static com.sovworks.eds.android.settings.UserSettingsCommon.IMAGE_VIEWER_FULL_SCREEN_ENABLED;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 @SuppressLint({"CommitPrefEdits", "ApplySharedPref", "InlinedApi"})
 public class ImageViewerActivity extends Activity implements PreviewFragment.Host
@@ -52,13 +46,14 @@ public class ImageViewerActivity extends Activity implements PreviewFragment.Hos
 		{
 			_loc = ((ImageViewerActivity)activity).getLocation();
 			_pathStrings = activity.getIntent().getStringArrayListExtra(LocationsManager.PARAM_PATHS);
+			_settings = UserSettings.getSettings(activity);
 		}
 
 		@Override
 		protected void doWork(TaskState state) throws Exception
 		{			
 			ArrayList<Path> paths = Util.restorePaths(_loc.getFS(), _pathStrings);
-			ArrayList<CachedPathInfo> res = new ArrayList<>();
+			@SuppressWarnings("unchecked") TreeSet<CachedPathInfo> res = new TreeSet(FileListDataFragment.getComparator(_settings));
 			for(Path p: paths)
 			{
 				CachedPathInfoBase cpi = new CachedPathInfoBase();
@@ -75,38 +70,7 @@ public class ImageViewerActivity extends Activity implements PreviewFragment.Hos
 		}
 		private Location _loc;
 		private ArrayList<String> _pathStrings;
-	}
-
-	public static class ImageViewFragment extends PreviewFragment
-	{
-		public static ImageViewFragment newInstance(String currentImagePathString)
-		{
-			Bundle b = new Bundle();
-			b.putString(STATE_CURRENT_PATH,currentImagePathString);
-			ImageViewFragment pf = new ImageViewFragment();
-			pf.setArguments(b);
-			return pf;
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-		{
-			View res = super.onCreateView(inflater, container, savedInstanceState);
-			if(res!=null)
-			{
-				_imageView = res.findViewById(R.id.imageView);
-				if(UserSettings.getSettings(getActivity()).isImageViewerFullScreenModeEnabled())
-					_imageView.setFullscreenMode(true);
-			}
-			return res;
-		}
-
-		GestureImageViewWithFullScreenMode getImageView()
-		{
-			return _imageView;
-		}
-
-		private GestureImageViewWithFullScreenMode _imageView;
+		private Settings _settings;
 	}
 
 	@Override
@@ -122,49 +86,9 @@ public class ImageViewerActivity extends Activity implements PreviewFragment.Hos
 		_location = LocationsManager.getLocationsManager(this).getFromIntent(getIntent(), null);
 		getFragmentManager().beginTransaction().add(RestorePathsTask.newInstance(), RestorePathsTask.TAG).commit();
 	}
-	
-	@Override
-	public boolean onCreateOptionsMenu (Menu menu)
-	{
-		super.onCreateOptionsMenu(menu);
-    	final MenuInflater menuInflater = getMenuInflater();
-    	menuInflater.inflate(R.menu.image_viewer_activity_menu, menu);
-    	return true; 
-	}
 
 	@Override
-	public boolean onPrepareOptionsMenu (Menu menu)
-	{
-		super.onPrepareOptionsMenu(menu);
-		MenuItem mi = menu.findItem(R.id.fullScreenModeMenuItem);
-		mi.setChecked(_isFullScreen);
-		return true;
-	}
-	
-
-	@Override
-	public boolean onOptionsItemSelected (MenuItem item)
-	{
-		super.onOptionsItemSelected(item);
-		if(item.getItemId() == R.id.fullScreenModeMenuItem)
-		{
-			_isFullScreen = !_isFullScreen;
-            UserSettings.getSettings(this).getSharedPreferences().edit().putBoolean(IMAGE_VIEWER_FULL_SCREEN_ENABLED, _isFullScreen).commit();
-			if(android.os.Build.VERSION.SDK_INT< Build.VERSION_CODES.KITKAT)
-				CompatHelper.restartActivity(this);
-			else
-			{
-				GestureImageViewWithFullScreenMode imageView = getImageView();
-				if(imageView!=null)
-					imageView.setFullscreenMode(_isFullScreen);
-			}
-			return true;
-		}
-		return false;
-	}
-	
-	@Override
-	public List<? extends CachedPathInfo> getCurrentFiles()
+	public NavigableSet<? extends CachedPathInfo> getCurrentFiles()
 	{
 		return _files;
 	}
@@ -173,6 +97,19 @@ public class ImageViewerActivity extends Activity implements PreviewFragment.Hos
 	public Location getLocation()
 	{
 		return _location;
+	}
+
+	@Override
+	public Object getFilesListSync()
+	{
+		return new Object();
+	}
+
+	@Override
+	public void onToggleFullScreen()
+	{
+		if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT)
+			CompatHelper.restartActivity(this);
 	}
 
 	public TaskFragment.TaskCallbacks getRestorePathsTaskCallbacks()
@@ -186,7 +123,7 @@ public class ImageViewerActivity extends Activity implements PreviewFragment.Hos
 				super.onCompleted(args, result);
 				try			
 				{
-					_files = (List<CachedPathInfo>) result.getResult();		
+					_files = (TreeSet<CachedPathInfo>) result.getResult();
 				}
 				catch(Throwable e)
 				{
@@ -201,33 +138,23 @@ public class ImageViewerActivity extends Activity implements PreviewFragment.Hos
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && _isFullScreen)
-		{
-			GestureImageViewWithFullScreenMode img = getImageView();
-			if(img!=null)
-				img.setFullscreenMode(true);
-		}
+		PreviewFragment pf = (PreviewFragment) getFragmentManager().findFragmentByTag(PreviewFragment.TAG);
+		if(pf!=null)
+			pf.updateImageViewFullScreen();
 	}
 
-	private boolean _isFullScreen;
-	private List<CachedPathInfo> _files = new ArrayList<>();
+	private TreeSet<CachedPathInfo> _files;
 	private Location _location;
 
-	private ImageViewFragment getPreviewFragment()
+	private PreviewFragment getPreviewFragment()
 	{
-		return (ImageViewFragment) getFragmentManager().findFragmentByTag(ImageViewFragment.TAG);
+		return (PreviewFragment) getFragmentManager().findFragmentByTag(PreviewFragment.TAG);
 	}
 
-	private GestureImageViewWithFullScreenMode getImageView()
-	{
-		ImageViewFragment f = getPreviewFragment();
-		return f != null ? f.getImageView() : null;
-	}
-		
 	private void showFragment(String currentImagePathString)
 	{
-		PreviewFragment f = ImageViewFragment.newInstance(currentImagePathString);
-		getFragmentManager().beginTransaction().add(android.R.id.content, f, ImageViewFragment.TAG).commit();
+		PreviewFragment f = PreviewFragment.newInstance(currentImagePathString);
+		getFragmentManager().beginTransaction().add(android.R.id.content, f, PreviewFragment.TAG).commit();
 	}	
 	
 	private void enableFullScreen()
@@ -237,7 +164,6 @@ public class ImageViewerActivity extends Activity implements PreviewFragment.Hos
 			requestWindowFeature(Window.FEATURE_NO_TITLE);
 			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
-	     _isFullScreen = true;
 		invalidateOptionsMenu();
 	}
 }

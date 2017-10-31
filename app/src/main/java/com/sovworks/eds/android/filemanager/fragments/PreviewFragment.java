@@ -1,16 +1,17 @@
 package com.sovworks.eds.android.filemanager.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.media.ExifInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,12 +27,15 @@ import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.filemanager.FileManagerFragment;
+import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
 import com.sovworks.eds.android.helpers.CachedPathInfo;
 import com.sovworks.eds.android.helpers.CompatHelper;
 import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.android.views.GestureImageView;
 import com.sovworks.eds.android.views.GestureImageView.NavigListener;
+import com.sovworks.eds.android.views.GestureImageViewWithFullScreenMode;
+import com.sovworks.eds.exceptions.ApplicationException;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.StringPathUtil;
 import com.sovworks.eds.locations.Location;
@@ -39,16 +43,19 @@ import com.sovworks.eds.settings.GlobalConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.NavigableSet;
 
 import static com.sovworks.eds.android.settings.UserSettingsCommon.IMAGE_VIEWER_AUTO_ZOOM_ENABLED;
+import static com.sovworks.eds.android.settings.UserSettingsCommon.IMAGE_VIEWER_FULL_SCREEN_ENABLED;
 
 public class PreviewFragment extends Fragment implements FileManagerFragment
 {
 	public interface Host
 	{
-		List<? extends CachedPathInfo> getCurrentFiles();
+		NavigableSet<? extends CachedPathInfo> getCurrentFiles();
 		Location getLocation();
+		Object getFilesListSync();
+		void onToggleFullScreen();
 	}
 	
 	public static final String TAG = "PreviewFragment";
@@ -64,14 +71,14 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 		pf.setArguments(b);
 		return pf;	
 	}
-	
+
 	public static PreviewFragment newInstance(String currentImagePathString)
 	{
 		Bundle b = new Bundle();
 		b.putString(STATE_CURRENT_PATH,currentImagePathString);
 		PreviewFragment pf = new PreviewFragment();
 		pf.setArguments(b);
-		return pf;	
+		return pf;
 	}
 	
 	public static Bitmap loadDownsampledImage(Path path,int sampleSize) throws IOException
@@ -130,16 +137,23 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 	    return inSampleSize;
 		
 	}
-	
+
 	@Override
 	public void onActivityCreated (Bundle savedInstanceState)
 	{
 		super.onActivityCreated(savedInstanceState);
-        initParams(savedInstanceState != null && savedInstanceState.containsKey(STATE_CURRENT_PATH) ?
-                   savedInstanceState
-                                                                                                    :
-                   getArguments()
-        );
+		try
+		{
+			initParams(savedInstanceState != null && savedInstanceState.containsKey(STATE_CURRENT_PATH) ?
+                       savedInstanceState
+                                                                                                        :
+                       getArguments()
+            );
+		}
+		catch (IOException | ApplicationException e)
+		{
+			Logger.showAndLog(getActivity(), e);
+		}
 
 		setHasOptionsMenu(true);
 	}
@@ -154,22 +168,34 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) 
 	{
 		View view = inflater.inflate(R.layout.preview_fragment, container, false);
-		_mainImageView = (GestureImageView)view.findViewById(R.id.imageView);
+		_mainImageView = view.findViewById(R.id.imageView);
 		_mainImageView.setAutoZoom(UserSettings.getSettings(getActivity()).isImageViewerAutoZoomEnabled());
 		_mainImageView.setNavigListener(new NavigListener()
 		{			
 			@Override
 			public void onPrev()
 			{
-				moveLeft();
-				
+				try
+				{
+					moveLeft();
+				}
+				catch (IOException | ApplicationException e)
+				{
+					Logger.showAndLog(getActivity(), e);
+				}
 			}
 			
 			@Override
 			public void onNext()
 			{
-				moveRight();
-				
+				try
+				{
+					moveRight();
+				}
+				catch (IOException | ApplicationException e)
+				{
+					Logger.showAndLog(getActivity(), e);
+				}
 			}
 		});
 		_mainImageView.setOnLoadOptimImageListener(new GestureImageView.OptimImageRequiredListener()
@@ -190,7 +216,10 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
                 startLoad();
             }
         });
-		_viewSwitcher = (ViewSwitcher)view.findViewById(R.id.viewSwitcher);
+		_viewSwitcher = view.findViewById(R.id.viewSwitcher);
+
+		if(UserSettings.getSettings(getActivity()).isImageViewerFullScreenModeEnabled())
+			_mainImageView.setFullscreenMode(true);
 		return view;
 	}
 
@@ -218,14 +247,24 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 		menuInflater.inflate(R.menu.image_viewer_menu, menu);
 		super.onCreateOptionsMenu(menu, menuInflater);
 	}
-	
+
+	@Override
 	public void onPrepareOptionsMenu (Menu menu)
 	{
 		super.onPrepareOptionsMenu(menu);
-		MenuItem mi = menu.findItem(R.id.prevMenuItem);
-		mi.setEnabled(getPrevImagePath()!=null);
-		mi = menu.findItem(R.id.nextMenuItem);
-		mi.setEnabled(getNextImagePath()!=null);
+		try
+		{
+			MenuItem mi = menu.findItem(R.id.prevMenuItem);
+			mi.setEnabled(getPrevImagePath() != null);
+			mi = menu.findItem(R.id.nextMenuItem);
+			mi.setEnabled(getNextImagePath() != null);
+			mi = menu.findItem(R.id.fullScreenModeMenuItem);
+			mi.setChecked(_isFullScreen);
+		}
+		catch (IOException | ApplicationException e)
+		{
+			Logger.showAndLog(getActivity(), e);
+		}
 	}
 	
 	@Override
@@ -256,6 +295,9 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 			case R.id.toggleAutoZoom:
 				toggleAutoZoom();
 				return true;
+			case R.id.fullScreenModeMenuItem:
+				toggleFullScreen();
+				return true;
 			}
 		}
 		catch (Exception e)
@@ -271,12 +313,13 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 	    return  px / (getResources().getDisplayMetrics().densityDpi / 160f);	    
 	    //return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, px, getResources().getDisplayMetrics());
 	}
-	*/
+
 
 	public float convertDpToPixel(float dp)
 	{		    
 	    return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());	    
 	}
+	*/
 	
 	public void waitTask()	
 	{
@@ -298,22 +341,24 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
     }
 
 	private Runnable _onLoadingCompleted;
-	
+
+	/*
 	public Path getCurrentImagePath()
 	{
 		return _currentImagePath;
 	}
-	
+	*/
+
 	private static class ImageLoaderTask
 	{
-		public Path imagePath;
-		public Rect viewRect;
-		public Rect regionRect;
+		Path imagePath;
+		Rect viewRect;
+		Rect regionRect;
 	}
 	
 	private class ImageLoader extends Thread
 	{		
-		public ImageLoader()
+		ImageLoader()
 		{
 			_uiHandler = new Handler();
 			PowerManager pm = (PowerManager)getActivity().getSystemService(Context.POWER_SERVICE);
@@ -356,7 +401,7 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 			}			
 		}
 		
-		public void setNextTask(Path imagePath, Rect viewRect, Rect regionRect)
+		void setNextTask(Path imagePath, Rect viewRect, Rect regionRect)
 		{
 			ImageLoaderTask t = new ImageLoaderTask();
 			t.imagePath = imagePath;
@@ -373,7 +418,7 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 			_stop=true;
 		}
 		
-		public void waitIdle()
+		void waitIdle()
 		{
 			synchronized (_currentTaskSync)
 			{
@@ -471,7 +516,7 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 			if(regionRect == null)
 			{
 				regionRect = new Rect(0,0,params.outWidth,params.outHeight);
-				_isOptimSupported = android.os.Build.VERSION.SDK_INT>=android.os.Build.VERSION_CODES.GINGERBREAD_MR1 && (isJpg || "image/png".equalsIgnoreCase(params.outMimeType));
+				_isOptimSupported = isJpg || "image/png".equalsIgnoreCase(params.outMimeType);
 				loadFull = true;
 			}
 			else
@@ -572,9 +617,15 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
             }
 		}
 		
-	}	
+	}
+
+	public void updateImageViewFullScreen()
+	{
+		if(_mainImageView!=null && _isFullScreen)
+			_mainImageView.setFullscreenMode(true);
+	}
 	
-	private GestureImageView _mainImageView;
+	private GestureImageViewWithFullScreenMode _mainImageView;
 	private ViewSwitcher _viewSwitcher;
 	private Path _currentImagePath;
 	private final Rect _viewRect = new Rect();
@@ -582,8 +633,25 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 	private ImageLoader _loader;
 	private boolean _isOptimSupported;
 	private boolean _isLoading;
-	
-	private void initParams(Bundle args)
+	private boolean _isFullScreen;
+
+
+
+	@SuppressLint("ApplySharedPref")
+	private void toggleFullScreen()
+	{
+		_isFullScreen = !_isFullScreen;
+		UserSettings.getSettings(getActivity()).getSharedPreferences().edit().putBoolean(IMAGE_VIEWER_FULL_SCREEN_ENABLED, _isFullScreen).commit();
+
+		if(android.os.Build.VERSION.SDK_INT>=Build.VERSION_CODES.KITKAT)
+		{
+			if(_mainImageView!=null)
+				_mainImageView.setFullscreenMode(_isFullScreen);
+		}
+		getPreviewFragmentHost().onToggleFullScreen();
+		getActivity().invalidateOptionsMenu();
+	}
+	private void initParams(Bundle args) throws IOException, ApplicationException
 	{
 		Host act = getPreviewFragmentHost();
 		if(act == null)
@@ -630,6 +698,7 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 		getActivity().invalidateOptionsMenu();
 	}
 
+	@SuppressLint("ApplySharedPref")
 	private void toggleAutoZoom()
 	{
 		UserSettings settings = UserSettings.getSettings(getActivity());
@@ -638,64 +707,51 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 		_mainImageView.setAutoZoom(val);
 	}
 
-	private void moveLeft()
+	private void moveLeft() throws IOException, ApplicationException
 	{
 		loadImage(getPrevImagePath(),null);		
 	}
 	
-	private void moveRight()
+	private void moveRight() throws IOException, ApplicationException
 	{
 		loadImage(getNextImagePath(),null);
 	}
 	
-	private int getImageIndexByPath(Path imagePath)
-	{			
-		List<? extends CachedPathInfo> paths = getPreviewFragmentHost().getCurrentFiles();
-		int count = paths.size();
-		for(int i=0;i<count;i++)		
-			if(imagePath.equals(paths.get(i).getPath()))
-				return i;			
-		
-		return -1;
-	}
-	
-	private Path getNextImagePath()
+	private Path getNextImagePath() throws IOException, ApplicationException
 	{
 		return getNextImagePath(_currentImagePath, true);
 	}
 	
-	private Path getPrevImagePath()
+	private Path getPrevImagePath() throws IOException, ApplicationException
 	{
 		return getNextImagePath(_currentImagePath, false);
 	}
 	
-	private Path getNextImagePath(Path curPath, boolean forward)
+	private Path getNextImagePath(Path curPath, boolean forward) throws IOException, ApplicationException
 	{
-		List<? extends CachedPathInfo> paths = getPreviewFragmentHost().getCurrentFiles();
-		int count = paths.size();
-		if(count == 0)
-			return null;
-		
-		int curIdx = 0;
-		if(curPath!=null)
+		synchronized (getPreviewFragmentHost().getFilesListSync())
 		{
-			curIdx = getImageIndexByPath(curPath);
-			if(curIdx<0)
-				curIdx = forward ? -1 : count;
-		}				
-		int inc = forward ? 1 : -1;
-		Context ctx = getActivity();
-		for(int i= curIdx + inc; (forward && i<count) || (!forward && i>=0);i+=inc)
-		{
-			CachedPathInfo rec = paths.get(i);
-			if(rec.isFile())
+			Host h = getPreviewFragmentHost();
+			//noinspection unchecked
+			NavigableSet<CachedPathInfo> files = (NavigableSet<CachedPathInfo>) h.getCurrentFiles();
+			if(files.isEmpty())
+				return null;
+			Context ctx = getActivity().getApplicationContext();
+			Location loc = h.getLocation();
+			CachedPathInfo cur = ReadDirTask.getBrowserRecordFromFsRecord(ctx, loc, curPath, null);
+			while(cur!=null)
 			{
-				String mime = FileOpsService.getMimeTypeFromExtension(ctx, new StringPathUtil(rec.getName()).getFileExtension());
-				if (mime.startsWith("image/"))				
-					return rec.getPath();
+				cur = forward ? files.higher(cur) : files.lower(cur);
+				if(cur!=null && cur.isFile())
+				{
+					String mime = FileOpsService.getMimeTypeFromExtension(ctx, new StringPathUtil(cur.getName()).getFileExtension());
+					if (mime.startsWith("image/"))
+						return cur.getPath();
+				}
 			}
+			return null;
 		}
-		return null;
+
 	}
 	
 	private void cancelTask()

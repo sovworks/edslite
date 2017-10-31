@@ -3,6 +3,11 @@
     xmlns:xliff="http://schemas.android.com/tools">
     <string name="eds" translatable="false"><xliff:g id="program_name">EDS Lite</xliff:g></string>
     <string name="changes_text" translatable="false"><![CDATA[<font color="black">
+        <b>2.0.0.212</b>:
+	    <ul>
+	        <li>Better handling of folders with large number of files.</li>
+	        <li>Fixed bugs</li>
+	    </ul>
         <b>2.0.0.211</b>:
 	    <ul>
 	        <li>Added an option to use temp files instead of pipes even for read-only access.</li>

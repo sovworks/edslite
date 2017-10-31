@@ -969,7 +969,7 @@ public abstract class LocationsManagerBase
 			Location location = new DeviceRootNPLocation(_context);
 			location.getExternalSettings().setVisibleToUser(true);
 			res.add(location);
-			StorageOptions.loadStorageList(_context);
+			StorageOptions.reloadStorageList(_context);
 			for(StorageOptions.StorageInfo si: StorageOptions.getStoragesList(getContext()))
 			{
 				if(si.isExternal)

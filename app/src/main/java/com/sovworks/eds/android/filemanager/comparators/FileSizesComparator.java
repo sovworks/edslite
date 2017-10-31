@@ -1,10 +1,10 @@
 package com.sovworks.eds.android.filemanager.comparators;
 
-import com.sovworks.eds.android.filemanager.records.BrowserRecord;
+import com.sovworks.eds.android.helpers.CachedPathInfo;
 
 import java.io.IOException;
 
-public class FileSizesComparator extends FileNamesComparator
+public class FileSizesComparator<T extends CachedPathInfo> extends FileNamesComparator<T>
 {
 	public FileSizesComparator(boolean asc)
 	{
@@ -12,7 +12,7 @@ public class FileSizesComparator extends FileNamesComparator
 	}
 
 	@Override
-	protected int compareDirs(BrowserRecord o1, BrowserRecord o2) throws IOException
+	protected int compareDirs(T o1, T o2) throws IOException
 	{
 		int res = super.compareDirs(o1, o2);
 		return res == 0 && (!o1.isFile() || !o2.isFile()) ?
@@ -22,7 +22,7 @@ public class FileSizesComparator extends FileNamesComparator
 	}
 
 	@Override
-	protected int compareImpl(BrowserRecord o1, BrowserRecord o2) throws IOException
+	protected int compareImpl(T o1, T o2) throws IOException
 	{
 		long aSize = o1.getSize();
 		long bSize = o2.getSize();

@@ -15,4 +15,6 @@
         <item android:id="@+id/rotateRightMenuItem" android:title="@string/rotate_right" android:icon="@drawable/ic_menu_rotate_right" android:showAsAction="ifRoom" android:orderInCategory="25"/>
     </group>
     <item android:id="@+id/toggleAutoZoom" android:title="@string/toggle_auto_zoom"  android:orderInCategory="26"/>
+    <item android:id="@+id/fullScreenModeMenuItem" android:title="@string/enable_full_screen_mode" android:checkable="true" android:showAsAction="ifRoom" android:icon="@drawable/ic_menu_fullscreen"
+        tools:ignore="AppCompatResource"  android:orderInCategory="26"/>
 </menu>

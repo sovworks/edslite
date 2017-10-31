@@ -201,19 +201,46 @@ public class File extends FileWrapper
     @Override
     public void rename(String newName) throws IOException
     {
-        if(_externalIV!=null || getPath().getNamingCodecInfo().useChainedNamingIV())
-            throw new UnsupportedOperationException();
         StringPathUtil newEncodedPath = getPath().getParentPath().calcCombinedEncodedParts(newName);
-        super.rename(newEncodedPath.getFileName());
+        if(_externalIV!=null || getPath().getNamingCodecInfo().useChainedNamingIV())
+        {
+            com.sovworks.eds.fs.File newFile = getPath().getParentPath().getDirectory().createFile(newName);
+            OutputStream out = newFile.getOutputStream();
+            try
+            {
+                copyToOutputStream(out, 0, 0, null);
+            }
+            finally
+            {
+                out.close();
+            }
+            delete();
+            setPath(newFile.getPath());
+        }
+        else
+            super.rename(newEncodedPath.getFileName());
     }
 
     @Override
     public void moveTo(com.sovworks.eds.fs.Directory newParent) throws IOException
     {
         if(_externalIV!=null || getPath().getNamingCodecInfo().useChainedNamingIV())
-            throw new UnsupportedOperationException();
-
-        super.moveTo(newParent);
+        {
+            com.sovworks.eds.fs.File newFile = newParent.createFile(getName());
+            OutputStream out = newFile.getOutputStream();
+            try
+            {
+                copyToOutputStream(out, 0, 0, null);
+            }
+            finally
+            {
+                out.close();
+            }
+            delete();
+            setPath(newFile.getPath());
+        }
+        else
+            super.moveTo(newParent);
     }
 
     @Override

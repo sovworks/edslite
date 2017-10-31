@@ -20,6 +20,7 @@ import com.sovworks.eds.android.filemanager.comparators.ModDateComparator;
 import com.sovworks.eds.android.filemanager.records.BrowserRecord;
 import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
 import com.sovworks.eds.android.helpers.ActivityResultHandler;
+import com.sovworks.eds.android.helpers.CachedPathInfo;
 import com.sovworks.eds.android.helpers.ExtendedFileInfoLoader;
 import com.sovworks.eds.android.locations.activities.OpenLocationsActivity;
 import com.sovworks.eds.android.service.FileOpsService;
@@ -28,12 +29,15 @@ import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.StringPathUtil;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
+import com.sovworks.eds.settings.Settings;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.Stack;
+import java.util.TreeSet;
 
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_DATE_ASC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_DATE_DESC;
@@ -49,6 +53,31 @@ public class FileListDataFragment extends Fragment
     public static FileListDataFragment newInstance()
     {
         return new FileListDataFragment();
+    }
+
+    public static <T extends CachedPathInfo> Comparator<T> getComparator(Settings settings)
+    {
+        switch (settings.getFilesSortMode())
+        {
+            case FB_SORT_FILENAME_ASC:
+                return new FileNamesComparator<>(true);
+            case FB_SORT_FILENAME_DESC:
+                return new FileNamesComparator<>(false);
+            case FB_SORT_FILENAME_NUM_ASC:
+                return new FileNamesNumericComparator<>(true);
+            case FB_SORT_FILENAME_NUM_DESC:
+                return new FileNamesNumericComparator<>(false);
+            case FB_SORT_SIZE_ASC:
+                return new FileSizesComparator<>(true);
+            case FB_SORT_SIZE_DESC:
+                return new FileSizesComparator<>(false);
+            case FB_SORT_DATE_ASC:
+                return new ModDateComparator<>(true);
+            case FB_SORT_DATE_DESC:
+                return new ModDateComparator<>(false);
+            default:
+                return null;
+        }
     }
 
     public static Uri getLocationUri(Intent intent, Bundle state)
@@ -70,7 +99,6 @@ public class FileListDataFragment extends Fragment
         setRetainInstance(true);
         _location = getFallbackLocation();
         _locationsManager = LocationsManager.getLocationsManager(getActivity());
-        _sortingComparator = initSorter();
         loadLocation(state, true);
     }
 
@@ -78,10 +106,11 @@ public class FileListDataFragment extends Fragment
     public void onActivityCreated(Bundle savedInstanceState)
     {
         super.onActivityCreated(savedInstanceState);
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            for(BrowserRecord br: _fileList)
-                br.setHostActivity((FileManagerActivity) getActivity());
+            if(_fileList!=null)
+                for(BrowserRecord br: _fileList)
+                    br.setHostActivity((FileManagerActivity) getActivity());
         }
     }
 
@@ -124,10 +153,11 @@ public class FileListDataFragment extends Fragment
     public void onDetach ()
     {
         super.onDetach();
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            for(BrowserRecord br: _fileList)
-                br.setHostActivity(null);
+            if(_fileList!=null)
+                for(BrowserRecord br: _fileList)
+                    br.setHostActivity(null);
         }
     }
 
@@ -137,12 +167,15 @@ public class FileListDataFragment extends Fragment
         ReadDirTask f = (ReadDirTask) getFragmentManager().findFragmentByTag(ReadDirTask.TAG);
         if(f!=null && f.isAdded())
             f.cancel();
-        _sortingComparator = null;
         _resHandler.clear();
         _navigHistory.clear();
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            _fileList.clear();
+            if(_fileList!=null)
+            {
+                _fileList.clear();
+                _fileList = null;
+            }
         }
         _locationsManager = null;
         super.onDestroy();
@@ -166,26 +199,28 @@ public class FileListDataFragment extends Fragment
     public ArrayList<BrowserRecord> getSelectedFiles()
     {
         ArrayList<BrowserRecord> res = new ArrayList<>();
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            for (BrowserRecord rec: _fileList)
-            {
-                if (rec.isSelected())
-                    res.add(rec);
-            }
+            if(_fileList!=null)
+                for (BrowserRecord rec: _fileList)
+                {
+                    if (rec.isSelected())
+                        res.add(rec);
+                }
         }
         return res;
     }
 
     public boolean hasSelectedFiles()
     {
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            for (BrowserRecord rec: _fileList)
-            {
-                if (rec.isSelected())
-                    return true;
-            }
+            if(_fileList!=null)
+                for (BrowserRecord rec: _fileList)
+                {
+                    if (rec.isSelected())
+                        return true;
+                }
         }
         return false;
     }
@@ -203,9 +238,14 @@ public class FileListDataFragment extends Fragment
         return FileListViewFragment.getPathsFromRecords(getSelectedFiles());
     }
 
-    public ArrayList<BrowserRecord> getFileList()
+    public NavigableSet<BrowserRecord> getFileList()
     {
         return _fileList;
+    }
+
+    public Object getFilesListSync()
+    {
+        return _filesListSync;
     }
 
     public Location getLocation()
@@ -216,48 +256,45 @@ public class FileListDataFragment extends Fragment
     public void addFileToList(BrowserRecord file)
     {
         FileManagerActivity act = (FileManagerActivity) getActivity();
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
             file.setHostActivity(act);
+            if(_fileList == null)
+                _fileList = new TreeSet<>(initSorter());
             _fileList.add(file);
         }
     }
 
-    public void sortFiles()
-    {
-        if(_sortingComparator!=null)
-            synchronized (_fileList)
-            {
-                Collections.sort(_fileList, _sortingComparator);
-            }
-    }
-
     public void copyToAdapter(FileListViewAdapter adapter)
     {
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
             adapter.clear();
-            adapter.addAll(_fileList);
+            if(_fileList!=null)
+                adapter.addAll(_fileList);
         }
     }
 
     public ArrayList<Path> getImageFilesInCurrentDir()
     {
         ArrayList<Path> al = new ArrayList<>();
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            int length = 0;
-            for (BrowserRecord rec: _fileList)
+            if(_fileList!=null)
             {
-                if (rec.isFile())
+                int length = 0;
+                for (BrowserRecord rec : _fileList)
                 {
-                    String mime = FileOpsService.getMimeTypeFromExtension(getActivity(), new StringPathUtil(rec.getName()).getFileExtension());
-                    if (mime.startsWith("image/"))
+                    if (rec.isFile())
                     {
-                        al.add(rec.getPath());
-                        length += rec.getPath().getPathString().length();
-                        if (length >= 100000)
-                            break;
+                        String mime = FileOpsService.getMimeTypeFromExtension(getActivity(), new StringPathUtil(rec.getName()).getFileExtension());
+                        if (mime.startsWith("image/"))
+                        {
+                            al.add(rec.getPath());
+                            length += rec.getPath().getPathString().length();
+                            if (length >= 100000)
+                                break;
+                        }
                     }
                 }
             }
@@ -327,6 +364,7 @@ public class FileListDataFragment extends Fragment
 
     public void rereadCurrentLocation()
     {
+        Logger.debug(TAG + "rereadCurrentLocation");
         int scrollPosition = 0;
         FileListViewFragment fl = getFilesListViewFragment();
         if(fl!=null)
@@ -336,6 +374,7 @@ public class FileListDataFragment extends Fragment
 
     public void readLocation(Location location, int scrollPosition)
     {
+        Logger.debug(TAG + "readCurrentLocation");
         cancelReadDirTask();
         clearCurrentFiles();
         _location = location;
@@ -361,10 +400,12 @@ public class FileListDataFragment extends Fragment
 
     public void reSortFiles()
     {
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            _sortingComparator = initSorter();
-            sortFiles();
+            TreeSet<BrowserRecord> n = new TreeSet<>(initSorter());
+            if(_fileList != null)
+                n.addAll(_fileList);
+            _fileList = n;
         }
     }
 
@@ -439,13 +480,12 @@ public class FileListDataFragment extends Fragment
 
     private static final int REQUEST_CODE_OPEN_LOCATION = 1;
 
-    private Comparator<BrowserRecord> _sortingComparator;
-
     private LocationsManager _locationsManager;
     private Location _location;
     private BrowserRecord _currentPathRecord;
     private DirectorySettings _directorySettings;
-    private final ArrayList<BrowserRecord> _fileList = new ArrayList<>();
+    private NavigableSet<BrowserRecord> _fileList;
+    private final Object _filesListSync = new Object();
     private final Stack<HistoryItem> _navigHistory = new Stack<>();
     private final ActivityResultHandler _resHandler = new ActivityResultHandler();
     private void cancelReadDirTask()
@@ -495,16 +535,19 @@ public class FileListDataFragment extends Fragment
 
     private  void clearCurrentFiles()
     {
-        synchronized (_fileList)
+        synchronized (_filesListSync)
         {
-            if(_location!=null)
+            if(_fileList!=null)
             {
-                ExtendedFileInfoLoader loader = ExtendedFileInfoLoader.getInstance();
-                for (BrowserRecord rec : _fileList)
-                    loader.detachRecord(_location.getId(), rec);
+                if (_location != null)
+                {
+                    ExtendedFileInfoLoader loader = ExtendedFileInfoLoader.getInstance();
+                    for (BrowserRecord rec : _fileList)
+                        loader.detachRecord(_location.getId(), rec);
+                }
+                _fileList.clear();
             }
             _directorySettings = null;
-            _fileList.clear();
         }
     }
 
@@ -535,26 +578,6 @@ public class FileListDataFragment extends Fragment
 
     private Comparator<BrowserRecord> initSorter()
 	{
-		switch (UserSettings.getSettings(getActivity()).getFilesSortMode())
-		{
-		case FB_SORT_FILENAME_ASC:
-			return new FileNamesComparator(true);
-		case FB_SORT_FILENAME_DESC:
-			return new FileNamesComparator(false);
-        case FB_SORT_FILENAME_NUM_ASC:
-            return new FileNamesNumericComparator(true);
-        case FB_SORT_FILENAME_NUM_DESC:
-            return new FileNamesNumericComparator(false);
-		case FB_SORT_SIZE_ASC:
-			return new FileSizesComparator(true);
-		case FB_SORT_SIZE_DESC:
-			return new FileSizesComparator(false);
-		case FB_SORT_DATE_ASC:
-			return new ModDateComparator(true);
-		case FB_SORT_DATE_DESC:
-			return new ModDateComparator(false);
-		default:
-			return null;
-		}
+        return getComparator(UserSettings.getSettings(getActivity()));
 	}
 }

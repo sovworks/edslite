@@ -3,14 +3,14 @@ apply plugin: 'com.android.application'
 android {
 
     compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    buildToolsVersion "26.0.2"
 
     defaultConfig {
         applicationId "com.sovworks.eds.android"
         minSdkVersion 14
         targetSdkVersion 25
-        versionCode 211
-        versionName "2.0.0.211"
+        versionCode 212
+        versionName "2.0.0.212"
 
         ndk {
             // Specifies the ABI configurations of your native
@@ -99,11 +99,8 @@ android {
     }
 
     applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            output.outputFile = new File(
-                    new File(output.outputFile.parentFile, variant.versionName),
-                    output.outputFile.name.replace("app-", "EDS-").replace(".apk", "-v${variant.versionName}.apk")
-            )
+        variant.outputs.all {
+            outputFileName = outputFileName.replace("app-", "EDS-").replace(".apk", "-v${variant.versionName}.apk")
         }
     }
 
@@ -114,11 +111,15 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
-    compile 'com.drewnoakes:metadata-extractor:2.9.1'
-    compile 'com.android.support:design:26.0.0-alpha1'
+    implementation 'com.drewnoakes:metadata-extractor:2.9.1'
+    implementation 'com.android.support:design:26.1.0'
 }
 
 apply from: 'build-full.gradle'

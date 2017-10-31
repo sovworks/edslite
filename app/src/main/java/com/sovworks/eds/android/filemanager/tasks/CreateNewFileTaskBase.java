@@ -111,10 +111,8 @@ public abstract class CreateNewFileTaskBase extends TaskFragment
 		{
 			Path currentPath = f.getLocation().getCurrentPath();
 			if(currentPath!=null && currentPath.equals(_location.getCurrentPath()))
-			{
 				f.addFileToList(rec);
-				f.sortFiles();
-			}
+
 			FileListViewFragment fl = (FileListViewFragment) getFragmentManager().findFragmentByTag(FileListViewFragment.TAG);
 			if(fl!=null)
 				fl.onReadingCompleted();

@@ -176,7 +176,6 @@ public abstract class ReadDirTaskBase extends TaskFragment
 					uiUpdateList = new ArrayList<>();
 				count++;
 			}
-            _dataFragment.sortFiles();
 			state.setResult(startRecord);
 		}
 		finally
