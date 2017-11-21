@@ -60,7 +60,7 @@
   <string name="save_changes">Değişiklikleri Sakla</string>
   <string name="do_you_want_to_save_changes">Değişiklikler saklansın mı?</string>
   <string name="select_image">Görüntü Seç</string>
-  <string name="do_you_really_want_to_delete_selected_files">Seçili dosyaları silmek istediğinizden emin misiniz?</string>
+  <string name="do_you_really_want_to_delete_selected_files">Seçili dosyaları silmek istediğinizden emin misiniz (%s)?</string>
   <string name="wiping_files">Dosyalar Temizleniyor..</string>
   <string name="creating_container">Konteyner Oluşturuluyor..</string>
   <string name="err_failed_saving_changes">Değişiklikler kaydedilemedi. Tekrar kaydetmeyi deneyin veya dosyayı manuel olarak kopyalayın. Detaylar için log dosyasına bakın.</string>

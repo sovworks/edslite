@@ -60,7 +60,7 @@
   <string name="save_changes">Sauvegarder les changements</string>
   <string name="do_you_want_to_save_changes">Voulez vous sauvegarder les changements ?</string>
   <string name="select_image">Sélectionnez une image</string>
-  <string name="do_you_really_want_to_delete_selected_files">Voulez-vous réellement effacer les fichiers sélectionnés ?</string>
+  <string name="do_you_really_want_to_delete_selected_files">Voulez-vous réellement effacer les fichiers sélectionnés  (%s)?</string>
   <string name="wiping_files">Effacement des fichiers</string>
   <string name="creating_container">Création du container en cours</string>
   <string name="err_failed_saving_changes">Échec de la sauvegarde des changements. Essayez de sauvegarder de nouveau ou bien copiez manuellement le fichier. Voir le log pour plus de détails.</string>

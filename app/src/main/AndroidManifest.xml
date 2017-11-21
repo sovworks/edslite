@@ -49,6 +49,7 @@
                 <category android:name="android.intent.category.OPENABLE"/>
 
                 <data android:scheme="file"/>
+                <data android:scheme="content"/>
                 <data android:mimeType="*/*"/>
                 <data android:pathPattern=".*\\.tc"/>
                 <data android:pathPattern=".*\\.eds"/>

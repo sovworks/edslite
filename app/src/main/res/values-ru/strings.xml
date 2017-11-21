@@ -64,7 +64,7 @@
   <string name="save_changes">Сохранить изменения</string>
   <string name="do_you_want_to_save_changes">Вы хотите сохранить изменения?</string>
   <string name="select_image">Выберите изображение</string>
-  <string name="do_you_really_want_to_delete_selected_files">Вы действительно хотите удалить выбранные файлы?</string>
+  <string name="do_you_really_want_to_delete_selected_files">Вы действительно хотите удалить выбранные файлы (%s)?</string>
   <string name="wiping_files">Удаление файлов</string>
   <string name="creating_container">Создание контейнера</string>
   <string name="err_failed_saving_changes">Не удалось сохранить изменения в файле. Вы можете попробовать сохранить файл ещё раз или скопировать файл вручную. Информацию об ошибке можно посмотреть в журнале программы.</string>

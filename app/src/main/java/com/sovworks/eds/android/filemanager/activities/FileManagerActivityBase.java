@@ -231,7 +231,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     public NavigableSet<? extends CachedPathInfo> getCurrentFiles()
     {
         FileListDataFragment f = getFileListDataFragment();
-        return f!=null ? f.getFileList() : new TreeSet<CachedPathInfo>();
+        return f!=null ? f.getFileList() : new TreeSet<>();
     }
 
     @Override
@@ -269,27 +269,10 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 	public void showPhoto(BrowserRecord currentFile, boolean allowInplace)
 	{
 		Path contextPath = currentFile == null ? null : currentFile.getPath();
-		if(_isLargeScreenLayout && allowInplace)
-		{
-			if(!hasSelectedFiles() && contextPath == null)
-				hideSecondaryFragment();
-			else
-				showPreviewFragment(contextPath);
-		}
-		else if(!allowInplace)
-		{
-			showPreviewFragment(contextPath);
-			/*Intent i = new Intent(this,ImageViewerActivity.class);
-			LocationsManager.storePathsInIntent(
-                    i,
-                    getLocation(),
-                    getFileListDataFragment().getImageFilesInCurrentDir()
-            );
-            if(contextPath!=null)
-			    i.putExtra(ImageViewerActivity.INTENT_PARAM_CURRENT_PATH, contextPath.getPathString());
-			startActivity(i);*/
-		}
-
+        if(!hasSelectedFiles() && contextPath == null)
+            hideSecondaryFragment();
+        else if(_isLargeScreenLayout || !allowInplace)
+            showPreviewFragment(contextPath);
 	}
 
     @Override
@@ -304,13 +287,17 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
             CompatHelper.setWindowFlagSecure(this);
 	    _isLargeScreenLayout = UserSettings.isWideScreenLayout(_settings, this);
 	    setContentView(R.layout.main_activity);
-        if(!_isLargeScreenLayout && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+	    Fragment f = getFragmentManager().findFragmentById(R.id.fragment2);
+	    if(f!=null)
         {
-            View secPanel = findViewById(R.id.fragment2);
-            if(secPanel != null)
-                secPanel.setVisibility(View.GONE);
+            View panel = findViewById(R.id.fragment2);
+            if (panel != null)
+                panel.setVisibility(View.VISIBLE);
+            panel = findViewById(R.id.fragment1);
+            if (panel != null)
+                panel.setVisibility(View.GONE);
         }
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(_exitBroadcastReceiver, new IntentFilter(EdsApplication.BROADCAST_EXIT));
+	    LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(_exitBroadcastReceiver, new IntentFilter(EdsApplication.BROADCAST_EXIT));
         registerReceiver(_locationAddedOrRemovedReceiver, LocationsManager.getLocationAddedIntentFilter());
         registerReceiver(_locationAddedOrRemovedReceiver, LocationsManager.getLocationRemovedIntentFilter());
         registerReceiver(_locationChangedReceiver, new IntentFilter(LocationsManager.BROADCAST_LOCATION_CHANGED));
@@ -373,7 +360,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         if(f!=null && ((FileManagerFragment) f).onBackPressed())
             return;
 
-        if(!_isLargeScreenLayout && hideSecondaryFragment())
+        if(hideSecondaryFragment())
             return;
 
         f = getFragmentManager().findFragmentById(R.id.fragment1);
@@ -622,9 +609,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     protected static final String FOLDER_MIME_TYPE = "resource/folder";
     protected final DrawerController _drawer = createDrawerController();
     protected final ActivityResultHandler _resHandler = new ActivityResultHandler();
-
     protected boolean _isLargeScreenLayout;
-
     protected UserSettings _settings;
 
     private final BroadcastReceiver _updatePathReceiver = new BroadcastReceiver()
@@ -784,16 +769,6 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     private void restoreActionCommon(Bundle state)
     {
         _drawer.init(state);
-        if(!_isLargeScreenLayout)
-        {
-            Fragment secFragment = getFragmentManager().findFragmentById(R.id.fragment2);
-            if(secFragment!= null)
-            {
-                FragmentTransaction trans = getFragmentManager().beginTransaction();
-                trans.remove(secFragment);
-                trans.commit();
-            }
-        }
     }
 
     private void initActionSend()
@@ -843,12 +818,16 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 	{
         FragmentTransaction trans = getFragmentManager().beginTransaction();
         trans.replace(R.id.fragment2, f, tag);
+        View panel = findViewById(R.id.fragment2);
+        if(panel!=null)
+            panel.setVisibility(View.VISIBLE);
         if(!_isLargeScreenLayout)
         {
-            Fragment lf = getFragmentManager().findFragmentById(R.id.fragment1);
-            if(lf!=null)
-                trans.hide(lf);
+            panel = findViewById(R.id.fragment1);
+            if(panel!=null)
+                panel.setVisibility(View.GONE);
         }
+        trans.disallowAddToBackStack();
         trans.commit();
     }
 
@@ -860,13 +839,16 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         {
             FragmentTransaction trans = fm.beginTransaction();
             trans.remove(f);
+            trans.commit();
+            View panel = findViewById(R.id.fragment1);
+            if(panel!=null)
+                panel.setVisibility(View.VISIBLE);
             if(!_isLargeScreenLayout)
             {
-                Fragment lf = getFragmentManager().findFragmentById(R.id.fragment1);
-                if(lf!=null)
-                    trans.show(lf);
+                panel = findViewById(R.id.fragment2);
+                if(panel!=null)
+                    panel.setVisibility(View.GONE);
             }
-            trans.commit();
             invalidateOptionsMenu();
             return true;
         }
@@ -916,10 +898,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 
     private void closeIntegratedViewer()
     {
-        if(_isLargeScreenLayout)
-            hideSecondaryFragment();
-        else if(getFragmentManager().getBackStackEntryCount() > 0)
-            getFragmentManager().popBackStack();
+        hideSecondaryFragment();
     }
 }
 

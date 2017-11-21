@@ -491,7 +491,7 @@ public abstract class UserSettingsCommon implements SettingsCommon
 	protected final SharedPreferences _prefs;
 
     private static final String CHECK_PHRASE = "valid pass";
-	private final Context _context;
+	protected final Context _context;
 	private final SettingsCommon _defaultSettings;
     private SecureBuffer _settingsProtectionKey;
 	private boolean _resetProtectedSettings;

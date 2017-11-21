@@ -63,7 +63,7 @@
   <string name="save_changes">Zapisz zmiany</string>
   <string name="do_you_want_to_save_changes">Czy chcesz zachować zmiany?</string>
   <string name="select_image">Wybór obrazka</string>
-  <string name="do_you_really_want_to_delete_selected_files">Czy chcesz skasować wybrane pliki?</string>
+  <string name="do_you_really_want_to_delete_selected_files">Czy chcesz skasować wybrane pliki (%s)?</string>
   <string name="wiping_files">Nadpisuję pliki</string>
   <string name="creating_container">Tworzenie kontenera</string>
   <string name="err_failed_saving_changes">Niepowodzenie zapisu zmian. Spróbuj zapisać plik ponownie lub skopiuj plik ręcznie. Zobacz detale w logach programu.</string>

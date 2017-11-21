@@ -179,7 +179,7 @@ public abstract class LocationsManagerBase
 			return null;
 		try
 		{
-			Location loc = lm.getLocation((Uri) b.getParcelable(PARAM_LOCATION_URI));
+			Location loc = lm.getLocation(b.getParcelable(PARAM_LOCATION_URI));
 			if(pathsHolder!=null)
 			{
 				ArrayList<String> pathStrings = b.getStringArrayList(PARAM_PATHS);

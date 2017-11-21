@@ -64,7 +64,7 @@
   <string name="save_changes">Guardar cambios</string>
   <string name="do_you_want_to_save_changes">¿Desea guardar los cambios?</string>
   <string name="select_image">Seleccione una imagen</string>
-  <string name="do_you_really_want_to_delete_selected_files">¿Realmente desea eliminar los ficheros seleccionados?</string>
+  <string name="do_you_really_want_to_delete_selected_files">¿Realmente desea eliminar los ficheros seleccionados (%s)?</string>
   <string name="wiping_files">Limpiando ficheros</string>
   <string name="creating_container">Creando contenedor</string>
   <string name="err_failed_saving_changes">No se han podido guardar los cambios. Intente guardar el fichero nuevamente o cópielo manualmente. Consulte el registro de la aplicación para más detalles.</string>

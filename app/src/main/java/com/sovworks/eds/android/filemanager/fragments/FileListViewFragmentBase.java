@@ -319,11 +319,9 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
 		}
     }
 
-    public void deleteFiles(final Bundle args)
+    public void deleteFiles(Location loc, List<Path> paths, boolean wipe)
     {
-        ArrayList<Path> paths = new ArrayList<>();
-        Location loc = LocationsManager.getLocationsManager(getActivity()).getFromBundle(args, paths);
-        if (args.getBoolean(ARG_WIPE_FILES, true))
+        if (wipe)
         {
             SrcDstCollection targets = SrcDstRec.fromPathsNoDest(loc, true, paths);
             FileOpsService.wipeFiles(getActivity(), targets);
@@ -419,7 +417,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         getFileManagerActivity().invalidateOptionsMenu();
     }
 
-    protected static final String ARG_WIPE_FILES = "com.sovworks.eds.android.WIPE_FILES";
+    public static final String ARG_WIPE_FILES = "com.sovworks.eds.android.WIPE_FILES";
 
     protected EditText _selectedFileEditText;
     protected TextView _currentPathTextView;
