@@ -3,12 +3,13 @@ package com.sovworks.eds.android.service;
 import android.content.Intent;
 
 import com.sovworks.eds.android.R;
-import com.sovworks.eds.android.activities.AskOverwriteActivity;
+import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
 import com.sovworks.eds.android.helpers.ExtendedFileInfoLoader;
 import com.sovworks.eds.fs.Directory;
 import com.sovworks.eds.fs.FSRecord;
 import com.sovworks.eds.fs.File;
 import com.sovworks.eds.fs.Path;
+import com.sovworks.eds.fs.errors.NoFreeSpaceLeftException;
 import com.sovworks.eds.fs.util.SrcDstCollection;
 import com.sovworks.eds.fs.util.SrcDstCollection.SrcDst;
 import com.sovworks.eds.locations.Location;
@@ -30,7 +31,11 @@ class MoveFilesTask extends CopyFilesTask
 	@Override
 	protected Intent getOverwriteRequestIntent(SrcDstCollection filesToOverwrite) throws IOException, JSONException
 	{
-		return AskOverwriteActivity.getOverwriteActivityIntent(_context, true, filesToOverwrite);
+		return FileManagerActivity.getOverwriteRequestIntent(
+				_context,
+				true,
+				filesToOverwrite
+		);
 	}
 
 	@Override
@@ -44,30 +49,47 @@ class MoveFilesTask extends CopyFilesTask
 	@Override
 	protected boolean processRecord(SrcDst record) throws Exception
 	{
-		_wipe = !record.getSrcLocation().isEncrypted() && record.getDstLocation().isEncrypted();
-		if(tryMove(record))
-			return true;
-		if(super.processRecord(record))
+		try
 		{
-			Path srcPath = record.getSrcLocation().getCurrentPath();
-			if(srcPath.isDirectory())
+			Location srcLocation = record.getSrcLocation();
+			Location dstLocation = record.getDstLocation();
+			if(dstLocation == null)
+				throw new IOException("Failed to determine destination location for " + srcLocation.getLocationUri());
+			_wipe = !srcLocation.isEncrypted() && dstLocation.isEncrypted();
+			if (tryMove(record))
+				return true;
+			copyFiles(record);
+			Path srcPath = srcLocation.getCurrentPath();
+			if (srcPath.isDirectory())
 				_foldersToDelete.add(0, srcPath.getDirectory());
-			return true;
+
 		}
-		return false;
+		catch(NoFreeSpaceLeftException e)
+		{
+			throw new com.sovworks.eds.android.errors.NoFreeSpaceLeftException(_context);
+		}
+		catch (IOException e)
+		{
+			setError(e);
+		}
+		return true;
 	}
 
-	protected boolean tryMove(SrcDst srcDst) throws IOException
+	private boolean tryMove(SrcDst srcDst) throws IOException
 	{
-		Path srcPath = srcDst.getSrcLocation().getCurrentPath();
-		Path dstPath = srcDst.getDstLocation().getCurrentPath();
+		Location srcLocation = srcDst.getSrcLocation();
+		Path srcPath = srcLocation.getCurrentPath();
+		Location dstLocation = srcDst.getDstLocation();
+		if(dstLocation == null)
+			throw new IOException("Failed to determine destination location for " + srcLocation.getLocationUri());
+		Path dstPath = dstLocation.getCurrentPath();
 		if (srcPath.getFileSystem() == dstPath.getFileSystem())
 		{
 			if(srcPath.isFile())
 			{
 				if(tryMove(srcPath.getFile(), dstPath.getDirectory()))
 				{
-					ExtendedFileInfoLoader.getInstance().discardCache(srcDst.getSrcLocation(), srcPath);
+					ExtendedFileInfoLoader.getInstance().discardCache(srcLocation, srcPath);
 					return true;
 				}
 			}
@@ -77,7 +99,7 @@ class MoveFilesTask extends CopyFilesTask
 		return false;
 	}
 
-	protected boolean tryMove(FSRecord srcFile, Directory newParent) throws IOException
+	private boolean tryMove(FSRecord srcFile, Directory newParent) throws IOException
 	{
 		try
 		{
@@ -119,7 +141,7 @@ class MoveFilesTask extends CopyFilesTask
 		return false;
 	}
 
-	protected void deleteFile(File file) throws IOException
+	private void deleteFile(File file) throws IOException
 	{
 		com.sovworks.eds.android.helpers.WipeFilesTask.wipeFile(
 				file,
@@ -141,7 +163,7 @@ class MoveFilesTask extends CopyFilesTask
 		);
 	}
 
-	protected boolean deleteEmptyDir(Directory startDir) throws IOException
+	private boolean deleteEmptyDir(Directory startDir) throws IOException
 	{
 		Directory.Contents dc = startDir.list();
 		try

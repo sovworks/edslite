@@ -9,7 +9,8 @@ import android.widget.ImageView;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
 import com.sovworks.eds.android.filemanager.fragments.FileListDataFragment;
-import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
+import com.sovworks.eds.android.filemanager.fragments.FileListViewFragment;
+import com.sovworks.eds.android.filemanager.fragments.FileListViewFragmentBase;
 import com.sovworks.eds.android.locations.activities.LocationSettingsActivity;
 import com.sovworks.eds.android.locations.closer.fragments.LocationCloserBaseFragment;
 import com.sovworks.eds.android.locations.opener.fragments.LocationOpenerBaseFragment;
@@ -25,7 +26,13 @@ public class DrawerLocationMenuItem extends DrawerMenuItemBase
         @Override
         public void onLocationOpened(Location location)
         {
-            ((FileManagerActivity)getActivity()).goTo(location);
+            Bundle args = getArguments();
+            FileManagerActivity.openFileManager(
+                    (FileManagerActivity)getActivity(),
+                    location, args != null ?
+                            args.getInt(FileListViewFragment.ARG_SCROLL_POSITION, 0)
+                            : 0
+            );
         }
     }
 
@@ -136,7 +143,7 @@ public class DrawerLocationMenuItem extends DrawerMenuItemBase
         else
         {
             b.putParcelable(LocationsManager.PARAM_LOCATION_URI, hi.locationUri);
-            b.putInt(ReadDirTask.ARG_SCROLL_POSITION, hi.scrollPosition);
+            b.putInt(FileListViewFragmentBase.ARG_SCROLL_POSITION, hi.scrollPosition);
         }
         return b;
     }
@@ -161,14 +168,7 @@ public class DrawerLocationMenuItem extends DrawerMenuItemBase
     }
 
     private final Location _location;
-    private final View.OnClickListener _closeIconClickListener = new View.OnClickListener()
-    {
-        @Override
-        public void onClick(View v)
-        {
-            closeLocation();
-        }
-    };
+    private final View.OnClickListener _closeIconClickListener = v -> closeLocation();
 
     private FileListDataFragment.HistoryItem findPrevLocation(Location loc)
     {

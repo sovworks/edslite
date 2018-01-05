@@ -1,12 +1,12 @@
 package com.sovworks.eds.android.helpers;
 
-import java.io.IOException;
-import java.util.Date;
-
 import com.sovworks.eds.fs.Directory;
 import com.sovworks.eds.fs.File;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.StringPathUtil;
+
+import java.io.IOException;
+import java.util.Date;
 
 public class CachedPathInfoBase implements CachedPathInfo
 {		
@@ -58,6 +58,11 @@ public class CachedPathInfoBase implements CachedPathInfo
 		_path = path;
 		if(_path!=null)
 			updateCommonPathParams();
+	}
+
+	public void setName(String name)
+	{
+		_name = name;
 	}
 
 	public void updateCommonPathParams()

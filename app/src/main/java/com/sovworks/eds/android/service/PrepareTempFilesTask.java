@@ -29,7 +29,7 @@ class PrepareTempFilesTask extends CopyFilesTask
 	
 	public static class FilesTaskParam extends CopyFilesTaskParam
 	{
-		public FilesTaskParam(Intent i, Context context)
+		FilesTaskParam(Intent i, Context context)
 		{
 			super(i);
 			_context = context;
@@ -56,10 +56,8 @@ class PrepareTempFilesTask extends CopyFilesTask
 					catch (IOException ignored){}
 					if(parentPath == null)
 						parentPath = srcPath;
-					SrcDstCollection sd = srcPath.isFile() ?
-							new SrcDstSingle(srcLoc, TempFilesMonitor.getTmpLocation(loc, parentPath, _context, wd))
-						:	
-							new SrcDstRec(srcLoc, TempFilesMonitor.getTmpLocation(loc, parentPath, _context, wd));
+					SrcDstSingle sds = new SrcDstSingle(srcLoc, TempFilesMonitor.getTmpLocation(loc, parentPath, _context, wd));
+					SrcDstCollection sd = srcPath.isFile() ? sds : new SrcDstRec(sds);
 					cols.add(sd);							
 				}		
 				return new SrcDstGroup(cols);
@@ -80,15 +78,13 @@ class PrepareTempFilesTask extends CopyFilesTask
 		Settings settings = UserSettings.getSettings(context);
 		_fileSizeLimit = 1024 * 1024 * settings.getMaxTempFileSize();
 		_wipe = settings.wipeTempFiles();
-		_workDir = settings.getWorkDir();		
 		super.doWork(context, i);
 		return _tempFilesList;
 	}
 
-	protected long _fileSizeLimit;
-	protected boolean _wipe;
-	protected String _workDir;
-	protected final List<Location> _tempFilesList = new ArrayList<>();
+	private long _fileSizeLimit;
+	private boolean _wipe;
+	private final List<Location> _tempFilesList = new ArrayList<>();
 	
 	@Override
 	protected FilesTaskParam initParam(Intent i)
@@ -106,7 +102,10 @@ class PrepareTempFilesTask extends CopyFilesTask
 	protected boolean copyFile(SrcDst record) throws IOException
 	{
 		Location srcLoc = record.getSrcLocation().copy();
-		Location dstLoc = record.getDstLocation().copy();
+		Location dstLoc = record.getDstLocation();
+		if(dstLoc == null)
+			throw new IOException("Failed to calc destination folder");
+		dstLoc = dstLoc.copy();
         Path tmpPath = calcDstPath(srcLoc.getCurrentPath().getFile(), dstLoc.getCurrentPath().getDirectory());
         srcLoc.setCurrentPath(srcLoc.getCurrentPath().getParentPath());
         if(tmpPath!=null)
@@ -137,7 +136,12 @@ class PrepareTempFilesTask extends CopyFilesTask
 	{
 		Path res = super.calcDstPath(src, dstFolder);
 		if(res == null)
-			res = dstFolder.createFile(src.getName()).getPath();
+			res = (src instanceof File) ?
+					dstFolder.createFile(src.getName()).getPath() :
+					(src instanceof Directory) ?
+							dstFolder.createDirectory(src.getName()).getPath() :
+							null;
+
 		return res;
 	}
 
@@ -160,7 +164,7 @@ class PrepareTempFilesTask extends CopyFilesTask
 		return super.copyFile(srcFile, targetFolder);
 	}
 
-	protected void addFileToMonitor(Location srcLocation, Location dstFilePath) throws IOException
+	private void addFileToMonitor(Location srcLocation, Location dstFilePath) throws IOException
 	{
 			TempFilesMonitor.getMonitor(_context).addFileToMonitor(srcLocation, dstFilePath);
 	}

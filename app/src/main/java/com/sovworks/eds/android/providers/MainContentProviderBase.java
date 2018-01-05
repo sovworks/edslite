@@ -18,19 +18,19 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.provider.BaseColumns;
-import android.provider.MediaStore;
-import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.util.Base64;
 
 import com.sovworks.eds.android.Logger;
+import com.sovworks.eds.android.helpers.CachedPathInfo;
 import com.sovworks.eds.android.helpers.TempFilesMonitor;
 import com.sovworks.eds.android.helpers.WipeFilesTask;
 import com.sovworks.eds.android.locations.PathsStore;
+import com.sovworks.eds.android.providers.cursor.FSCursor;
+import com.sovworks.eds.android.filemanager.tasks.LoadPathInfoObservable;
+import com.sovworks.eds.android.providers.cursor.SelectionChecker;
 import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.android.settings.UserSettings;
-import com.sovworks.eds.fs.Directory;
 import com.sovworks.eds.fs.FSRecord;
 import com.sovworks.eds.fs.File;
 import com.sovworks.eds.fs.Path;
@@ -50,20 +50,23 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
+
+import static com.sovworks.eds.android.providers.cursor.FSCursorBase.COLUMN_ID;
+import static com.sovworks.eds.android.providers.cursor.FSCursorBase.COLUMN_IS_FOLDER;
+import static com.sovworks.eds.android.providers.cursor.FSCursorBase.COLUMN_LAST_MODIFIED;
+import static com.sovworks.eds.android.providers.cursor.FSCursorBase.COLUMN_NAME;
+import static com.sovworks.eds.android.providers.cursor.FSCursorBase.COLUMN_PATH;
+import static com.sovworks.eds.android.providers.cursor.FSCursorBase.COLUMN_SIZE;
+import static com.sovworks.eds.android.providers.cursor.FSCursorBase.COLUMN_TITLE;
 
 public abstract class MainContentProviderBase extends ContentProvider
 {
-    public static final String COLUMN_ID = BaseColumns._ID;
-    public static final String COLUMN_NAME = OpenableColumns.DISPLAY_NAME;
-    public static final String COLUMN_SIZE = OpenableColumns.SIZE;
-    public static final String COLUMN_LAST_MODIFIED = MediaStore.MediaColumns.DATE_MODIFIED;
-    public static final String COLUMN_IS_FOLDER = "is_folder";
-
     public static final String COLUMN_LOCATION = "location";
-    public static final String COLUMN_PATH = "path";
 
     public static final String MIME_TYPE_FILE_META = "vnd.android.cursor.item/file";
     public static final String MIME_TYPE_FOLDER_META = "vnd.android.cursor.dir/folder";
@@ -123,12 +126,14 @@ public abstract class MainContentProviderBase extends ContentProvider
         return Uri.parse(new String(locationUriBytes, Charset.defaultCharset()));
     }
 
-    public static ParcelFileDescriptor getParcelFileDescriptor(final ContentProvider cp, Uri srcUri, final Location loc, String accessMode, final Bundle opts)
+    public static ParcelFileDescriptor getParcelFileDescriptor(final ContentProvider cp, final Location loc, String accessMode, final Bundle opts)
     {
         try
         {
-            final File f = loc.getCurrentPath().getFile();
             File.AccessMode am = Util.getAccessModeFromString(accessMode);
+            if(!loc.getCurrentPath().isFile() && am == File.AccessMode.Read)
+                throw new FileNotFoundException();
+            final File f = loc.getCurrentPath().getFile();
             ParcelFileDescriptor fd = f.getFileDescriptor(am);
             if(fd!=null)
                 return fd;
@@ -140,8 +145,9 @@ public abstract class MainContentProviderBase extends ContentProvider
                     if (am == File.AccessMode.Read)
                     //    return writeToPipe(f, opts == null ? new Bundle() : opts);
                     {
-                        String mime = FileOpsService.getMimeTypeFromExtension(cp.getContext(), loc.getCurrentPath());
-                        return cp.openPipeHelper(srcUri, mime, opts, f, new PipeWriter());
+                        //String mime = FileOpsService.getMimeTypeFromExtension(cp.getContext(), loc.getCurrentPath());
+                        //return cp.openPipeHelper(srcUri, mime, opts, f, new PipeWriter());
+                        return writeToPipe(f, opts);
                     } else
                         return readFromPipe(f, opts == null ? new Bundle() : opts);
                 }
@@ -162,19 +168,15 @@ public abstract class MainContentProviderBase extends ContentProvider
                 return mode == ParcelFileDescriptor.MODE_READ_ONLY || Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT ?
                         ParcelFileDescriptor.open(jf, mode) :
                         ParcelFileDescriptor.open(jf, mode, new Handler(Looper.getMainLooper()),
-                                new ParcelFileDescriptor.OnCloseListener()
+                                e ->
                                 {
-                                    @Override
-                                    public void onClose(IOException e)
-                                    {
-                                        if (e != null)
-                                            Logger.showAndLog(cp.getContext(), e);
-                                        else
-                                            FileOpsService.saveChangedFile(
-                                                    cp.getContext(),
-                                                    new SrcDstSingle(tmpLocation, loc)
-                                            );
-                                    }
+                                    if (e != null)
+                                        Logger.showAndLog(cp.getContext(), e);
+                                    else
+                                        FileOpsService.saveChangedFile(
+                                                cp.getContext(),
+                                                new SrcDstSingle(tmpLocation, loc)
+                                        );
                                 }
                         );
 
@@ -190,6 +192,8 @@ public abstract class MainContentProviderBase extends ContentProvider
 
     private static Location copyFileToTmpLocation(Location srcLoc, Path parentPath, File srcFile, int mode, ContentProvider cp) throws IOException
     {
+        if(!srcLoc.getCurrentPath().exists() && (mode & ParcelFileDescriptor.MODE_CREATE) == 0)
+            throw new IOException("File doesn't exist");
 
         final Location tmpLocation = TempFilesMonitor.getTmpLocation(
                 srcLoc,
@@ -199,7 +203,7 @@ public abstract class MainContentProviderBase extends ContentProvider
                 mode != ParcelFileDescriptor.MODE_READ_ONLY
         );
         File dst;
-        if(mode != ParcelFileDescriptor.MODE_WRITE_ONLY && mode != ParcelFileDescriptor.MODE_TRUNCATE)
+        if((mode & ParcelFileDescriptor.MODE_TRUNCATE) == 0)
             dst = Util.copyFile(srcFile, tmpLocation.getCurrentPath().getDirectory(), srcFile.getName());
         else
         {
@@ -210,7 +214,7 @@ public abstract class MainContentProviderBase extends ContentProvider
         }
         tmpLocation.setCurrentPath(dst.getPath());
         srcLoc.setCurrentPath(parentPath);
-        if(mode != ParcelFileDescriptor.MODE_READ_ONLY)
+        if((mode & ParcelFileDescriptor.MODE_READ_ONLY) == 0)
         {
             Uri u = tmpLocation.getDeviceAccessibleUri(dst.getPath());
             if(u == null || !ContentResolver.SCHEME_FILE.equalsIgnoreCase(u.getScheme()))
@@ -219,85 +223,65 @@ public abstract class MainContentProviderBase extends ContentProvider
         return tmpLocation;
     }
 
+
+
     private static ParcelFileDescriptor readFromPipe(final File targetFile, final Bundle opts) throws IOException
     {
         final ParcelFileDescriptor[] pfds = ParcelFileDescriptor.createPipe();
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
+        Completable.create(s -> {
+            FileInputStream fin = new FileInputStream(pfds[0].getFileDescriptor());
+            try
             {
-                try
-                {
-                    FileInputStream fin = new FileInputStream(pfds[0].getFileDescriptor());
-                    try
-                    {
-                        Util.copyFileFromInputStream(
-                                fin,
-                                targetFile,
-                                opts.getLong(OPTION_OFFSET, 0),
-                                opts.getLong(OPTION_NUM_BYTES, -1),
-                                null
-                        );
-                    }
-                    finally
-                    {
-                        fin.close();
-                    }
-                }
-                catch (IOException e)
-                {
-                    Logger.log(e);
-                }
+                Util.CancellableProgressInfo pi = new Util.CancellableProgressInfo();
+                s.setCancellable(pi);
+                Util.copyFileFromInputStream(
+                        fin,
+                        targetFile,
+                        opts.getLong(OPTION_OFFSET, 0),
+                        opts.getLong(OPTION_NUM_BYTES, -1),
+                        pi
+                );
             }
-        }).start();
+            finally
+            {
+                fin.close();
+            }
+            pfds[0].close();
+            s.onComplete();
+        }).
+                subscribeOn(Schedulers.io()).
+                subscribe(() ->{}, Logger::log);
         return pfds[1];
     }
 
     private static ParcelFileDescriptor writeToPipe(final File srcFile, final Bundle opts) throws IOException
     {
         final ParcelFileDescriptor[] pfds = ParcelFileDescriptor.createPipe();
-        new Thread(new Runnable()
+        Completable.create(s ->
         {
-            @Override
-            public void run()
+            FileOutputStream fout = new FileOutputStream(pfds[1].getFileDescriptor());
+            try
             {
-                try
-                {
-                    FileOutputStream fout = new FileOutputStream(pfds[1].getFileDescriptor());
-                    try
-                    {
-                        Util.copyFileToOutputStream(
-                                fout,
-                                srcFile,
-                                opts.getLong(OPTION_OFFSET, 0),
-                                opts.getLong(OPTION_NUM_BYTES, -1),
-                                null
-                        );
-                    }
-                    finally
-                    {
-                        fout.close();
-                    }
-                }
-                catch (IOException e)
-                {
-                    Logger.log(e);
-                }
+                Util.CancellableProgressInfo pi = new Util.CancellableProgressInfo();
+                s.setCancellable(pi);
+                Util.copyFileToOutputStream(
+                        fout,
+                        srcFile,
+                        opts.getLong(OPTION_OFFSET, 0),
+                        opts.getLong(OPTION_NUM_BYTES, -1),
+                        pi
+                );
             }
-        }).start();
+            finally
+            {
+                fout.close();
+            }
+            pfds[1].close();
+            s.onComplete();
+        }).
+                subscribeOn(Schedulers.newThread()).
+                subscribe(() ->{}, Logger::log);
         return pfds[0];
-    }
-
-    interface PathChecker
-    {
-        boolean checkPath(Path path);
-    }
-
-    interface SearchFilter
-    {
-        String getName();
-        PathChecker getChecker(Location location, String arg);
     }
 
 
@@ -324,55 +308,6 @@ public abstract class MainContentProviderBase extends ContentProvider
 
         private final StringBuilder _selectionBuilder = new StringBuilder();
         private final ArrayList<String> _selectionArgs = new ArrayList<>();
-    }
-
-    static class SelectionChecker
-    {
-        SelectionChecker(Location location, String selectionString, String[] selectionArgs)
-        {
-            _location = location;
-            if(selectionString!=null)
-            {
-                String[] filtNames = selectionString.split(" ");
-                int i = 0;
-                for (String filtName : filtNames)
-                {
-                    if(selectionArgs==null || i>=selectionArgs.length)
-                        break;
-                    PathChecker f = getFilter(filtName, selectionArgs[i++]);
-                    if (f == null)
-                        throw new IllegalArgumentException("Unsupported search filter: " + filtName);
-                    else
-                        _filters.add(f);
-                }
-            }
-        }
-
-        boolean checkPath(Path path)
-        {
-            for(PathChecker pc: _filters)
-                if(!pc.checkPath(path))
-                    return false;
-            return true;
-        }
-
-        protected final Location _location;
-        final List<PathChecker> _filters = new ArrayList<>();
-
-        private static final SearchFilter[] ALL_FILTERS = new SearchFilter[]{  };
-
-        protected Collection<SearchFilter> getAllFilters()
-        {
-            return Arrays.asList(ALL_FILTERS);
-        }
-
-        private PathChecker getFilter(String filtName, String arg)
-        {
-            for(SearchFilter f: getAllFilters())
-                if(f.getName().equals(filtName))
-                    return f.getChecker(_location, arg);
-            return null;
-        }
     }
 
     /*
@@ -441,9 +376,6 @@ public abstract class MainContentProviderBase extends ContentProvider
         switch (_uriMatcher.match(uri))
         {
             case CONTENT_PATH_CODE:
-                if(sortOrder!=null)
-                    throw new IllegalArgumentException("Sorting is not supported");
-                return queryMeta(uri, projection == null ? new String[]{COLUMN_NAME, COLUMN_SIZE} : projection, selection, selectionArgs);
             case META_PATH_CODE:
                 if(sortOrder!=null)
                     throw new IllegalArgumentException("Sorting is not supported");
@@ -551,7 +483,7 @@ public abstract class MainContentProviderBase extends ContentProvider
         String[] mimeTypes = getContentMimeType(loc, mimeTypeFilter);
         // If the MIME type is supported
         if (mimeTypes != null)
-            return getAssetFileDescriptor(uri, loc, "r", opts == null ? new Bundle() : opts);
+            return getAssetFileDescriptor(loc, "r", opts == null ? new Bundle() : opts);
 
         // If the MIME type is not supported, return a read-only handle to the file.
         return super.openTypedAssetFile(uri, mimeTypeFilter, opts);
@@ -565,7 +497,7 @@ public abstract class MainContentProviderBase extends ContentProvider
             case CONTENT_PATH_CODE:
             case META_PATH_CODE:
                 Location loc = getLocationFromProviderUri(uri);
-                return getAssetFileDescriptor(uri, loc, mode, new Bundle());
+                return getAssetFileDescriptor(loc, mode, new Bundle());
         }
         throw new IllegalArgumentException("Unsupported uri: " + uri);
     }
@@ -578,13 +510,17 @@ public abstract class MainContentProviderBase extends ContentProvider
             case CONTENT_PATH_CODE:
             case META_PATH_CODE:
                 Location loc = getLocationFromProviderUri(uri);
-                return getParcelFileDescriptor(uri, loc, mode, new Bundle());
+                return getParcelFileDescriptor(loc, mode, new Bundle());
         }
         throw new IllegalArgumentException("Unsupported uri: " + uri);
 
     }
 
-    protected static final String[] ALL_META_COLUMNS = { COLUMN_ID, COLUMN_NAME, COLUMN_SIZE, COLUMN_LAST_MODIFIED, COLUMN_IS_FOLDER, COLUMN_PATH };
+    public static Cursor getEmptyMetaCursor()
+    {
+        return _emptyMetaCursor;
+    }
+
     protected static final String[] ALL_SELECTION_COLUMNS = { COLUMN_LOCATION };
 
     protected static final String META_PATH = "fs";
@@ -616,34 +552,9 @@ public abstract class MainContentProviderBase extends ContentProvider
 
     private PathsStore _currentSelection;
 
-    private static class PipeWriter implements PipeDataWriter<File>
+    protected AssetFileDescriptor getAssetFileDescriptor(Location loc, String accessMode, Bundle opts)
     {
-
-        @Override
-        public void writeDataToPipe(@NonNull ParcelFileDescriptor output, @NonNull Uri uri, @NonNull String mimeType, Bundle opts, File file)
-        {
-            try
-            {
-                FileOutputStream fout = new FileOutputStream(output.getFileDescriptor());
-                try
-                {
-                    Util.copyFileToOutputStream(fout, file, opts.getLong(OPTION_OFFSET, 0), opts.getLong(OPTION_NUM_BYTES, -1), null);
-                }
-                finally
-                {
-                    fout.close();
-                }
-            }
-            catch (IOException e)
-            {
-                Logger.log(e);
-            }
-        }
-    }
-
-    protected AssetFileDescriptor getAssetFileDescriptor(Uri srcUri, Location loc, String accessMode, Bundle opts)
-    {
-        ParcelFileDescriptor pfd = getParcelFileDescriptor(srcUri, loc, accessMode, opts);
+        ParcelFileDescriptor pfd = getParcelFileDescriptor(loc, accessMode, opts);
         return new AssetFileDescriptor(
                 pfd,
                 opts.getLong(OPTION_OFFSET, 0),
@@ -651,71 +562,56 @@ public abstract class MainContentProviderBase extends ContentProvider
         );
     }
 
-    protected ParcelFileDescriptor getParcelFileDescriptor(Uri srcUri, final Location loc, String accessMode, Bundle opts)
+    protected ParcelFileDescriptor getParcelFileDescriptor(final Location loc, String accessMode, Bundle opts)
     {
-        return getParcelFileDescriptor(this, srcUri, loc, accessMode, opts);
+        return Single.<ParcelFileDescriptor>create(s -> s.onSuccess(getParcelFileDescriptor(this, loc, accessMode, opts))).
+                subscribeOn(Schedulers.io()).blockingGet();
     }
 
     protected int updateFS(Uri uri, ContentValues values, String selection, String[] selectionArgs)
     {
         Location loc = getLocationFromProviderUri(uri);
-        try
-        {
-            Path path = loc.getCurrentPath();
-            SelectionChecker sc = new SelectionChecker(loc, selection, selectionArgs);
-            if(sc.checkPath(path))
-            {
-                if (path.isFile())
+        return LoadPathInfoObservable.create(loc).
+                filter(new SelectionChecker(loc, selection, selectionArgs)).
+                map(cpi ->
                 {
-                    path.getFile().rename(values.getAsString(COLUMN_NAME));
-                    return 1;
-                }
-                else if (path.isDirectory())
-                {
-                    path.getDirectory().rename(values.getAsString(COLUMN_NAME));
-                    return 1;
-                }
-            }
-        }
-        catch (IOException e)
-        {
-            Logger.log(e);
-        }
-        return 0;
+                    if (cpi.isFile())
+                    {
+                        cpi.getPath().getFile().rename(values.getAsString(COLUMN_NAME));
+                        return true;
+                    } else if (cpi.isDirectory())
+                    {
+                        cpi.getPath().getDirectory().rename(values.getAsString(COLUMN_NAME));
+                        return true;
+                    }
+                    return false;
+                }).subscribeOn(Schedulers.io()).blockingGet() ? 1 : 0;
     }
 
     protected int deleteFromFS(Uri uri, String selection, String[] selectionArgs)
     {
         Location loc = getLocationFromProviderUri(uri);
-        try
-        {
-            Path path = loc.getCurrentPath();
-            SelectionChecker sc = new SelectionChecker(loc, selection, selectionArgs);
-            if(sc.checkPath(path))
-            {
-                if (path.isFile())
+        return LoadPathInfoObservable.create(loc).
+                filter(new SelectionChecker(loc, selection, selectionArgs)).
+                map(cpi ->
                 {
-                    path.getFile().delete();
-                    return 1;
-                } else if (path.isDirectory())
-                {
-                    path.getDirectory().delete();
-                    return 1;
-                }
-            }
-        }
-        catch (IOException e)
-        {
-            Logger.log(e);
-        }
-        return 0;
+                    if (cpi.isFile())
+                    {
+                        cpi.getPath().getFile().delete();
+                        return true;
+                    } else if (cpi.isDirectory())
+                    {
+                        cpi.getPath().getDirectory().delete();
+                        return true;
+                    }
+                    return false;
+                }).subscribeOn(Schedulers.io()).blockingGet() ? 1 : 0;
     }
 
     protected Uri insertMeta(Uri uri, ContentValues contentValues)
     {
-        Location loc = getLocationFromProviderUri(uri);
-        try
-        {
+        return Single.<Uri>create(em -> {
+            Location loc = getLocationFromProviderUri(uri);
             Path basePath = loc.getCurrentPath();
             if (!basePath.isDirectory())
                 throw new IllegalArgumentException("Wrong parent folder: " + basePath);
@@ -724,13 +620,8 @@ public abstract class MainContentProviderBase extends ContentProvider
                     basePath.getDirectory().createDirectory(name) :
                     basePath.getDirectory().createFile(name);
             loc.setCurrentPath(res.getPath());
-            return loc.getLocationUri();
-        }
-        catch (IOException e)
-        {
-            Logger.log(e);
-        }
-        return null;
+            em.onSuccess(loc.getLocationUri());
+        }).subscribeOn(Schedulers.io()).blockingGet();
     }
 
     protected void setCurrentSelection(ContentValues contentValues)
@@ -765,39 +656,17 @@ public abstract class MainContentProviderBase extends ContentProvider
         _currentSelection = selection;
     }
 
-    protected SelectionChecker getSelectionChecker(Location loc, String selection, String[] selectionArgs)
-    {
-        return new SelectionChecker(loc, selection, selectionArgs);
-    }
-
     protected Cursor queryMeta(Uri uri, String[] projection, String selection, String[] selectionArgs)
     {
-        checkProjection(projection, ALL_META_COLUMNS);
-        if(projection == null)
-            projection = ALL_META_COLUMNS;
         Location loc = getLocationFromProviderUri(uri);
-        try
-        {
-            SelectionChecker sc = getSelectionChecker(loc, selection, selectionArgs);
-            MatrixCursor res = new MatrixCursor(projection);
-            queryMeta(res, sc, loc);
-            return res;
-
-        }
-        catch (IOException e)
-        {
-            Logger.log(e);
-        }
-        return null;
-    }
-
-    protected void queryMeta(MatrixCursor res, SelectionChecker sc, Location loc) throws IOException
-    {
-        Path path = loc.getCurrentPath();
-        if (path.isFile() && sc.checkPath(path))
-            addFileRow(res, 1, path, path.getFile().getName());
-        else if (path.isDirectory())
-            listFolder(res, path, sc);
+        return new FSCursor(
+                getContext(),
+                loc,
+                projection == null ? ALL_META_COLUMNS : projection,
+                selection,
+                selectionArgs,
+                true
+        );
     }
 
     protected Cursor querySelection(String[] projection)
@@ -835,10 +704,13 @@ public abstract class MainContentProviderBase extends ContentProvider
     {
         try
         {
-            Path path = loc.getCurrentPath();
-            if(!path.isFile())
-                return null;
-            return FileOpsService.getMimeTypeFromExtension(getContext(), loc.getCurrentPath());
+            CachedPathInfo cpi = LoadPathInfoObservable.
+                    create(loc).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
+            return cpi == null ?
+                    null : cpi.isFile() ?
+                    FileOpsService.getMimeTypeFromExtension(getContext(), loc.getCurrentPath()) : null;
         }
         catch (IOException e)
         {
@@ -857,103 +729,11 @@ public abstract class MainContentProviderBase extends ContentProvider
     protected String getMetaMimeType(Uri uri)
     {
         Location loc = getLocationFromProviderUri(uri);
-        try
-        {
-            return getMetaMimeType(loc.getCurrentPath());
-        }
-        catch (IOException e)
-        {
-            Logger.log(e);
-            return null;
-        }
-    }
-
-    protected String getMetaMimeType(Path path) throws IOException
-    {
-        if(path.isFile())
-            return MIME_TYPE_FILE_META;
-        if(path.isDirectory())
-            return MIME_TYPE_FOLDER_META;
-        return null;
-    }
-
-    protected void addFileRow(MatrixCursor cur, long id, Path path, String title) throws IOException
-    {
-        MatrixCursor.RowBuilder rb = cur.newRow();
-        for(String col: cur.getColumnNames())
-        {
-            switch (col)
-            {
-                case COLUMN_ID:
-                    rb.add(id);
-                    break;
-                case COLUMN_NAME:
-                    rb.add(title);
-                    break;
-                case COLUMN_IS_FOLDER:
-                    rb.add(true);
-                    break;
-                case COLUMN_LAST_MODIFIED:
-                    rb.add(path.getFile().getLastModified().getTime());
-                    break;
-                case COLUMN_SIZE:
-                    rb.add(path.getFile().getSize());
-                    break;
-                case COLUMN_PATH:
-                    rb.add(path.getPathString());
-            }
-        }
-    }
-
-    protected void addFolderRow(MatrixCursor cur, long id, Path path, String title) throws IOException
-    {
-        MatrixCursor.RowBuilder rb = cur.newRow();
-        for(String col: cur.getColumnNames())
-        {
-            switch (col)
-            {
-                case COLUMN_ID:
-                    rb.add(id);
-                case COLUMN_NAME:
-                    rb.add(title);
-                    break;
-                case COLUMN_IS_FOLDER:
-                    rb.add(true);
-                    break;
-                case COLUMN_LAST_MODIFIED:
-                    rb.add(path.getDirectory().getLastModified().getTime());
-                    break;
-            }
-        }
-    }
-
-
-    protected void listFolder(MatrixCursor cur, Path path, SelectionChecker sc) throws IOException
-    {
-        Directory.Contents dc = path.getDirectory().list();
-        try
-        {
-            listFiles(cur, dc, sc);
-        }
-        finally
-        {
-            dc.close();
-        }
-    }
-
-    protected void listFiles(MatrixCursor cur, Iterable<Path> it, SelectionChecker sc) throws IOException
-    {
-        int id = 1;
-        for(Path p: it)
-        {
-            if(sc.checkPath(p))
-            {
-                if (p.isFile())
-                    addFileRow(cur, id++, p, p.getFile().getName());
-                else if (p.isDirectory())
-                    addFolderRow(cur, id++, p, p.getDirectory().getName());
-            }
-        }
+        CachedPathInfo cpi = LoadPathInfoObservable.create(loc).blockingGet();
+        return cpi == null ?
+                null : cpi.isFile() ?
+                MIME_TYPE_FILE_META : cpi.isDirectory() ?
+                MIME_TYPE_FOLDER_META : null;
     }
 
     protected void checkProjection(String[] projection, String[] columns)
@@ -971,4 +751,16 @@ public abstract class MainContentProviderBase extends ContentProvider
     {
         return getLocationFromProviderUri(getContext(), providerUri);
     }
+
+    private static final String[] ALL_META_COLUMNS = {
+            COLUMN_ID,
+            COLUMN_NAME,
+            COLUMN_TITLE,
+            COLUMN_SIZE,
+            COLUMN_LAST_MODIFIED,
+            COLUMN_IS_FOLDER,
+            COLUMN_PATH
+    };
+
+    private static final Cursor _emptyMetaCursor = new MatrixCursor(ALL_META_COLUMNS, 0);
 }

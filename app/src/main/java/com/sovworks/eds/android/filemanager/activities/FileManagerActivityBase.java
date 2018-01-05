@@ -1,8 +1,6 @@
 package com.sovworks.eds.android.filemanager.activities;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -11,28 +9,21 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 
 import com.sovworks.eds.android.EdsApplication;
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.activities.VersionHistory;
-import com.sovworks.eds.android.dialogs.AskPrimaryStoragePermissionDialog;
-import com.sovworks.eds.android.dialogs.MasterPasswordDialog;
-import com.sovworks.eds.android.dialogs.PasswordDialog;
-import com.sovworks.eds.android.dialogs.PasswordDialogBase;
+import com.sovworks.eds.android.dialogs.AskOverwriteDialog;
 import com.sovworks.eds.android.filemanager.FileManagerFragment;
 import com.sovworks.eds.android.filemanager.fragments.FileListDataFragment;
 import com.sovworks.eds.android.filemanager.fragments.FileListViewFragment;
@@ -41,35 +32,66 @@ import com.sovworks.eds.android.filemanager.fragments.PreviewFragment;
 import com.sovworks.eds.android.filemanager.records.BrowserRecord;
 import com.sovworks.eds.android.filemanager.tasks.CheckStartPathTask;
 import com.sovworks.eds.android.fragments.TaskFragment;
-import com.sovworks.eds.android.helpers.ActivityResultHandler;
+import com.sovworks.eds.android.helpers.AppInitHelper;
 import com.sovworks.eds.android.helpers.CachedPathInfo;
 import com.sovworks.eds.android.helpers.CompatHelper;
 import com.sovworks.eds.android.helpers.ProgressDialogTaskFragmentCallbacks;
 import com.sovworks.eds.android.helpers.Util;
-import com.sovworks.eds.android.locations.ContainerBasedLocation;
 import com.sovworks.eds.android.navigdrawer.DrawerController;
 import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.fs.Path;
+import com.sovworks.eds.fs.util.SrcDstCollection;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
 import com.sovworks.eds.locations.Openable;
 import com.sovworks.eds.settings.GlobalConfig;
-import com.sovworks.eds.settings.Settings;
+import com.trello.rxlifecycle2.android.ActivityEvent;
+import com.trello.rxlifecycle2.components.RxActivity;
+
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.concurrent.CancellationException;
 
-import static com.sovworks.eds.android.settings.UserSettingsCommon.CURRENT_SETTINGS_VERSION;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 
 @SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
-public abstract class FileManagerActivityBase extends Activity implements PreviewFragment.Host, PasswordDialogBase.PasswordReceiver
+public abstract class FileManagerActivityBase extends RxActivity implements PreviewFragment.Host
 {
+    public static final String TAG = "FileManagerActivity";
+    public static final String ACTION_ASK_OVERWRITE = "com.sovworks.eds.android.ACTION_ASK_OVERWRITE";
+
+    static
+    {
+        if(GlobalConfig.isTest())
+            TEST_INIT_OBSERVABLE = BehaviorSubject.createDefault(false);
+
+    }
+    public static Subject<Boolean> TEST_INIT_OBSERVABLE;
+
     public static Location getStartLocation(Context context)
     {
         return LocationsManager.getLocationsManager(context, true).getDefaultDeviceLocation();
     }
+
+    public static Intent getOverwriteRequestIntent(
+            Context context,
+            boolean move,
+            SrcDstCollection records) throws IOException, JSONException
+    {
+        Intent i = new Intent(context, FileManagerActivity.class);
+        i.setAction(ACTION_ASK_OVERWRITE);
+        i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        //i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        i.putExtra(AskOverwriteDialog.ARG_MOVE, move);
+        i.putExtra(AskOverwriteDialog.ARG_PATHS, records);
+        return i;
+    }
+
     public static Intent getSelectPathIntent(
             Context context,
             Uri startPath,
@@ -106,6 +128,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 
     }
 
+    @SuppressWarnings("SameParameterValue")
     public static void selectPath(
             Activity context,
             Fragment f,
@@ -198,10 +221,11 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 
     public void goTo(Location location, int scrollPosition)
     {
+        Logger.debug(TAG + ": goTo");
         closeIntegratedViewer();
-        FileListDataFragment f = getFileListDataFragment();
+        FileListViewFragment f = getFileListViewFragment();
         if(f!=null)
-            f.goTo(location, scrollPosition);
+            f.goTo(location, scrollPosition, true);
     }
 
     public void goTo(Path path) throws IOException
@@ -211,13 +235,13 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         {
             Location newLocation = prevLocation.copy();
             newLocation.setCurrentPath(path);
-            goTo(newLocation);
+            goTo(newLocation, 0);
         }
 	}
 
     public void rereadCurrentLocation()
     {
-        FileListDataFragment f = getFileListDataFragment();
+        FileListViewFragment f = getFileListViewFragment();
         if(f!=null)
             f.rereadCurrentLocation();
     }
@@ -261,13 +285,21 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     public void showProperties(BrowserRecord currentFile, boolean allowInplace)
 	{
         if(!hasSelectedFiles() && currentFile == null)
-            hideSecondaryFragment();
+        {
+            Logger.debug(TAG + ": showProperties (hide)");
+            if(getFragmentManager().findFragmentByTag(FilePropertiesFragment.TAG)!=null)
+                hideSecondaryFragment();
+        }
         else if(_isLargeScreenLayout || !allowInplace)
+        {
+            Logger.debug(TAG + ": showProperties");
             showPropertiesFragment(currentFile);
+        }
 	}
 
 	public void showPhoto(BrowserRecord currentFile, boolean allowInplace)
 	{
+	    Logger.debug(TAG + ": showPhoto");
 		Path contextPath = currentFile == null ? null : currentFile.getPath();
         if(!hasSelectedFiles() && contextPath == null)
             hideSecondaryFragment();
@@ -278,10 +310,11 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     @Override
 	public void onCreate(Bundle savedInstanceState)
 	{
+	    if(GlobalConfig.isTest())
+	        TEST_INIT_OBSERVABLE.onNext(false);
         Util.setTheme(this);
 	    super.onCreate(savedInstanceState);
         Logger.debug("fm start intent: " + getIntent());
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         _settings = UserSettings.getSettings(this);
         if(_settings.isFlagSecureEnabled())
             CompatHelper.setWindowFlagSecure(this);
@@ -302,10 +335,35 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         registerReceiver(_locationAddedOrRemovedReceiver, LocationsManager.getLocationRemovedIntentFilter());
         registerReceiver(_locationChangedReceiver, new IntentFilter(LocationsManager.BROADCAST_LOCATION_CHANGED));
         registerReceiver(_locationAddedOrRemovedReceiver, new IntentFilter(LocationsManager.BROADCAST_LOCATION_CHANGED));
-        Logger.debug("Checking master password");
-        if(MasterPasswordDialog.checkMasterPasswordIsSet(this, getFragmentManager(), null))
-            startAction(savedInstanceState);
+
+        _drawer.init(savedInstanceState);
+        AppInitHelper.
+                createObservable(this).
+                compose(bindToLifecycle()).
+                subscribe(() -> {
+                    startAction(savedInstanceState);
+                    addFileListFragments();
+                }, err -> {
+                        if(!(err instanceof CancellationException))
+                            Logger.showAndLog(getApplicationContext(), err);
+                });
+
 	}
+
+    @Override
+    protected void onNewIntent(Intent intent)
+    {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        lifecycle().
+                filter(event -> event == ActivityEvent.RESUME).
+                firstElement().
+                subscribe(res -> startAction(null), err ->
+                {
+                    if(!(err instanceof CancellationException))
+                        Logger.log(err);
+                });
+    }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus)
@@ -328,6 +386,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     @Override
     public boolean dispatchKeyEvent(KeyEvent event)
     {
+        Logger.debug(TAG + ": dispatchKeyEvent");
         //Prevent selection clearing when back button is pressed while properties fragment is active
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP)
         {
@@ -353,6 +412,8 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     @Override
     public void onBackPressed()
     {
+        Logger.debug(TAG + ": onBackPressed");
+
         if(_drawer.onBackPressed())
             return;
 
@@ -389,43 +450,11 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         return f != null && f.isAdded() ? f : null;
     }
 
-    public void continueActionMainInit()
-    {
-        _drawer.init(null);
-        if(Intent.ACTION_MAIN.equals(getIntent().getAction()) && getIntent().getData() == null)
-            _drawer.showContainers();
-        convertLegacySettings();
-        showPromoDialogIfNeeded();
-        _testIsInited = true;
-    }
-
     public DrawerController getDrawerController()
     {
         return _drawer;
     }
 
-    public void initActionMain() throws IOException
-    {
-        initActionCommon();
-        continueActionMainInit();
-    }
-
-    //master passsword is set
-    @Override
-    public void onPasswordEntered(PasswordDialog dlg)
-    {
-        startAction(null);
-    }
-
-    //master passsword is not set
-    @Override
-    public void onPasswordNotEntered(PasswordDialog dlg)
-    {
-        if(MasterPasswordDialog.checkSettingsKey(this))
-            startAction(null);
-        else
-            finish();
-    }
 
     public TaskFragment.TaskCallbacks getCheckStartPathCallbacks()
     {
@@ -438,7 +467,12 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
                 {
                     Location locToOpen = (Location) result.getResult();
                     if(locToOpen != null)
+                    {
                         setIntent(new Intent(Intent.ACTION_MAIN, locToOpen.getLocationUri()));
+                        FileListDataFragment df = getFileListDataFragment();
+                        if(df!=null)
+                            df.loadLocation(null, true);
+                    }
                     else
                         setIntent(new Intent());
                 }
@@ -446,15 +480,6 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
                 {
                     Logger.showAndLog(_context, e);
                     setIntent(new Intent());
-                }
-                try
-                {
-                    actionMain(null);
-                }
-                catch (Exception e)
-                {
-                    Logger.showAndLog(_context, e);
-                    finish();
                 }
             }
         };
@@ -468,50 +493,13 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
-    {
-        if (requestCode == REQUEST_EXT_STORAGE_PERMISSIONS)
-        {
-            if((grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) && !requestExtStoragePermissionWithRationale())
-                return;
-
-            try
-            {
-                initActionMain();
-            }
-            catch (Exception e)
-            {
-                Logger.showAndLog(this, e);
-                finish();
-            }
-
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-    }
-
-    @Override
     protected void onPostCreate(Bundle state)
     {
         super.onPostCreate(state);
         _drawer.onPostCreate();
     }
 
-    @Override
-    protected void onPause()
-    {
-        Logger.debug("FileManagerActivity onPause");
-        _resHandler.onPause();
-        super.onPause();
-    }
 
-    @Override
-	protected void onResume()
-	{
-        Logger.debug("FileManagerActivity onResume");
-		super.onResume();
-        _resHandler.handle();
-	}
 
     @Override
     protected void onStart()
@@ -534,34 +522,6 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         Logger.debug("FileManagerActivity has stopped");
     }
 
-    protected void convertLegacySettings()
-    {
-        int curSettingsVersion = _settings.getCurrentSettingsVersion();
-        if(curSettingsVersion >= Settings.VERSION)
-            return;
-
-        if(curSettingsVersion == 1)
-        {
-            if(_settings.getLastViewedPromoVersion() > 160)
-            {
-                _settings.getSharedPreferences().edit().putInt(CURRENT_SETTINGS_VERSION, Settings.VERSION).commit();
-                return;
-            }
-        }
-
-        LocationsManager lm = LocationsManager.getLocationsManager(this);
-        for(Location l: lm.getLoadedLocations(false))
-            if(l instanceof ContainerBasedLocation && !l.getExternalSettings().isVisibleToUser())
-            {
-                l.getExternalSettings().setVisibleToUser(true);
-                l.saveExternalSettings();
-            }
-        SharedPreferences prefs = _settings.getSharedPreferences();
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(UserSettings.CURRENT_SETTINGS_VERSION, Settings.VERSION);
-        editor.commit();
-    }
-
     protected void startAction(Bundle savedState)
     {
         String action = getIntent().getAction();
@@ -572,13 +532,14 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         {
             switch (action)
             {
-                case Intent.ACTION_SEND:
-                case Intent.ACTION_SEND_MULTIPLE:
-                    actionSend(savedState);
-                    break;
                 case Intent.ACTION_VIEW:
                     actionView(savedState);
                     break;
+                case ACTION_ASK_OVERWRITE:
+                    actionAskOverwrite();
+                    break;
+                case Intent.ACTION_SEND:
+                case Intent.ACTION_SEND_MULTIPLE:
                 case Intent.ACTION_MAIN:
                 default:
                     actionMain(savedState);
@@ -594,6 +555,14 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
     }
 
     @Override
+    protected void onResume()
+    {
+        super.onResume();
+        if(GlobalConfig.isTest())
+            TEST_INIT_OBSERVABLE.onNext(true);
+    }
+
+    @Override
 	protected void onDestroy ()
 	{
         unregisterReceiver(_locationAddedOrRemovedReceiver);
@@ -605,10 +574,8 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 
     protected abstract DrawerController createDrawerController();
 
-    private static final int REQUEST_EXT_STORAGE_PERMISSIONS = 2;
     protected static final String FOLDER_MIME_TYPE = "resource/folder";
     protected final DrawerController _drawer = createDrawerController();
-    protected final ActivityResultHandler _resHandler = new ActivityResultHandler();
     protected boolean _isLargeScreenLayout;
     protected UserSettings _settings;
 
@@ -707,111 +674,58 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
         }
     };
 
-    private void actionMain(Bundle savedState) throws Exception
+    protected void actionMain(Bundle savedState) throws Exception
     {
         if(savedState == null)
         {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || checkExtStoragePermissions())
-                initActionMain();
+            if(getIntent().getData() == null)
+                _drawer.showContainers();
+            showPromoDialogIfNeeded();
         }
-        else
-            restoreActionCommon(savedState);
-    }
-
-    private void actionSend(Bundle savedState)
-    {
-        if(savedState == null)
-            initActionSend();
-        else
-            restoreActionCommon(savedState);
     }
 
     private void actionView(Bundle savedState) throws Exception
     {
         if(savedState == null)
-            initActionView();
-        else
-            restoreActionCommon(savedState);
-    }
-
-    protected void initActionCommon()
-    {
-        FragmentTransaction trans = getFragmentManager().beginTransaction();
-        trans.add(FileListDataFragment.newInstance(), FileListDataFragment.TAG);
-        trans.add(R.id.fragment1, FileListViewFragment.newInstance(), FileListViewFragment.TAG);
-        trans.commit();
-    }
-
-    private void initActionView() throws IOException
-    {
-        Uri dataUri = getIntent().getData();
-        if(dataUri!=null)
         {
-            String mime = getIntent().getType();
-            if(!FOLDER_MIME_TYPE.equalsIgnoreCase(mime))
+            Uri dataUri = getIntent().getData();
+            if(dataUri!=null)
             {
-                getFragmentManager().
-                        beginTransaction().
-                        add(
-                                CheckStartPathTask.newInstance(dataUri, false),
-                                CheckStartPathTask.TAG
-                        ).
-                        commit();
-                return;
+                String mime = getIntent().getType();
+                if(!FOLDER_MIME_TYPE.equalsIgnoreCase(mime))
+                {
+                    getFragmentManager().
+                            beginTransaction().
+                            add(
+                                    CheckStartPathTask.newInstance(dataUri, false),
+                                    CheckStartPathTask.TAG
+                            ).
+                            commit();
+                    setIntent(new Intent());
+                }
             }
-
         }
+    }
+
+    private void actionAskOverwrite() throws Exception
+    {
+        AskOverwriteDialog.showDialog(
+                getFragmentManager(),
+                getIntent().getExtras()
+        );
         setIntent(new Intent());
-        initActionMain();
     }
 
-
-    private void restoreActionCommon(Bundle state)
+    protected void addFileListFragments()
     {
-        _drawer.init(state);
-    }
-
-    private void initActionSend()
-    {
-        initActionCommon();
-        _drawer.init(null);
-    }
-
-    @TargetApi(Build.VERSION_CODES.M)
-    private boolean checkExtStoragePermissions()
-    {
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED
-            || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+        FragmentManager fm = getFragmentManager();
+        if(fm.findFragmentByTag(FileListDataFragment.TAG) == null)
         {
-            requestExtStoragePermission();
-            return false;
+            FragmentTransaction trans = getFragmentManager().beginTransaction();
+            trans.add(FileListDataFragment.newInstance(), FileListDataFragment.TAG);
+            trans.add(R.id.fragment1, FileListViewFragment.newInstance(), FileListViewFragment.TAG);
+            trans.commit();
         }
-        return true;
-    }
-
-    @TargetApi(Build.VERSION_CODES.M)
-    private boolean requestExtStoragePermissionWithRationale()
-    {
-        if (shouldShowRequestPermissionRationale(
-                Manifest.permission.READ_EXTERNAL_STORAGE)
-                || shouldShowRequestPermissionRationale(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE))
-        {
-            AskPrimaryStoragePermissionDialog.showDialog(getFragmentManager());
-            return false;
-        }
-        return true;
-    }
-
-    @TargetApi(Build.VERSION_CODES.M)
-    public void requestExtStoragePermission()
-    {
-        requestPermissions(
-                new String[] {
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                },
-                REQUEST_EXT_STORAGE_PERMISSIONS);
     }
 
     protected void showSecondaryFragment(Fragment f, String tag)
@@ -833,6 +747,7 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
 
     protected boolean hideSecondaryFragment()
     {
+        Logger.debug(TAG + ": hideSecondaryFragment");
         FragmentManager fm = getFragmentManager();
         Fragment f = fm.findFragmentById(R.id.fragment2);
         if(f!=null)
@@ -874,30 +789,21 @@ public abstract class FileManagerActivityBase extends Activity implements Previe
             startActivity(new Intent(this, VersionHistory.class));
     }
 
-    public boolean isInited()
-    {
-        return _testIsInited;
-    }
-
-
-    private boolean _testIsInited;
-
-    private FilePropertiesFragment showPropertiesFragment(BrowserRecord currentFile)
+    private void showPropertiesFragment(BrowserRecord currentFile)
 	{
 		FilePropertiesFragment f = FilePropertiesFragment.newInstance(currentFile == null ? null : currentFile.getPath());
 		showSecondaryFragment(f, FilePropertiesFragment.TAG);
-		return f;
-	}
+    }
 
-    private PreviewFragment showPreviewFragment(Path currentImage)
+    private void showPreviewFragment(Path currentImage)
     {
         PreviewFragment f = PreviewFragment.newInstance(currentImage);
         showSecondaryFragment(f, PreviewFragment.TAG);
-        return f;
     }
 
     private void closeIntegratedViewer()
     {
+        Logger.debug(TAG + ": closeIntegratedViewer");
         hideSecondaryFragment();
     }
 }

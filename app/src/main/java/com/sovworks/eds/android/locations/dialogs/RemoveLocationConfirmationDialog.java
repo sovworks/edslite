@@ -12,8 +12,6 @@ import com.sovworks.eds.locations.Location;
 
 public class RemoveLocationConfirmationDialog extends ConfirmationDialog
 {
-    public static final String ARG_LOCATION_TITLE = "com.sovworks.eds.android.LOCATION_TITLE";
-
     public static final String TAG = "RemoveLocationConfirmationDialog";
 
     public static void showDialog(FragmentManager fm, Location loc)

@@ -26,7 +26,15 @@ public class ExternalStorageOpenerFragment extends LocationOpenerBaseFragment
 {
     public static class CheckLocationWritableTaskFragment extends TaskFragment
     {
+        enum ResultType
+        {
+            OK,
+            AskPermission,
+            DontAskPermission
+        }
+
         public static final String TAG = "CheckLocationWritableTaskFragment";
+
         @Override
         protected void initTask(Activity activity)
         {
@@ -37,7 +45,11 @@ public class ExternalStorageOpenerFragment extends LocationOpenerBaseFragment
         protected void doWork(TaskState state) throws Throwable
         {
             ExternalStorageLocation loc = getTargetLocation();
-            state.setResult(isWritable(loc));
+            DocumentTreeLocation docTreeLocation = getDocTreeLocation(_lm, loc);
+            if(docTreeLocation != null && docTreeLocation.getFS().getRootPath().exists())
+                state.setResult(ResultType.OK);
+            else
+                state.setResult(isWritable(loc) ? ResultType.DontAskPermission : ResultType.AskPermission);
         }
 
         private boolean isWritable(ExternalStorageLocation loc)
@@ -90,7 +102,9 @@ public class ExternalStorageOpenerFragment extends LocationOpenerBaseFragment
                 {
                     try
                     {
-                        if(!(Boolean)result.getResult())
+                        if(result.getResult() == ResultType.OK)
+                            f.openLocation();
+                        else if(result.getResult() == ResultType.AskPermission)
                         {
                             f.askWritePermission();
                             return;
@@ -128,6 +142,11 @@ public class ExternalStorageOpenerFragment extends LocationOpenerBaseFragment
         openLocation();
     }
 
+    public void cancelOpen()
+    {
+        finishOpener(false, null);
+    }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void showSystemDialog()
     {
@@ -145,23 +164,26 @@ public class ExternalStorageOpenerFragment extends LocationOpenerBaseFragment
             if(resultCode == Activity.RESULT_OK)
             {
                 Uri treeUri = data.getData();
-                try
+                if(treeUri!=null)
                 {
-                    getActivity().getContentResolver().takePersistableUriPermission(treeUri,
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                }
-                catch (SecurityException e)
-                {
-                    Logger.log(e);
-                }
+                    try
+                    {
+                        getActivity().getContentResolver().takePersistableUriPermission(treeUri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    }
+                    catch (SecurityException e)
+                    {
+                        Logger.log(e);
+                    }
 
-                DocumentTreeLocation loc = new DocumentTreeLocation(getActivity().getApplicationContext(), treeUri);
-                loc.getExternalSettings().setVisibleToUser(false);
-                loc.saveExternalSettings();
-                LocationsManager.getLocationsManager(getActivity()).addNewLocation(loc, true);
-                ExternalStorageLocation tloc = getTargetLocation();
-                tloc.getExternalSettings().setDocumentsAPIUriString(loc.getLocationUri().toString());
-                tloc.saveExternalSettings();
+                    DocumentTreeLocation loc = new DocumentTreeLocation(getActivity().getApplicationContext(), treeUri);
+                    loc.getExternalSettings().setVisibleToUser(false);
+                    loc.saveExternalSettings();
+                    LocationsManager.getLocationsManager(getActivity()).addNewLocation(loc, true);
+                    ExternalStorageLocation tloc = getTargetLocation();
+                    tloc.getExternalSettings().setDocumentsAPIUriString(loc.getLocationUri().toString());
+                    tloc.saveExternalSettings();
+                }
                 openLocation();
             }
         }
@@ -207,6 +229,23 @@ public class ExternalStorageOpenerFragment extends LocationOpenerBaseFragment
     String getCheckWritableTaskTag(Location loc)
     {
         return CheckLocationWritableTaskFragment.TAG + loc.getId();
+    }
+
+    private static DocumentTreeLocation getDocTreeLocation(LocationsManager lm, ExternalStorageLocation extLoc)
+    {
+        String docUri = extLoc.getExternalSettings().getDocumentsAPIUriString();
+        if (docUri != null)
+        {
+            try
+            {
+                return (DocumentTreeLocation) lm.getLocation(Uri.parse(docUri));
+            }
+            catch (Exception e)
+            {
+                Logger.log(e);
+            }
+        }
+        return null;
     }
 
     private void startCheckWritableTask(Location loc)

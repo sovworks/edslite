@@ -90,11 +90,6 @@
             android:name=".locations.activities.OpenLocationsActivity"
             android:excludeFromRecents="true"/>
         <activity
-            android:name=".activities.AskOverwriteActivity"
-            android:theme="@style/Dialog"
-            android:excludeFromRecents="true"
-            android:label="@string/overwrite"/>
-        <activity
             android:name=".activities.VersionHistory"
             android:label="@string/version_history"/>
         <activity

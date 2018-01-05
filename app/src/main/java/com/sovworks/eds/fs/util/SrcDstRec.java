@@ -3,11 +3,13 @@ package com.sovworks.eds.fs.util;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 
 import com.sovworks.eds.android.Logger;
-import com.sovworks.eds.locations.LocationsManager;
+import com.sovworks.eds.fs.Directory;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.locations.Location;
+import com.sovworks.eds.locations.LocationsManager;
 import com.sovworks.eds.locations.LocationsManagerBase;
 
 import java.io.IOException;
@@ -17,7 +19,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class SrcDstRec implements SrcDstCollection
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
+
+public class SrcDstRec implements SrcDstCollection, SrcDstCollection.SrcDst
 {
 	public static SrcDstCollection fromPathsNoDest(Location srcLoc, boolean dirLast, Path... srcPaths)
 	{
@@ -46,9 +51,9 @@ public class SrcDstRec implements SrcDstCollection
 		ArrayList<SrcDstCollection> res = new ArrayList<>(srcPaths.size());
 		for(Path p: srcPaths)
 		{
-			Location l = srcLoc.copy();
-			l.setCurrentPath(p);
-            SrcDstRec sdr = new SrcDstRec(l, dstLoc);
+			Location nextSrcLoc = srcLoc.copy();
+			nextSrcLoc.setCurrentPath(p);
+            SrcDstRec sdr = new SrcDstRec(new SrcDstSingle(nextSrcLoc, dstLoc));
             sdr.setIsDirLast(dirLast);
 			res.add(sdr);
 		}
@@ -69,7 +74,7 @@ public class SrcDstRec implements SrcDstCollection
 					boolean dirLast = in.readByte() == 1;
 					if(srcLoc != null)
 					{
-						SrcDstRec sdr = new SrcDstRec(srcLoc, dstLoc);
+						SrcDstRec sdr = new SrcDstRec( new SrcDstSingle(srcLoc, dstLoc));
 						sdr.setIsDirLast(dirLast);
 						return sdr;
 					}
@@ -88,10 +93,9 @@ public class SrcDstRec implements SrcDstCollection
 			}
 	};
 	
-	public SrcDstRec(Location srcLoc,Location dstLoc)
+	public SrcDstRec(SrcDstCollection.SrcDst topElement)
 	{
-		_srcLocation = srcLoc;
-		_dstLocation = dstLoc;				
+		_topElement = topElement;
 	}
 	
 	public void setIsDirLast(boolean val)
@@ -99,13 +103,14 @@ public class SrcDstRec implements SrcDstCollection
 		_dirLast = val;
 	}
 
+	@NonNull
 	@Override
 	public Iterator<SrcDstCollection.SrcDst> iterator()
 	{
-		SrcDst list = getSrcTree();
-        if(list == null)
-            throw new IllegalStateException("Source path doesn't exist");
-		return new SrcTreeIterator(list);
+		return observeTree(this, _dirLast).
+				subscribeOn(Schedulers.newThread()).
+				blockingIterable(100).
+				iterator();
 	}
 	
 	@Override
@@ -117,231 +122,132 @@ public class SrcDstRec implements SrcDstCollection
 	@Override
 	public void writeToParcel(Parcel dest, int flags)
 	{
-		dest.writeParcelable(_srcLocation.getLocationUri(), flags);
-		dest.writeParcelable(_dstLocation == null ? Uri.EMPTY : _dstLocation.getLocationUri(), flags);
-        dest.writeByte((byte) (_dirLast ? 1 : 0));
+		try
+		{
+			Location srcLocation = _topElement.getSrcLocation();
+			Location dstLocation = _topElement.getDstLocation();
+			dest.writeParcelable(srcLocation.getLocationUri(), flags);
+			dest.writeParcelable(dstLocation == null ? Uri.EMPTY : dstLocation.getLocationUri(), flags);
+			dest.writeByte((byte) (_dirLast ? 1 : 0));
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 
-	private Location _srcLocation,_dstLocation;
+	@Override
+	public Location getSrcLocation() throws IOException
+	{
+		return _topElement.getSrcLocation();
+	}
 
-    private SrcDst _srcTree;
+	@Override
+	public Location getDstLocation() throws IOException
+	{
+		return _topElement.getDstLocation();
+	}
+
+
+	private final SrcDstCollection.SrcDst _topElement;
+	private List<SrcDstRec> _subElements;
     private boolean _dirLast;
 
-    private SrcDst getSrcTree()
+    private List<SrcDstRec> getSubElements()
     {
-        if(_srcTree == null)
+        if(_subElements == null)
         {
             try
             {
-                if(_srcLocation.getCurrentPath().exists())
-                {
-                    _srcTree = buildSrcSubTree(_srcLocation.getCurrentPath());
-                    _srcTree._curDstLocation = _dstLocation;
-                }
+                _subElements = listSubElements();
             }
             catch (IOException e)
             {
                 throw new RuntimeException(e);
             }
         }
-        return _srcTree;
+        return _subElements;
     }
 
-	private class SrcTreeIterator implements Iterator<SrcDstCollection.SrcDst>
+
+	private static Observable<SrcDst> observeTree(SrcDstRec tree, boolean isDirLast)
 	{
-        SrcTreeIterator(SrcDst start)
-		{
-			_start = _first = start;
-		}
-
-		@Override
-		public boolean hasNext()
-		{
-			if(!_inited)
-				getNext();
-			return _next!=null;
-		}
-
-		@Override
-		public SrcDstCollection.SrcDst next()
-		{
-			if(!_inited)
-				getNext();
-			if(_next == null)
-				throw new IllegalStateException("No more elements");
-			SrcDstCollection.SrcDst next = _next;
-			getNext();
-			return next;
-		}
-
-		@Override
-		public void remove()
-		{
-			throw new UnsupportedOperationException();
-		}
-
-		private final SrcDst _start;
-		private Iterator<SrcDst> _currentFolderIterator;
-        private Location _subDstLocation;
-		private SrcTreeIterator _recursiveIterator;
-		private SrcDstCollection.SrcDst _next;
-		private SrcDst _first, _last;
-		private boolean _inited;
-
-		private synchronized boolean getNext()
-		{
-			_inited = true;
-			_next = null;
-			return checkFirst() || checkRecursive() || checkCurrentFolder() || checkLast();
-		}
-
-		private boolean checkFirst()
-		{
-			if(_first!=null)
-			{
-				if(_first._subTree != null)
-				{
-					_currentFolderIterator = _first._subTree.iterator();
-					if(_dirLast)
-					{
-						_last = _first;
-						_first = null;
-					}
-					else
-					{
-						_next = _first;
-						_first = null;
-						return true;
-					}
-				}
-				else
-				{
-					_next = _first;
-					_first = null;
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private boolean checkRecursive()
-		{
-			if(_recursiveIterator!=null && _recursiveIterator.hasNext())
-			{
-				_next = _recursiveIterator.next();
-				return true;
-			}
-			return false;
-		}
-
-		private boolean checkCurrentFolder()
-		{
-			if(_currentFolderIterator != null && _currentFolderIterator.hasNext())
-			{
-				SrcDst sub = _currentFolderIterator.next();
-                sub._curDstLocation = getSubDstLocation();
-				_recursiveIterator = new SrcTreeIterator(sub);
-				return getNext();
-			}
-			return false;
-		}
-
-        private Location getSubDstLocation()
-        {
-            if(_subDstLocation == null)
-                _subDstLocation = calcSubDestLocation();
-            return _subDstLocation;
-        }
-
-        private Location calcSubDestLocation()
-        {
-            if(_start._curDstLocation!=null)
-            {
-                Location loc = _start._curDstLocation.copy();
-                try
-                {
-                    loc.setCurrentPath(PathUtil.getDirectory(_start.
-								_curDstLocation.
-								getCurrentPath(),
-								_start.
-										_curSrcLocation.
-										getCurrentPath().
-										getDirectory().
-										getName()
-							).
-							getPath()
-
-                    );
-                    return loc;
-                }
-                catch (IOException e)
-                {
-                    Logger.log(e);
-                }
-            }
-            return null;
-        }
-
-		private boolean checkLast()
-		{
-			if(_last != null)
-			{
-				_next = _last;
-				_last = null;
-				return true;
-			}
-			return false;
-		}
+		return Observable.create(emitter -> {
+			if(!isDirLast)
+				emitter.onNext(tree);
+			for(SrcDstRec sdc : tree.getSubElements())
+				observeTree(sdc, isDirLast).
+                        subscribe(emitter::onNext, emitter::onError);
+			if(isDirLast)
+				emitter.onNext(tree);
+			emitter.onComplete();
+		});
 	}
 
-	private class SrcDst implements SrcDstCollection.SrcDst
+	private List<SrcDstRec> listSubElements() throws IOException
 	{
-		SrcDst(Location srcLocation)
-		{
-			_curSrcLocation = srcLocation;
-		}
+		ArrayList<SrcDstRec> res = new ArrayList<>();
+		Location srcLocation = _topElement.getSrcLocation();
+		Path startPath = srcLocation.getCurrentPath();
+        if(startPath == null || !startPath.isDirectory())
+            return res;
 
-		@Override
-		public Location getSrcLocation() throws IOException
-		{
-			return _curSrcLocation;
-		}
-
-		@Override
-		public Location getDstLocation() throws IOException
-		{
-			return _curDstLocation;
-		}
-
-		private final Location _curSrcLocation;
-		private Location _curDstLocation;
-		private List<SrcDst> _subTree;
-	}
-
-	private SrcDst buildSrcSubTree(Path srcPath) throws IOException
-	{
-        if(srcPath == null)
-            return null;
-
-        Location srcLoc = _srcLocation.copy();
-        srcLoc.setCurrentPath(srcPath);
-		SrcDst res = new SrcDst(srcLoc);
-		if(!srcPath.isDirectory())
-			return res;
-
-		ArrayList<SrcDst> sub = new ArrayList<>();
-		com.sovworks.eds.fs.Directory.Contents dc = srcPath.getDirectory().list();
+        Directory directory = startPath.getDirectory();
+        String directoryName = directory.getName();
+		com.sovworks.eds.fs.Directory.Contents dc = directory.list();
 		try
 		{
 			for(Path subPath: dc)
-				sub.add(buildSrcSubTree(subPath));
+			{
+				Location subSrcLocation = srcLocation.copy();
+				subSrcLocation.setCurrentPath(subPath);
+				SrcDstCollection.SrcDst subSrcDst = new SrcDstCollection.SrcDst()
+				{
+					@Override
+					public Location getSrcLocation() throws IOException
+					{
+						return subSrcLocation;
+					}
+
+					@Override
+					public Location getDstLocation() throws IOException
+					{
+						if(_dstLocationCache == null)
+							_dstLocationCache = calcSubDestLocation(_topElement, directoryName);
+						return _dstLocationCache;
+					}
+					private Location _dstLocationCache;
+				};
+				res.add(new SrcDstRec(subSrcDst));
+			}
 		}
 		finally
 		{
 			dc.close();
 		}
-		res._subTree = sub;
 		return res;
+	}
+
+	private static Location calcSubDestLocation(SrcDstCollection.SrcDst parentSrcDst, String nextDirName) throws IOException
+	{
+		Location loc = parentSrcDst.getDstLocation();
+		if(loc == null)
+			return null;
+		try
+		{
+		    loc = loc.copy();
+            Path dstSubPath = PathUtil.getDirectory(
+                    loc.getCurrentPath(),
+                    nextDirName
+            ).getPath();
+		    loc.setCurrentPath(dstSubPath);
+			return loc;
+		}
+		catch (IOException e)
+		{
+			Logger.log(e);
+		}
+		return null;
 	}
 }
 

@@ -16,7 +16,7 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
 {
 	public static class FileOperationParam
 	{
-		public FileOperationParam(Intent i)
+		FileOperationParam(Intent i)
 		{
 			_intent = i;			
 		}
@@ -50,6 +50,8 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
         updateUIOnTime();
 		_currentStatus = initStatus(_param.getRecords());
 		processSrcDstCollection(_param.getRecords());
+		if(_error!=null)
+			throw _error;
 		return null;
 	}
 	
@@ -60,7 +62,7 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
         broadcastCompleted();
 	}
 	
-	protected FilesOperationStatus _currentStatus;
+	FilesOperationStatus _currentStatus;
 	
 	abstract protected FilesOperationStatus initStatus(SrcDstCollection records);
 	abstract protected boolean processRecord(SrcDst record) throws Exception;
@@ -83,7 +85,7 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
 		return R.string.copying_files;
 	}
 	
-	protected void updateNotificationProgress()
+	private void updateNotificationProgress()
 	{
         _notificationBuilder.setProgress(100, getProgress(), false);
         _notificationBuilder.setContentText(getNotificationText());
@@ -108,7 +110,6 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
 			return (int) ((_currentStatus.processed.totalSize / (float) _currentStatus.total.totalSize) * 100);
         return 0;
     }
-
 	
 	@Override
     protected NotificationCompat.Builder initNotification()
@@ -125,8 +126,14 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
 				break;
 		}
 	}
+
+	void setError(Throwable err)
+	{
+		if(_error == null || err == null)
+			_error = err;
+	}
 	
-	protected void incProcessedSize(int inc)
+	void incProcessedSize(int inc)
 	{
 		//int prevPrc = (int) ((_currentStatus.processed.totalSize / (float) _currentStatus.total.totalSize) * 100);
 		_currentStatus.processed.totalSize += inc;
@@ -136,7 +143,7 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
 			
 	}
 	
-	protected void broadcastCompleted()
+	private void broadcastCompleted()
 	{
 		_context.sendBroadcast(new Intent(FileOpsService.BROADCAST_FILE_OPERATION_COMPLETED));
 	}	
@@ -147,5 +154,7 @@ public abstract class FileOperationTaskBase extends	ServiceTaskWithNotificationB
 	}
 	
 	private FileOperationParam _param;
+    private Throwable _error;
+
 
 }

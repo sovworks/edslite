@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 
@@ -974,8 +975,7 @@ public abstract class LocationsManagerBase
 			{
 				if(si.isExternal)
 				{
-					File f = new File(si.path);
-					if(f.isDirectory())
+					if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP || new File(si.path).isDirectory())
 					{
 						Location extLoc = new ExternalStorageLocation(_context, si.label, si.path, null);
 						extLoc.getFS(); //pre-create fs to use the same fs instance everywhere

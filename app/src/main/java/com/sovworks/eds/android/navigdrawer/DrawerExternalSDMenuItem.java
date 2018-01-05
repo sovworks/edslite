@@ -22,7 +22,7 @@ public class DrawerExternalSDMenuItem extends DrawerLocationMenuItem
         }
     }
 
-    public DrawerExternalSDMenuItem(Location location, DrawerControllerBase drawerController, boolean allowDocumentsAPI)
+    DrawerExternalSDMenuItem(Location location, DrawerControllerBase drawerController, boolean allowDocumentsAPI)
     {
         super(location, drawerController);
         _allowDocumentsAPI = allowDocumentsAPI;

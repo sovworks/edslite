@@ -64,9 +64,9 @@ public abstract class DrawerMenuItemBase
 
     public void updateView(View view, @SuppressWarnings("UnusedParameters") int position)
     {
-        TextView tv = (TextView)view.findViewById(android.R.id.text1);
+        TextView tv = view.findViewById(android.R.id.text1);
         tv.setText(getTitle());
-        ImageView iconView = (ImageView) view.findViewById(android.R.id.icon);
+        ImageView iconView = view.findViewById(android.R.id.icon);
         if(iconView!=null)
         {
             iconView.setContentDescription(getTitle());

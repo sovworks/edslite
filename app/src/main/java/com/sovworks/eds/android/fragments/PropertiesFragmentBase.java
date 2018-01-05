@@ -20,7 +20,7 @@ public abstract class PropertiesFragmentBase extends Fragment implements Propert
     public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         View view = inflater.inflate(R.layout.properties_fragment, container, false);
-        _propertiesView = (PropertiesView) view.findViewById(R.id.list);
+        _propertiesView = view.findViewById(R.id.list);
         createProperties();
         initProperties(savedInstanceState);
         return view;

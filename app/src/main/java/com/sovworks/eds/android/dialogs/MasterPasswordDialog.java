@@ -14,11 +14,57 @@ import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.crypto.SecureBuffer;
 import com.sovworks.eds.settings.GlobalConfig;
 import com.sovworks.eds.settings.Settings;
+import com.trello.rxlifecycle2.components.RxActivity;
+
+import io.reactivex.Single;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 
 import static com.sovworks.eds.android.settings.UserSettingsCommon.SETTINGS_PROTECTION_KEY_CHECK;
 
 public class MasterPasswordDialog extends PasswordDialog
 {
+    public static final String TAG = "com.sovworks.eds.android.dialogs.MasterPasswordDialog";
+    public static final String ARG_IS_OBSERVABLE = "com.sovworks.eds.android.IS_OBSERVABLE";
+
+    public static Single<Boolean> getObservable(RxActivity activity)
+    {
+        UserSettings s = UserSettings.getSettings(activity);
+        long curTime = SystemClock.elapsedRealtime();
+        long lastActTime = EdsApplication.getLastActivityTime();
+        if(curTime - lastActTime > GlobalConfig.CLEAR_MASTER_PASS_INACTIVITY_TIMEOUT)
+        {
+            Logger.debug("Clearing settings protection key");
+            EdsApplication.clearMasterPassword();
+            s.clearSettingsProtectionKey();
+        }
+        EdsApplication.updateLastActivityTime();
+        try
+        {
+            s.getSettingsProtectionKey();
+        }
+        catch(Settings.InvalidSettingsPassword e)
+        {
+            FragmentManager fm = activity.getFragmentManager();
+            MasterPasswordDialog mpd = (MasterPasswordDialog) fm.findFragmentByTag(TAG);
+            if(mpd == null)
+            {
+                MasterPasswordDialog masterPasswordDialog = new MasterPasswordDialog();
+                Bundle args = new Bundle();
+                args.putBoolean(ARG_IS_OBSERVABLE, true);
+                masterPasswordDialog.setArguments(args);
+                return masterPasswordDialog.
+                        _passwordCheckSubject.
+                        doOnSubscribe(subscription ->
+                                masterPasswordDialog.show(fm, TAG)).
+                        firstOrError();
+            }
+            return mpd.
+                    _passwordCheckSubject.
+                    firstOrError();
+        }
+        return Single.just(true);
+    }
 
     public static boolean checkSettingsKey(Context context)
     {
@@ -94,6 +140,26 @@ public class MasterPasswordDialog extends PasswordDialog
     {
         EdsApplication.setMasterPassword(new SecureBuffer(getPassword()));
         if(checkSettingsKey(getActivity()))
-            super.onPasswordEntered();
+        {
+            Bundle args = getArguments();
+            if(args!=null && args.getBoolean(ARG_IS_OBSERVABLE))
+                _passwordCheckSubject.onNext(true);
+            else
+                super.onPasswordEntered();
+        }
+        else
+            onPasswordNotEntered();
     }
+
+    @Override
+    protected void onPasswordNotEntered()
+    {
+        Bundle args = getArguments();
+        if(args!=null && args.getBoolean(ARG_IS_OBSERVABLE))
+            _passwordCheckSubject.onNext(false);
+        else
+            super.onPasswordNotEntered();
+    }
+
+    private final Subject<Boolean> _passwordCheckSubject = BehaviorSubject.create();
 }

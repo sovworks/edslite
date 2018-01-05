@@ -5,15 +5,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 
-import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
-import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
-
-import java.io.IOException;
+import com.sovworks.eds.android.filemanager.fragments.ExtStorageWritePermisisonCheckFragment;
 
 public class AskPrimaryStoragePermissionDialog extends DialogFragment
 {
@@ -30,33 +26,20 @@ public class AskPrimaryStoragePermissionDialog extends DialogFragment
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setMessage(R.string.storage_permission_desc)
                 .setPositiveButton(R.string.grant,
-                        new DialogInterface.OnClickListener()
-                        {
-                            public void onClick(DialogInterface dialog, int id)
-                            {
-                                dialog.dismiss();
-								FileManagerActivity act = (FileManagerActivity) getActivity();
-								if(act!=null)
-									act.requestExtStoragePermission();
-							}
+						(dialog, id) ->
+						{
+                            dialog.dismiss();
+							ExtStorageWritePermisisonCheckFragment stateFragment = (ExtStorageWritePermisisonCheckFragment) getFragmentManager().findFragmentByTag(ExtStorageWritePermisisonCheckFragment.TAG);
+							if(stateFragment!=null)
+								stateFragment.requestExtStoragePermission();
                         })
 				.setNegativeButton(android.R.string.cancel,
-						new DialogInterface.OnClickListener()
+						(dialog, id) ->
 						{
-							public void onClick(DialogInterface dialog, int id)
-							{
-								FileManagerActivity act = (FileManagerActivity) getActivity();
-								if(act!=null)
-									try
-									{
-										act.initActionMain();
-									}
-									catch (IOException e)
-									{
-										Logger.showAndLog(getActivity(), e);
-									}
-							}
-						});
+							ExtStorageWritePermisisonCheckFragment stateFragment = (ExtStorageWritePermisisonCheckFragment) getFragmentManager().findFragmentByTag(ExtStorageWritePermisisonCheckFragment.TAG);
+							if(stateFragment!=null)
+								stateFragment.cancelExtStoragePermissionRequest();
+                        });
 		return builder.create();		
 	}
 

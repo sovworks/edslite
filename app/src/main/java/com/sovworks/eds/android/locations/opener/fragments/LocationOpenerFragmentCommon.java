@@ -42,7 +42,7 @@ public class LocationOpenerFragmentCommon extends LocationOpenerBaseFragment imp
             location.setOpeningProgressReporter(_openingProgressReporter);
 
             if(param.containsKey(Openable.PARAM_PASSWORD))
-                location.setPassword((SecureBuffer) param.getParcelable(Openable.PARAM_PASSWORD));
+                location.setPassword(param.getParcelable(Openable.PARAM_PASSWORD));
             if(param.containsKey(Openable.PARAM_KDF_ITERATIONS))
                 location.setNumKDFIterations(param.getInt(Openable.PARAM_KDF_ITERATIONS));
 

@@ -38,11 +38,11 @@ public abstract class ServiceTaskWithNotificationBase implements Task
 		return _isCancelled;
 	}
 
-	protected boolean _isCancelled;
+	private boolean _isCancelled;
 	protected Context _context;
-    protected NotificationCompat.Builder _notificationBuilder;
-	protected long _prevUpdateTime;
-	protected int _taskId;
+    NotificationCompat.Builder _notificationBuilder;
+	private long _prevUpdateTime;
+	private int _taskId;
 
     protected void initTask(Context context, Intent i) throws Exception
     {
@@ -61,7 +61,7 @@ public abstract class ServiceTaskWithNotificationBase implements Task
 		return Logger.getExceptionMessage(_context, ex);
 	}
 
-	protected String getErrorDetails(Throwable ex)
+	private String getErrorDetails(Throwable ex)
 	{
 		String msg = ex.getLocalizedMessage();
 		if(msg == null)
@@ -73,13 +73,13 @@ public abstract class ServiceTaskWithNotificationBase implements Task
 		return msg;
 	}
 
-	protected void reportError(Throwable err)
+	void reportError(Throwable err)
 	{
 		Logger.log(err);
 		showNotificationMessage(getErrorMessage(err), getErrorDetails(err));
 	}
 	
-	protected void showNotificationMessage(String title, String message)
+	private void showNotificationMessage(String title, String message)
 	{
 		if(title == null)
 			return;
@@ -95,10 +95,11 @@ public abstract class ServiceTaskWithNotificationBase implements Task
         nb.setContentIntent(pi);
 
         NotificationManager nm = (NotificationManager) _context.getSystemService(Context.NOTIFICATION_SERVICE);
-		nm.notify(FileOpsService.getNewNotificationId(), nb.build());
+        if(nm!=null)
+			nm.notify(FileOpsService.getNewNotificationId(), nb.build());
 	}
 	
-	protected ServiceTaskWithNotificationBase()
+	ServiceTaskWithNotificationBase()
 	{
 	}	
 
@@ -126,19 +127,22 @@ public abstract class ServiceTaskWithNotificationBase implements Task
         return nb;
     }
 
-    protected void removeNotification()
+    void removeNotification()
     {
         NotificationManager nm = (NotificationManager) _context.getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.cancel(_taskId);
-    }
+		if (nm != null)
+			nm.cancel(_taskId);
 
-    protected void updateNotification()
+	}
+
+    private void updateNotification()
     {
         NotificationManager nm = (NotificationManager) _context.getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.notify(_taskId, _notificationBuilder.build());
-    }
+		if (nm != null)
+			nm.notify(_taskId, _notificationBuilder.build());
+	}
 
-	protected void updateUIOnTime()
+	void updateUIOnTime()
 	{
 		long time = SystemClock.uptimeMillis();
 		if(time-_prevUpdateTime>1000)

@@ -3,6 +3,7 @@ package com.sovworks.eds.fs.util;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.fs.util.SrcDstCollection.SrcDst;
@@ -50,12 +51,8 @@ public class SrcDstSingle implements SrcDstCollection, SrcDst
 		_srcLocation = srcLoc;
 		_dstLocation = dstLoc;
 	}
-	
-	public SrcDstSingle(SrcDst from) throws IOException
-	{
-		this(from.getSrcLocation(),from.getDstLocation());
-	}
-	
+
+	@NonNull
 	public Iterator<SrcDst> iterator()
 	{
 		return new Iterator<SrcDst>()

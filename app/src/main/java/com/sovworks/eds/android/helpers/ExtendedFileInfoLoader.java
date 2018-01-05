@@ -20,8 +20,8 @@ import java.util.NoSuchElementException;
 
 public class ExtendedFileInfoLoader implements Closeable
 {
-    public static final int FB_EXTENDED_INFO_QUEUE_SIZE = 40;
-    public static final int FB_NUM_CACHED_EXTENDED_INFO = 100;
+    private static final int FB_EXTENDED_INFO_QUEUE_SIZE = 40;
+    private static final int FB_NUM_CACHED_EXTENDED_INFO = 100;
 
     public interface ExtendedFileInfo
     {
@@ -30,7 +30,7 @@ public class ExtendedFileInfoLoader implements Closeable
         void clear();
     }
 
-    public static String getPathKey(String locationId,Path path)
+    static String getPathKey(String locationId, Path path)
 	{
 		return String.format("%s/%s",locationId,path.getPathString());
 	}
@@ -69,14 +69,7 @@ public class ExtendedFileInfoLoader implements Closeable
             {
                 if(oldValue!=null)
                 {
-                    _updateViewHandler.post(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            oldValue.clear();
-                        }
-                    });
+                    _updateViewHandler.post(oldValue::clear);
                 }
                 super.entryRemoved(evicted, key, oldValue, newValue);
             }
@@ -184,19 +177,15 @@ public class ExtendedFileInfoLoader implements Closeable
             if (data != null)
             {
                 _loadedInfo.put(ii.getPathKey(), data);
-                _updateViewHandler.post(new Runnable()
+                _updateViewHandler.post(() ->
                 {
-                    @Override
-                    public void run()
+                    if (!ii.discard)
                     {
-                        if (!ii.discard)
-                        {
-                            data.attach(ii.record);
-                            if (!_pause)
-                                ii.record.updateView();
-                        }
-
+                        data.attach(ii.record);
+                        if (!_pause)
+                            ii.record.updateView();
                     }
+
                 });
             }
 		}
@@ -227,37 +216,37 @@ public class ExtendedFileInfoLoader implements Closeable
 
 class InfoCache
 {
-	public InfoCache(String locId, BrowserRecord rec)
+	InfoCache(String locId, BrowserRecord rec)
 	{
 		locationId = locId;
 		record = rec;
 	}
 	
-	public String getPathKey()
+	String getPathKey()
 	{
 		return ExtendedFileInfoLoader.getPathKey(locationId, record.getPath());
 	}
 
 	public final String locationId;
 	public final BrowserRecord record;
-    public boolean discard;
+    boolean discard;
 }
 
 class FileInfoLoadQueue extends AbstractQueue<InfoCache>
 {
 	
 	
-	public FileInfoLoadQueue(int capacity)
+	FileInfoLoadQueue(int capacity)
 	{	
 		_buf = new InfoCache[capacity];
 	}
 	
-	public int getCapacity()
+	int getCapacity()
 	{
 		return _buf.length;
 	}
 
-    public void discard(BrowserRecord rec)
+    void discard(BrowserRecord rec)
     {
         for(int i=0; i<_usedSlots; i++)
         {

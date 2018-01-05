@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioButton;
@@ -113,46 +112,38 @@ public abstract class FsBrowserRecord extends CachedPathInfoBase implements Brow
         //if(isSelected())
         //    //noinspection deprecation
         //    view.setBackgroundDrawable(getSelectedBackgroundDrawable(_context));
-        CheckBox cb = (CheckBox) view.findViewById(android.R.id.checkbox);
+        CheckBox cb = view.findViewById(android.R.id.checkbox);
         if(cb!=null)
         {
             if(allowSelect() && (_host.isSelectAction() || hf.isInSelectionMode()) && (!_host.isSelectAction() || !_host.isSingleSelectionMode()))
             {
                 cb.setOnCheckedChangeListener(null);
                 cb.setChecked(isSelected());
-                cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+                cb.setOnCheckedChangeListener((compoundButton, isChecked) ->
                 {
-                    @Override
-                    public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked)
-                    {
-                        if(isChecked)
-                            hf.selectFile(FsBrowserRecord.this);
-                        else
-                            hf.unselectFile(FsBrowserRecord.this);
-                    }
+                    if(isChecked)
+                        hf.selectFile(FsBrowserRecord.this);
+                    else
+                        hf.unselectFile(FsBrowserRecord.this);
                 });
                 cb.setVisibility(View.VISIBLE);
             }
             else
                 cb.setVisibility(View.INVISIBLE);
         }
-        RadioButton rb = (RadioButton) view.findViewById(R.id.radio);
+        RadioButton rb = view.findViewById(R.id.radio);
         if(rb!=null)
         {
             if(allowSelect() && _host.isSelectAction() && _host.isSingleSelectionMode())
             {
                 rb.setOnCheckedChangeListener(null);
                 rb.setChecked(isSelected());
-                rb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+                rb.setOnCheckedChangeListener((compoundButton, isChecked) ->
                 {
-                    @Override
-                    public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked)
-                    {
-                        if(isChecked)
-                            hf.selectFile(FsBrowserRecord.this);
-                        else
-                           hf.unselectFile(FsBrowserRecord.this);
-                    }
+                    if(isChecked)
+                        hf.selectFile(FsBrowserRecord.this);
+                    else
+                       hf.unselectFile(FsBrowserRecord.this);
                 });
                 rb.setVisibility(View.VISIBLE);
             }
@@ -160,31 +151,27 @@ public abstract class FsBrowserRecord extends CachedPathInfoBase implements Brow
                 rb.setVisibility(View.INVISIBLE);
         }
 
-        TextView tv = (TextView)view.findViewById(android.R.id.text1);
+        TextView tv = view.findViewById(android.R.id.text1);
      	tv.setText(getName());
 
-        ImageView iv = (ImageView)view.findViewById(android.R.id.icon);
+        ImageView iv = view.findViewById(android.R.id.icon);
         iv.setImageDrawable(getDefaultIcon());
         iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        iv.setOnClickListener(new View.OnClickListener()
+        iv.setOnClickListener(view1 ->
         {
-            @Override
-            public void onClick(View view)
+            if (allowSelect())
             {
-                if (allowSelect())
+                if(isSelected())
                 {
-                    if(isSelected())
-                    {
-                        if(!_host.isSelectAction() || !_host.isSingleSelectionMode())
-                            hf.unselectFile(FsBrowserRecord.this);
-                    }
-                    else
-                        hf.selectFile(FsBrowserRecord.this);
+                    if(!_host.isSelectAction() || !_host.isSingleSelectionMode())
+                        hf.unselectFile(FsBrowserRecord.this);
                 }
+                else
+                    hf.selectFile(FsBrowserRecord.this);
             }
         });
 
-        iv = (ImageView)view.findViewById(android.R.id.icon1);
+        iv = view.findViewById(android.R.id.icon1);
         if(_miniIcon == null)
             iv.setVisibility(View.INVISIBLE);
         else

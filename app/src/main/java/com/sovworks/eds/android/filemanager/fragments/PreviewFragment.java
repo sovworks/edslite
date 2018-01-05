@@ -1,17 +1,12 @@
 package com.sovworks.eds.android.filemanager.fragments;
 
 import android.annotation.SuppressLint;
-import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
-import android.media.ExifInterface;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,19 +15,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ViewSwitcher;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.metadata.Directory;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.filemanager.FileManagerFragment;
-import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
+import com.sovworks.eds.android.filemanager.tasks.LoadPathInfoObservable;
+import com.sovworks.eds.android.filemanager.tasks.LoadedImage;
 import com.sovworks.eds.android.helpers.CachedPathInfo;
-import com.sovworks.eds.android.helpers.CompatHelper;
 import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.android.settings.UserSettings;
-import com.sovworks.eds.android.views.GestureImageView;
 import com.sovworks.eds.android.views.GestureImageView.NavigListener;
 import com.sovworks.eds.android.views.GestureImageViewWithFullScreenMode;
 import com.sovworks.eds.exceptions.ApplicationException;
@@ -40,15 +30,24 @@ import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.util.StringPathUtil;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.settings.GlobalConfig;
+import com.trello.rxlifecycle2.components.RxFragment;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.NavigableSet;
+import java.util.concurrent.CancellationException;
+
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 import static com.sovworks.eds.android.settings.UserSettingsCommon.IMAGE_VIEWER_AUTO_ZOOM_ENABLED;
 import static com.sovworks.eds.android.settings.UserSettingsCommon.IMAGE_VIEWER_FULL_SCREEN_ENABLED;
 
-public class PreviewFragment extends Fragment implements FileManagerFragment
+public class PreviewFragment extends RxFragment implements FileManagerFragment
 {
 	public interface Host
 	{
@@ -149,13 +148,43 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
                                                                                                         :
                        getArguments()
             );
+			loadImagePaths();
 		}
 		catch (IOException | ApplicationException e)
 		{
 			Logger.showAndLog(getActivity(), e);
 		}
-
 		setHasOptionsMenu(true);
+	}
+
+	@Override
+	public void onStart()
+	{
+		super.onStart();
+		Logger.debug(TAG + " fragment started");
+		loadImageWhenReady();
+	}
+
+	@Override
+	public void onStop()
+	{
+		super.onStop();
+		Logger.debug(TAG + " fragment stopped");
+
+	}
+
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+		Logger.debug(TAG + " fragment resumed");
+	}
+
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		Logger.debug(TAG + " fragment paused");
 	}
 
 	@Override
@@ -198,25 +227,18 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 				}
 			}
 		});
-		_mainImageView.setOnLoadOptimImageListener(new GestureImageView.OptimImageRequiredListener()
-		{			
-			@Override
-			public void onOptimImageRequired(Rect srcImageRect)
-			{
-				if(_isOptimSupported)
-					loadImage(_currentImagePath, srcImageRect);				
-			}
-		});
-        _mainImageView.setOnSizeChangedListener(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                _mainImageView.getViewRect().round(_viewRect);
-                startLoad();
-            }
-        });
 		_viewSwitcher = view.findViewById(R.id.viewSwitcher);
+		_mainImageView.setOnLoadOptimImageListener(srcImageRect ->
+		{
+            if(_isOptimSupported)
+                loadImage(srcImageRect);
+        });
+        _mainImageView.setOnSizeChangedListener(() ->
+		{
+            _mainImageView.getViewRect().round(_viewRect);
+            _imageViewPrepared.onNext(_viewRect.width() > 0 && _viewRect.height() > 0);
+        });
+
 
 		if(UserSettings.getSettings(getActivity()).isImageViewerFullScreenModeEnabled())
 			_mainImageView.setFullscreenMode(true);
@@ -226,10 +248,10 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 
 	@Override
 	public void onDestroyView()
-	{		
-		cancelTask();
+	{
 		_mainImageView.clearImage();
 		_mainImageView = null;
+		_viewSwitcher = null;
 		super.onDestroyView();		
 	}	
 	
@@ -307,318 +329,6 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 		return super.onOptionsItemSelected(menuItem);
 	}
 
-    /*
-	public float convertPixelsToDp(float px)
-	{		    
-	    return  px / (getResources().getDisplayMetrics().densityDpi / 160f);	    
-	    //return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, px, getResources().getDisplayMetrics());
-	}
-
-
-	public float convertDpToPixel(float dp)
-	{		    
-	    return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());	    
-	}
-	*/
-	
-	public void waitTask()	
-	{
-		synchronized (_taskSync)
-		{
-			if(_loader!=null)
-				_loader.waitIdle();		
-		}		
-	}
-
-	public boolean isLoading()
-	{
-		return _isLoading;
-	}
-
-	public void setOnLoadingCompletedReference(Runnable r)
-    {
-        _onLoadingCompleted = r;
-    }
-
-	private Runnable _onLoadingCompleted;
-
-	/*
-	public Path getCurrentImagePath()
-	{
-		return _currentImagePath;
-	}
-	*/
-
-	private static class ImageLoaderTask
-	{
-		Path imagePath;
-		Rect viewRect;
-		Rect regionRect;
-	}
-	
-	private class ImageLoader extends Thread
-	{		
-		ImageLoader()
-		{
-			_uiHandler = new Handler();
-			PowerManager pm = (PowerManager)getActivity().getSystemService(Context.POWER_SERVICE);
-			_wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LoadImageTask");
-		}
-		
-		@Override
-		public void run()
-		{
-			while(!_stop)
-			{
-				ImageLoaderTask curTask;
-				synchronized (_currentTaskSync)
-				{
-					curTask = _nextTask;
-					_nextTask = null;
-					_currentTaskSync.notify();
-				}				
-				if(curTask == null)
-				{
-					try 
-					{
-						Thread.sleep(POLLING_INTERVAL);
-					} 
-					catch (InterruptedException ignored)
-					{				
-					}
-					continue;
-				}
-				_wakeLock.acquire();
-				try
-				{
-					loadTask(curTask);
-				}
-				finally
-				{
-					_wakeLock.release();
-				}
-				
-			}			
-		}
-		
-		void setNextTask(Path imagePath, Rect viewRect, Rect regionRect)
-		{
-			ImageLoaderTask t = new ImageLoaderTask();
-			t.imagePath = imagePath;
-			t.viewRect = viewRect;
-			t.regionRect = regionRect;
-			synchronized (_currentTaskSync)
-			{
-				_nextTask = t;				
-			}			
-		}
-		
-		public void cancel()
-		{
-			_stop=true;
-		}
-		
-		void waitIdle()
-		{
-			synchronized (_currentTaskSync)
-			{
-				try
-				{
-					while(_nextTask!=null)
-						_currentTaskSync.wait();
-				}
-				catch (InterruptedException ignored)
-				{					
-				}
-			}
-		}
-		
-		private static final int POLLING_INTERVAL = 200;
-		
-		private final Handler _uiHandler;
-		private final WakeLock _wakeLock;
-		private final Object _currentTaskSync = new Object();
-		private boolean _stop, _flipX, _flipY;
-		private ImageLoaderTask _nextTask;
-		private Bitmap _image;
-		private int _sampleSize, _rotation;
-		
-		private void loadTask(final ImageLoaderTask task)
-		{
-			_isLoading = true;
-			if(task.regionRect == null)
-			{
-				_uiHandler.post(new Runnable()
-				{
-					
-					@Override
-					public void run()
-					{
-						showLoading();
-						_mainImageView.setImageBitmap(null);						
-					}
-				});							
-			}
-			
-			try
-			{
-				loadImage(task.imagePath, task.viewRect,task.regionRect);
-				synchronized (_currentTaskSync)
-				{
-					if(_nextTask == null && !_stop)
-						_uiHandler.post(new Runnable()
-						{			
-							private Bitmap _result = _image;
-							private int _curSampleSize = _sampleSize;
-							private boolean _curFlipX = _flipX;
-							private boolean _curFlipY = _flipY;
-							private int _curRotation = _rotation;
-							@Override
-							public void run()							
-							{
-								if(_stop)
-									return;
-								if(task.regionRect == null)
-								{
-									_mainImageView.setImage(_result,_curSampleSize, _curRotation, _curFlipX, _curFlipY);
-									_currentImagePath = task.imagePath;
-									showImage();
-								}
-								else 
-									_mainImageView.setOptimImage(_result,_curSampleSize);		
-								
-							}
-						});					
-				}
-				
-			}
-			catch(final Throwable e)
-			{
-				_uiHandler.post(new Runnable()
-				{				
-					@Override
-					public void run()
-					{
-						Logger.showAndLog(getActivity(), e);
-					}
-				});
-			}
-            _isLoading = false;
-			if(_onLoadingCompleted!=null)
-			    _onLoadingCompleted.run();
-		}
-		
-		private void loadImage(Path imagePath, Rect viewRect, Rect regionRect) throws IOException
-		{
-			BitmapFactory.Options params = loadImageParams(imagePath);			
-			boolean loadFull;
-			boolean isJpg = "image/jpeg".equalsIgnoreCase(params.outMimeType);
-			if(regionRect == null)
-			{
-				regionRect = new Rect(0,0,params.outWidth,params.outHeight);
-				_isOptimSupported = isJpg || "image/png".equalsIgnoreCase(params.outMimeType);
-				loadFull = true;
-			}
-			else
-			{
-				if(regionRect.top<0)
-					regionRect.top = 0;
-				if(regionRect.left<0)
-					regionRect.left=0;
-				if(regionRect.width()>params.outWidth)
-					regionRect.right -= (regionRect.width()-params.outWidth);
-				if(regionRect.height()>params.outHeight)
-					regionRect.bottom -= (regionRect.height()-params.outHeight);
-				loadFull = false;
-			}
-			_sampleSize = calcSampleSize(viewRect, regionRect);			
-			for(int i=0;i<5;i++,_sampleSize*=2)
-			{
-				try
-				{
-					    if(loadFull)
-						_image =  loadDownsampledImage(imagePath, _sampleSize);
-					else
-						_image = CompatHelper.loadBitmapRegion(imagePath, _sampleSize, regionRect);
-
-					_flipX                                                                                                                                                                      = _flipY = false;
-					_rotation = 0;
-					if(isJpg)
-						loadInitOrientation(imagePath);
-					return;
-				}
-				catch(OutOfMemoryError e)
-				{
-					System.gc();					
-				}				
-				try
-				{
-					Thread.sleep(3000);
-				}
-				catch (InterruptedException ignored)
-				{					
-				}
-			}
-			throw new OutOfMemoryError();
-		}
-
-		private void loadInitOrientation(Path imagePath)
-		{
-			try
-			{
-				InputStream s = imagePath.getFile().getInputStream();
-				try
-				{
-					Metadata m = ImageMetadataReader.readMetadata(s);
-
-					for(Directory directory: m.getDirectories())
-                        if(directory.containsTag(ExifSubIFDDirectory.TAG_ORIENTATION))
-                        {
-                            int orientation = directory.getInt(ExifSubIFDDirectory.TAG_ORIENTATION);
-                            switch (orientation)
-                            {
-                                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-                                    _flipX = true;
-                                    break;
-                                case ExifInterface.ORIENTATION_ROTATE_180:
-                                    _rotation = 180;
-                                    break;
-                                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-                                    _rotation = 180;
-                                    _flipX = true;
-                                    break;
-                                case ExifInterface.ORIENTATION_TRANSPOSE:
-                                    _rotation = 90;
-                                    _flipX = true;
-                                    break;
-                                case ExifInterface.ORIENTATION_ROTATE_90:
-                                    _rotation = 90;
-                                    break;
-                                case ExifInterface.ORIENTATION_TRANSVERSE:
-                                    _rotation = -90;
-                                    _flipX = true;
-                                    break;
-                                case ExifInterface.ORIENTATION_ROTATE_270:
-                                    _rotation = -90;
-                                    break;
-                            }
-                            break;
-                        }
-				}
-				finally
-				{
-					s.close();
-				}
-			}
-			catch (Exception e)
-            {
-                if(GlobalConfig.isDebug())
-                    Logger.log(e);
-            }
-		}
-		
-	}
-
 	public void updateImageViewFullScreen()
 	{
 		if(_mainImageView!=null && _isFullScreen)
@@ -627,14 +337,38 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 	
 	private GestureImageViewWithFullScreenMode _mainImageView;
 	private ViewSwitcher _viewSwitcher;
-	private Path _currentImagePath;
+	private Path _currentImagePath, _prevImagePath, _nextImagePath;
 	private final Rect _viewRect = new Rect();
-	private final Object _taskSync = new Object();
-	private ImageLoader _loader;
-	private boolean _isOptimSupported;
-	private boolean _isLoading;
-	private boolean _isFullScreen;
+	private boolean _isFullScreen, _isOptimSupported;
+	private final Subject<Boolean> _imageViewPrepared = BehaviorSubject.create();
 
+	private void loadImagePaths()
+	{
+		_prevImagePath = _nextImagePath = null;
+		getActivity().invalidateOptionsMenu();
+		if(_currentImagePath != null)
+		{
+			Location loc = getPreviewFragmentHost().getLocation();
+			if(loc!=null)
+			{
+				loc = loc.copy();
+				loc.setCurrentPath(_currentImagePath);
+				LoadPathInfoObservable.create(loc).
+						subscribeOn(Schedulers.io()).
+						observeOn(AndroidSchedulers.mainThread()).
+						compose(bindToLifecycle()).
+						subscribe(
+								rec -> {
+									setNeibImagePaths(rec);
+									getActivity().invalidateOptionsMenu();
+								},
+								err -> { if(!(err instanceof CancellationException))
+									Logger.showAndLog(getActivity(), err);
+								}
+						);
+			}
+		}
+	}
 
 
 	@SuppressLint("ApplySharedPref")
@@ -666,20 +400,20 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 			Logger.showAndLog(getActivity(), e);
 		}
 		if(_currentImagePath == null)
-			_currentImagePath = getNextImagePath(null, true);						
+			_currentImagePath = getFirstImagePath();
 	}
-	
-	private void startLoad()
+
+	private Path getFirstImagePath()
 	{
-		if(_loader!=null)
-			return;
-		_loader = new ImageLoader();
-		_loader.start();
-		if(!loadImage(_currentImagePath,null))
-			cancelTask();
+		synchronized (getPreviewFragmentHost().getFilesListSync())
+		{
+			Host h = getPreviewFragmentHost();
+			//noinspection unchecked
+			NavigableSet<CachedPathInfo> files = (NavigableSet<CachedPathInfo>) h.getCurrentFiles();
+			return files.isEmpty() ? null : files.first().getPath();
+		}
 	}
-	
-	
+
 	private Host getPreviewFragmentHost()
 	{
 		return (Host)getActivity();
@@ -709,25 +443,35 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 
 	private void moveLeft() throws IOException, ApplicationException
 	{
-		loadImage(getPrevImagePath(),null);		
+		if(_prevImagePath != null)
+		{
+			_currentImagePath = _prevImagePath;
+			loadImageWhenReady();
+		}
+		loadImagePaths();
 	}
 	
 	private void moveRight() throws IOException, ApplicationException
 	{
-		loadImage(getNextImagePath(),null);
+		if(_nextImagePath!=null)
+		{
+			_currentImagePath = _nextImagePath;
+			loadImageWhenReady();
+		}
+		loadImagePaths();
 	}
 	
 	private Path getNextImagePath() throws IOException, ApplicationException
 	{
-		return getNextImagePath(_currentImagePath, true);
+		return _nextImagePath;
 	}
 	
-	private Path getPrevImagePath() throws IOException, ApplicationException
+	private Path getPrevImagePath()
 	{
-		return getNextImagePath(_currentImagePath, false);
+		return _prevImagePath;
 	}
 	
-	private Path getNextImagePath(Path curPath, boolean forward) throws IOException, ApplicationException
+	private void setNeibImagePaths(CachedPathInfo curImageFileInfo) throws IOException, ApplicationException
 	{
 		synchronized (getPreviewFragmentHost().getFilesListSync())
 		{
@@ -735,54 +479,97 @@ public class PreviewFragment extends Fragment implements FileManagerFragment
 			//noinspection unchecked
 			NavigableSet<CachedPathInfo> files = (NavigableSet<CachedPathInfo>) h.getCurrentFiles();
 			if(files.isEmpty())
-				return null;
+				return;
 			Context ctx = getActivity().getApplicationContext();
-			Location loc = h.getLocation();
-			CachedPathInfo cur = ReadDirTask.getBrowserRecordFromFsRecord(ctx, loc, curPath, null);
+			CachedPathInfo cur = curImageFileInfo;
 			while(cur!=null)
 			{
-				cur = forward ? files.higher(cur) : files.lower(cur);
+				cur = files.higher(cur);
 				if(cur!=null && cur.isFile())
 				{
 					String mime = FileOpsService.getMimeTypeFromExtension(ctx, new StringPathUtil(cur.getName()).getFileExtension());
 					if (mime.startsWith("image/"))
-						return cur.getPath();
+					{
+						_nextImagePath = cur.getPath();
+						break;
+					}
 				}
 			}
-			return null;
+			cur = curImageFileInfo;
+			while(cur!=null)
+			{
+				cur = files.lower(cur);
+				if(cur!=null && cur.isFile())
+				{
+					String mime = FileOpsService.getMimeTypeFromExtension(ctx, new StringPathUtil(cur.getName()).getFileExtension());
+					if (mime.startsWith("image/"))
+					{
+						_prevImagePath = cur.getPath();
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	private void loadImageWhenReady()
+	{
+		_imageViewPrepared.
+				filter(res -> res).
+				firstElement().
+				compose(bindToLifecycle()).
+				subscribe(res -> loadImage(null), err ->
+				{
+					if(!(err instanceof CancellationException))
+						Logger.log(err);
+				});
+	}
+
+	private void loadImage(Rect regionRect)
+	{		
+		if(_currentImagePath == null)
+			return;
+		Logger.debug(TAG + ": loading image");
+		if(regionRect == null)
+			showLoading();
+		Single<LoadedImage> loadImageTaskObservable = LoadedImage.createObservable(getActivity().getApplicationContext(), _currentImagePath, _viewRect, regionRect).
+				subscribeOn(Schedulers.io()).
+				observeOn(AndroidSchedulers.mainThread()).
+				compose(bindToLifecycle());
+		if(GlobalConfig.isTest())
+		{
+			loadImageTaskObservable = loadImageTaskObservable.
+					doOnSubscribe(sub -> TEST_LOAD_IMAGE_TASK_OBSERVABLE.onNext(true)).
+					doFinally(() -> TEST_LOAD_IMAGE_TASK_OBSERVABLE.onNext(false));
 		}
 
+		loadImageTaskObservable.subscribe(res -> {
+					if(regionRect == null)
+					{
+						_mainImageView.setImage(
+								res.getImageData(),
+								res.getSampleSize(),
+								res.getRotation(),
+								res.getFlipX(),
+								res.getFlipY());
+						_isOptimSupported = res.isOptimSupported();
+						showImage();
+					}
+					else
+						_mainImageView.setOptimImage(res.getImageData(), res.getSampleSize());
+
+				}, err -> {
+					if(!(err instanceof CancellationException))
+						Logger.showAndLog(getActivity(), err);
+				});
 	}
-	
-	private void cancelTask()
+
+	static
 	{
-		synchronized (_taskSync)
-		{
-			if(_loader!=null)
-			{
-				_loader.cancel();
-				try
-				{
-					_loader.join();
-				}
-				catch (InterruptedException ignored)
-				{
-				}
-				_loader = null;
-			}			
-		}	
+		if(GlobalConfig.isTest())
+			TEST_LOAD_IMAGE_TASK_OBSERVABLE = PublishSubject.create();
+
 	}
-	
-	private boolean loadImage(Path imagePath, Rect regionRect)
-	{		
-		if(imagePath == null || getActivity() == null || _viewRect.width() == 0 || _viewRect.height() == 0 || _viewSwitcher == null)			
-			return false;
-		
-		synchronized (_taskSync)
-		{
-			if(_loader!=null)			
-				_loader.setNextTask(imagePath, new Rect(_viewRect), regionRect);				
-		}		
-		return true;
-	}
+
+	public static Subject<Boolean> TEST_LOAD_IMAGE_TASK_OBSERVABLE;
 }

@@ -2,7 +2,7 @@ package com.sovworks.eds.fs.util;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.filemanager.DirectorySettings;
-import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
+import com.sovworks.eds.android.filemanager.tasks.ReadDir;
 import com.sovworks.eds.fs.FileSystem;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ public class ContainerFSWrapper extends ActivityTrackingFSWrapper
         DirectorySettings ds = null;
         try
         {
-            ds = ReadDirTask.loadDirectorySettings(path);
+            ds = ReadDir.loadDirectorySettings(path);
         }
         catch (IOException e)
         {

@@ -1,7 +1,6 @@
 package com.sovworks.eds.android.dialogs;
 
 import android.app.Activity;
-import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -23,10 +22,11 @@ import com.sovworks.eds.android.views.EditSB;
 import com.sovworks.eds.crypto.SecureBuffer;
 import com.sovworks.eds.locations.LocationsManager;
 import com.sovworks.eds.locations.Openable;
+import com.trello.rxlifecycle2.components.RxDialogFragment;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
-public abstract class PasswordDialogBase extends DialogFragment
+public abstract class PasswordDialogBase extends RxDialogFragment
 {
     public static final String TAG = "com.sovworks.eds.android.dialogs.PasswordDialog";
 
@@ -107,30 +107,32 @@ public abstract class PasswordDialogBase extends DialogFragment
 
         View passwordLayout = v.findViewById(R.id.password_layout);
         if(passwordLayout!=null)
-            passwordLayout.setVisibility(hasPassword() ? View.VISIBLE : View.GONE);
+        {
+            if(hasPassword())
+            {
+                passwordLayout.setVisibility(View.VISIBLE);
+                _passwordEditText.requestFocus();
+                /*lifecycle().
+                        filter(event -> event == FragmentEvent.RESUME).
+                        subscribe(event -> {
+                            final InputMethodManager imm = (InputMethodManager) _passwordEditText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            if(imm != null)
+                                imm.showSoftInput(_passwordEditText, InputMethodManager.SHOW_FORCED);
+                            //_passwordEditText.requestFocus();
+                        });*/
+            }
+            else
+                passwordLayout.setVisibility(hasPassword() ? View.VISIBLE : View.GONE);
+        }
 
         Button b = v.findViewById(android.R.id.button1);
         if(b!=null)
-            b.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View view)
-                {
-                    confirm();
-                }
-            });
+            b.setOnClickListener(view -> confirm());
 
         ImageButton ib = v.findViewById(R.id.toggle_show_pass);
         if(ib!=null)
         {
-            ib.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    toggleShowPassword((ImageButton) v);
-                }
-            });
+            ib.setOnClickListener(v12 -> toggleShowPassword((ImageButton) v12));
         }
 
         ib = v.findViewById(R.id.settings);
@@ -138,17 +140,12 @@ public abstract class PasswordDialogBase extends DialogFragment
         {
             if(_location == null)
                 ib.setVisibility(View.GONE);
-            ib.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    openOptions();
-                }
-            });
+            ib.setOnClickListener(v1 -> openOptions());
         }
         return v;
     }
+
+
 
     @Override
     public void onDestroyView()
@@ -335,6 +332,11 @@ public abstract class PasswordDialogBase extends DialogFragment
 
     @Override
     public void onCancel(DialogInterface dialog)
+    {
+        onPasswordNotEntered();
+    }
+
+    protected void onPasswordNotEntered()
     {
         PasswordReceiver r = getResultReceiver();
         if(r!=null)

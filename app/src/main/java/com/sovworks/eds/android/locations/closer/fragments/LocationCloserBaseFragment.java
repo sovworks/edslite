@@ -66,8 +66,9 @@ public class LocationCloserBaseFragment extends Fragment
         protected void doWork(TaskState taskState) throws Exception
         {
             PowerManager pm = (PowerManager)_context.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, toString());
-            wl.acquire();
+            PowerManager.WakeLock wl = pm == null ? null : pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, toString());
+            if(wl!=null)
+                wl.acquire(30000);
             try
             {
                 Uri locationUri = getArguments().getParcelable(LocationsManager.PARAM_LOCATION_URI);
@@ -77,7 +78,8 @@ public class LocationCloserBaseFragment extends Fragment
             }
             finally
             {
-                wl.release();
+                if(wl!=null)
+                    wl.release();
             }
         }
 

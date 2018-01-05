@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.widget.EditText;
@@ -46,22 +45,13 @@ public class RenameFileDialog extends DialogFragment
 		alert.setView(input);
 
 		alert.setPositiveButton(getString(android.R.string.ok),
-				new DialogInterface.OnClickListener()
-				{
-					public void onClick(DialogInterface dialog, int whichButton)
-					{						
-						renameFile(input.getText().toString());
-					}
-				});
+				(dialog, whichButton) -> renameFile(input.getText().toString()));
 
 		alert.setNegativeButton(android.R.string.cancel,
-				new DialogInterface.OnClickListener()
+				(dialog, whichButton) ->
 				{
-					public void onClick(DialogInterface dialog, int whichButton)
-					{
-						// Canceled.
-					}
-				});
+                    // Canceled.
+                });
 
 		return alert.create();
 	}

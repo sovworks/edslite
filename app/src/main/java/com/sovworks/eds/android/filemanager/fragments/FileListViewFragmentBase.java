@@ -3,7 +3,6 @@ package com.sovworks.eds.android.filemanager.fragments;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.FragmentManager;
-import android.app.ListFragment;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -22,7 +21,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -40,15 +38,13 @@ import com.sovworks.eds.android.filemanager.dialogs.SortDialog;
 import com.sovworks.eds.android.filemanager.records.BrowserRecord;
 import com.sovworks.eds.android.filemanager.records.ExecutableFileRecord;
 import com.sovworks.eds.android.filemanager.tasks.CopyToClipboardTask;
-import com.sovworks.eds.android.filemanager.tasks.CreateNewFileAndSelectTask;
-import com.sovworks.eds.android.filemanager.tasks.CreateNewFileTask;
+import com.sovworks.eds.android.filemanager.tasks.CreateNewFile;
 import com.sovworks.eds.android.filemanager.tasks.OpenAsContainerTask;
 import com.sovworks.eds.android.filemanager.tasks.PrepareToSendTask;
-import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
 import com.sovworks.eds.android.filemanager.tasks.RenameFileTask;
 import com.sovworks.eds.android.fragments.TaskFragment;
 import com.sovworks.eds.android.fs.ContentResolverFs;
-import com.sovworks.eds.android.helpers.ActivityResultHandler;
+import com.sovworks.eds.android.helpers.CachedPathInfo;
 import com.sovworks.eds.android.helpers.ExtendedFileInfoLoader;
 import com.sovworks.eds.android.helpers.ProgressDialogTaskFragmentCallbacks;
 import com.sovworks.eds.android.locations.ContentResolverLocation;
@@ -65,19 +61,38 @@ import com.sovworks.eds.fs.util.SrcDstRec;
 import com.sovworks.eds.fs.util.SrcDstSingle;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
+import com.sovworks.eds.settings.GlobalConfig;
+import com.trello.rxlifecycle2.android.FragmentEvent;
+import com.trello.rxlifecycle2.components.RxFragment;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 
 import static com.sovworks.eds.android.settings.UserSettingsCommon.FILE_BROWSER_SORT_MODE;
 
-public abstract class FileListViewFragmentBase extends ListFragment implements SortDialog.SortingReceiver, FileManagerFragment, LocationOpenerBaseFragment.LocationOpenerResultReceiver
+public abstract class FileListViewFragmentBase extends RxFragment implements
+        SortDialog.SortingReceiver,
+        FileManagerFragment,
+        LocationOpenerBaseFragment.LocationOpenerResultReceiver,
+        NewFileDialog.Receiver
 {
     public static final String TAG = "com.sovworks.eds.android.filemanager.fragments.FileListViewFragment";
 
     public static final int REQUEST_CODE_SELECT_FROM_CONTENT_PROVIDER = Activity.RESULT_FIRST_USER;
+    public static final String ARG_SCROLL_POSITION = "com.sovworks.eds.android.SCROLL_POSITION";
 
     public static ArrayList<Path> getPathsFromRecords(List<? extends BrowserRecord> records)
 	{
@@ -95,28 +110,8 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         setHasOptionsMenu(true);
         _locationsManager = LocationsManager.getLocationsManager(getActivity());
         initListView();
-        if(!_isReadingLocation)
-            fillAdapter();
-    }
-
-    public void onReadingCompleted()
-    {
-        Logger.debug(TAG + " onReadingCompleted");
-        Intent i = getActivity().getIntent();
-        if(i.getAction() == null || Intent.ACTION_MAIN.equals(i.getAction()))
-        {
-            i.setData(null);
-            getActivity().setIntent(i);
-        }
-        updateCurrentPathLabel();
-        fillAdapter();
-        if(haveSelectedFiles())
-            startSelectionMode();
-        else
-        {
-            getFileManagerActivity().showProperties(null, true);
-            updateOptionsMenu();
-        }
+        if(savedInstanceState!=null)
+            _scrollPosition = savedInstanceState.getInt(ARG_SCROLL_POSITION, 0);
     }
 
     @Override
@@ -125,6 +120,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         Logger.debug(TAG + " onCreateView");
         View view = inflater.inflate(R.layout.file_list_view_fragment, container, false);
         _selectedFileEditText = view.findViewById(R.id.selected_file_edit_text);
+        _listView = view.findViewById(android.R.id.list);
         if(showSelectedFilenameEditText())
         {
             _selectedFileEditText.setVisibility(View.VISIBLE);
@@ -168,6 +164,64 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     }
 
     @Override
+    public void onStart()
+    {
+        Logger.debug(TAG + " onStart");
+        super.onStart();
+        ListView lv = getListView();
+        FileListViewAdapter adapter = new FileListViewAdapter(getActivity());
+        lv.setAdapter(adapter);
+        _isReadingLocation = true;
+        _locationLoadingObserver = getFileListDataFragment().
+                getLocationLoadingObservable().
+                observeOn(AndroidSchedulers.mainThread()).
+                compose(bindToLifecycle()).
+                subscribe(loadInfo -> {
+                    switch (loadInfo.stage)
+                    {
+                        case StartedLoading:
+                            setStartedLoading(loadInfo);
+                            break;
+                        case Loading:
+                            if(!_isReadingLocation)
+                                setStartedLoading(loadInfo);
+                            setLocationLoading(loadInfo);
+                            break;
+                        case FinishedLoading:
+                            if(_isReadingLocation)
+                                setLocationNotLoading();
+                            break;
+                    }
+                }, err ->
+                {
+                    if(!(err instanceof CancellationException))
+                        Logger.log(err);
+                });
+    }
+
+    @Override
+    public void onStop()
+    {
+        Logger.debug(TAG + " onStop");
+
+        getListView().setAdapter(null);
+        if(_locationLoadingObserver !=null)
+        {
+            _locationLoadingObserver.dispose();
+            _locationLoadingObserver = null;
+        }
+        _isReadingLocation = false;
+        super.onStop();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        outState.putInt(ARG_SCROLL_POSITION, getListView().getFirstVisiblePosition());
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater)
     {
         super.onCreateOptionsMenu(menu, menuInflater);
@@ -185,6 +239,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         Logger.debug(String.format("onPrepareOptionsMenu: isReading=%b isSendAction=%b hasInClipboard=%b isSelectAction=%b",
                 isReading, isSendAction, hasInClipboard, isSelectAction));
 
+        menu.findItem(R.id.progressbar).setVisible(isReading);
         menu.findItem(R.id.copy).setVisible(!isReading && !isSelectAction && (isSendAction || hasInClipboard));
         menu.findItem(R.id.move).setVisible(!isReading && !isSelectAction && hasInClipboard);
 
@@ -223,7 +278,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
             if(resultCode == Activity.RESULT_OK && data!=null)
             {
                 returnSelectionFromContentProvider(data);
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && data.getData()!=null)
                 {
                     getActivity().getContentResolver().takePersistableUriPermission(
                             data.getData(),
@@ -247,7 +302,6 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         }
         _cleanSelectionOnModeFinish = true;
         ExtendedFileInfoLoader.getInstance().resumeViewUpdate();
-        _resHandler.handle();
     }
 
     @Override
@@ -258,14 +312,12 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         _cleanSelectionOnModeFinish = false;
         if(isInSelectionMode())
             stopSelectionMode();
-        _resHandler.onPause();
     }
 
 
     @Override
     public void onDestroyView ()
     {
-        getAdapter().clear();
         _selectedFileEditText = null;
         _currentPathTextView = null;
         super.onDestroyView();
@@ -274,7 +326,6 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     @Override
     public void onDestroy()
     {
-        _resHandler.clear();
         _locationsManager = null;
         super.onDestroy();
     }
@@ -291,10 +342,8 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         else
             e.putInt(UserSettings.FILE_BROWSER_SORT_MODE, sortMode);
         e.commit();
-        FileListDataFragment df = getFileListDataFragment();
-        if(df != null)
-            df.reSortFiles();
-        onReadingCompleted();
+        getFileListDataFragment().reSortFiles();
+        updateSelectionMode();
     }
 
     public void renameFile(String path, String newName)
@@ -317,6 +366,23 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
 		{
 			Logger.showAndLog(getActivity(), e);
 		}
+    }
+
+    @Override
+    public void makeNewFile(String name, int type)
+    {
+        getFileListDataFragment().makeNewFile(name, type).
+                compose(bindToLifecycle()).
+                subscribe(res -> {
+                    FileListViewAdapter adapter = getAdapter();
+                    if(adapter!=null)
+                        adapter.add(res);
+                    newRecordCreated(res);
+                }, err ->
+                {
+                    if(!(err instanceof CancellationException))
+                        Logger.log(err);
+                });
     }
 
     public void deleteFiles(Location loc, List<Path> paths, boolean wipe)
@@ -358,24 +424,6 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         onSelectionChanged();
     }
 
-    public void onLocationChanged()
-	{
-        FileListViewAdapter adapter = getAdapter();
-        adapter.clear();
-        adapter.setCurrentLocationId(getLocation().getId());
-        updateCurrentPathLabel();
-        _selectedFileEditText.setVisibility(showSelectedFilenameEditText() ? View.VISIBLE : View.GONE);
-        if(_actionMode!=null)
-            _actionMode.invalidate();
-        else
-            updateOptionsMenu();
-	}
-
-    public TaskFragment.TaskCallbacks getReadDirTaskCallbacks()
-    {
-        return _readDirTaskCallbacks;
-    }
-
     public TaskFragment.TaskCallbacks getOpenAsContainerTaskCallbacks()
     {
         return new ProgressDialogTaskFragmentCallbacks(getActivity(), R.string.loading)
@@ -387,14 +435,14 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
                 {
                     final Location locToOpen = (Location) result.getResult();
                     if(locToOpen != null)
-                        _resHandler.addResult(new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                openLocation(locToOpen);
-                            }
-                        });
+                        lifecycle().
+                                filter(event -> event == FragmentEvent.RESUME).
+                                firstElement().
+                                subscribe(res -> openLocation(locToOpen), err ->
+                                {
+                                    if(!(err instanceof CancellationException))
+                                        Logger.log(err);
+                                });
                 }
                 catch (Throwable e)
                 {
@@ -423,7 +471,9 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     protected TextView _currentPathTextView;
     protected LocationsManager _locationsManager;
     protected ActionMode _actionMode;
-    protected final ActivityResultHandler _resHandler = new ActivityResultHandler();
+    private ListView _listView;
+    private Disposable _locationLoadingObserver, _loadingRecordObserver;
+    private int _scrollPosition;
 
     protected boolean _isReadingLocation, _changingSelectedFileText, _cleanSelectionOnModeFinish;
 
@@ -432,80 +482,211 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         return loc instanceof DocumentTreeLocation;
     }
 
-    private final TaskFragment.TaskCallbacks _readDirTaskCallbacks = new TaskFragment.TaskCallbacks()
-    {
-        @Override
-        public void onUpdateUI(Object state)
-        {
-            //noinspection unchecked
-            getAdapter().addAll((Collection<? extends BrowserRecord>) state);
-            updateCurrentPathLabel();
-        }
-
-        @Override
-        public void onPrepare(Bundle args)
-        {
-            _isReadingLocation = true;
-        }
-
-        @SuppressWarnings("deprecation")
-        @Override
-        public void onResumeUI(Bundle args)
-        {
-            getActivity().setProgressBarIndeterminateVisibility(true);
-        }
-
-        @SuppressWarnings("deprecation")
-        @Override
-        public void onSuspendUI(Bundle args)
-        {
-            getActivity().setProgressBarIndeterminateVisibility(false);
-        }
-
-        @Override
-        public void onCompleted(Bundle args, TaskFragment.Result result)
-        {
-            _isReadingLocation = false;
-            try
-            {
-                onReadingCompleted();
-                if(!result.isCancelled())
-                {
-                    int scrollPosition = args.getInt(ReadDirTask.ARG_SCROLL_POSITION, 0);
-                    if(scrollPosition > 0)
-                    {
-                        ListView lv = getListView();
-                        if(lv.getFirstVisiblePosition() == 0)
-                        {
-                            int num = lv.getCount();
-                            if(scrollPosition >= num)
-                                scrollPosition = num - 1;
-                            if(scrollPosition >= 0)
-                                lv.smoothScrollToPosition(scrollPosition);
-                        }
-                    }
-                    BrowserRecord startRecord = (BrowserRecord) result.getResult();
-                    if(startRecord!=null)
-                        startRecord.open();
-                }
-            }
-            catch(Throwable e)
-            {
-                Logger.showAndLog(getActivity(), e);
-            }
-        }
-    };
-
     @Override
     public boolean onBackPressed()
     {
-        FileListDataFragment df = getFileListDataFragment();
-        if(df!= null && !df.getNavigHistory().isEmpty())
+        return goToPrevLocation();
+    }
+
+    private boolean goToPrevLocation()
+    {
+        Stack<FileListDataFragment.HistoryItem> hs = getFileListDataFragment().getNavigHistory();
+        while(!hs.isEmpty())
         {
-            getFileListDataFragment().goToPrevLocation();
-            return true;
+            FileListDataFragment.HistoryItem hi = hs.pop();
+            Uri uri  = hi.locationUri;
+            try
+            {
+                Location loc = _locationsManager.getLocation(uri);
+                if(loc!=null && LocationsManager.isOpen(loc))
+                {
+                    readLocation(getFileListDataFragment(), loc, hi.scrollPosition);
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.log(e);
+            }
         }
         return false;
+    }
+
+    public void goTo(Location location, int scrollPosition, boolean addToHistory)
+    {
+        Location prevLocation = addToHistory ? getLocation() : null;
+        int prevScrollPosition = getListView().getLastVisiblePosition();
+        FileListDataFragment df = getFileListDataFragment();
+        readLocation(df, location, scrollPosition);
+        if (prevLocation != null)
+        {
+            Uri uri = prevLocation.getLocationUri();
+            Stack<FileListDataFragment.HistoryItem> nh = df.getNavigHistory();
+            if (nh.empty() || !nh.lastElement().locationUri.equals(uri))
+            {
+                FileListDataFragment.HistoryItem hi = new FileListDataFragment.HistoryItem();
+                hi.locationUri = uri;
+                hi.scrollPosition = prevScrollPosition;
+                hi.locationId = prevLocation.getId();
+                nh.push(hi);
+            }
+        }
+    }
+
+    //call from main thread
+    public void rereadCurrentLocation()
+    {        Logger.debug(TAG + "rereadCurrentLocation");
+        int scrollPosition = getListView().getLastVisiblePosition();
+        goTo(getLocation(), scrollPosition, false);
+
+    }
+
+    static
+    {
+        if(GlobalConfig.isTest())
+            TEST_READING_OBSERVABLE = BehaviorSubject.createDefault(false);
+    }
+
+    public static Subject<Boolean> TEST_READING_OBSERVABLE;
+
+    private void setStartedLoading(FileListDataFragment.LoadLocationInfo loadInfo)
+    {
+        if(TEST_READING_OBSERVABLE != null)
+            TEST_READING_OBSERVABLE.onNext(true);
+        Logger.debug(TAG + ": Started loading " + loadInfo.location.getLocationUri());
+        _isReadingLocation = true;
+        FileListViewAdapter adapter = getAdapter();
+        adapter.clear();
+        adapter.setCurrentLocationId(loadInfo.location.getId());
+        _currentPathTextView.setText("");
+        _selectedFileEditText.setVisibility(View.GONE);
+        if(_actionMode!=null)
+            _actionMode.invalidate();
+        else
+            updateOptionsMenu();
+    }
+
+    private void setLocationLoading(FileListDataFragment.LoadLocationInfo loadInfo)
+    {
+        Logger.debug(TAG + ": Loading " + loadInfo.location.getLocationUri());
+        FileListViewAdapter adapter = getAdapter();
+        adapter.clear();
+        if(_loadingRecordObserver!=null && !_loadingRecordObserver.isDisposed())
+        {
+            if(GlobalConfig.isDebug())
+                throw new RuntimeException("Loading record observer was not disposed!");
+            else
+                _loadingRecordObserver.dispose();
+        }
+        _loadingRecordObserver = getFileListDataFragment().getLoadRecordObservable().
+                    compose(bindToLifecycle()).
+                    buffer(200, TimeUnit.MILLISECONDS).
+                    filter(records -> !records.isEmpty()).
+                    compose(bindToLifecycle()).
+                    observeOn(AndroidSchedulers.mainThread()).
+                    subscribe(adapter::addAll, err ->
+                    {
+                        if(!(err instanceof CancellationException))
+                            Logger.log(err);
+                    });
+        if(loadInfo.folder!=null)
+            updateCurrentFolderLabel(loadInfo.folder);
+        showFileIfNeeded(loadInfo.file);
+    }
+
+    private void setLocationNotLoading()
+    {
+        Logger.debug(TAG + ": Finished loading");
+        if(_loadingRecordObserver!=null)
+            _loadingRecordObserver.dispose();
+        FileListViewAdapter adapter = getAdapter();
+        getFileListDataFragment().copyToAdapter(adapter);
+        _isReadingLocation = false;
+        _selectedFileEditText.setVisibility(showSelectedFilenameEditText() ? View.VISIBLE : View.GONE);
+        if(_actionMode!=null)
+            _actionMode.invalidate();
+        else
+            updateSelectionMode();
+        if(_scrollPosition > 0)
+        {
+            int sp = _scrollPosition;
+            _scrollPosition = 0;
+            Completable.
+                    timer(50, TimeUnit.MILLISECONDS, Schedulers.computation()).
+                    observeOn(AndroidSchedulers.mainThread()).
+                    compose(bindToLifecycle()).
+                    subscribe(() -> scrollList(sp), err -> {});
+        }
+        if(TEST_READING_OBSERVABLE != null)
+            TEST_READING_OBSERVABLE.onNext(false);
+    }
+
+    private void readLocation(FileListDataFragment df, Location loc, int scrollPosition)
+    {
+        readLocationAndScroll(df, loc, scrollPosition);
+    }
+
+    private void updateCurrentFolderLabel(CachedPathInfo currentFolder)
+    {
+        _currentPathTextView.setText(currentFolder.getPathDesc());
+    }
+
+    private void showFileIfNeeded(BrowserRecord file)
+    {
+        if(file!=null)
+        {
+            FileManagerActivity activity = getFileManagerActivity();
+            if (activity != null)
+            {
+                file.setHostActivity(activity);
+                try
+                {
+                    Logger.debug(TAG + ": Opening file " + file.getPathDesc());
+                    file.open();
+                }
+                catch (Exception e)
+                {
+                    Logger.showAndLog(activity, e);
+                }
+            }
+        }
+    }
+
+    private void readLocationAndScroll(FileListDataFragment df, Location loc, int scrollPosition)
+    {
+        _scrollPosition = scrollPosition;
+        df.readLocation(loc, null);
+    }
+
+
+
+    private void scrollList(int scrollPosition)
+    {
+        if(scrollPosition > 0)
+        {
+            ListView lv = getListView();
+            if(lv.getFirstVisiblePosition() == 0)
+            {
+                int num = lv.getCount();
+                int sp = scrollPosition;
+                if(scrollPosition >= num)
+                    sp = num - 1;
+                if(sp >= 0)
+                    //lv.setSelection(sp);
+                    lv.smoothScrollToPosition(sp);
+            }
+        }
+    }
+
+    private void updateSelectionMode()
+    {
+        if(haveSelectedFiles())
+            startSelectionMode();
+        else
+        {
+            getFileManagerActivity().showProperties(null, true);
+            updateOptionsMenu();
+        }
     }
 
     @Override
@@ -531,6 +712,11 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         return (FileListViewAdapter) getListView().getAdapter();
     }
 
+    public @NonNull ListView getListView()
+    {
+        return _listView == null ? new ListView(getActivity()) : _listView;
+    }
+
     protected void initListView()
     {
         ListView lv = getListView();
@@ -539,38 +725,29 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         lv.setChoiceMode(ListView.CHOICE_MODE_NONE);
         lv.setItemsCanFocus(true);
 
-        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
+        lv.setOnItemLongClickListener((adapterView, view, pos, itemId) ->
         {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int pos, long itemId)
-            {
-                BrowserRecord rec = (BrowserRecord) adapterView.getItemAtPosition(pos);
-                if (rec != null && rec.allowSelect())
-                    selectFile(rec);
-                return true;
-            }
+            BrowserRecord rec = (BrowserRecord) adapterView.getItemAtPosition(pos);
+            if (rec != null && rec.allowSelect())
+                selectFile(rec);
+            return true;
         });
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        lv.setOnItemClickListener((adapterView, view, pos, l) ->
         {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l)
+            BrowserRecord rec = (BrowserRecord) adapterView.getItemAtPosition(pos);
+            if(rec!=null)
             {
-                BrowserRecord rec = (BrowserRecord) adapterView.getItemAtPosition(pos);
-                if(rec!=null)
+                if(rec.isSelected())
                 {
-                    if(rec.isSelected())
-                    {
-                        if(!isSelectAction() || !isSingleSelectionMode())
-                            unselectFile(rec);
-                    }
-                    else if(rec.allowSelect() && (_actionMode!=null || (isSelectAction() && rec.isFile())))
-                         selectFile(rec);
-                    else
-                         onFileClicked(rec);
+                    if(!isSelectAction() || !isSingleSelectionMode())
+                        unselectFile(rec);
                 }
+                else if(rec.allowSelect() && (_actionMode!=null || (isSelectAction() && rec.isFile())))
+                     selectFile(rec);
+                else
+                     onFileClicked(rec);
             }
         });
-        lv.setAdapter(new FileListViewAdapter(getActivity()));
     }
 
     protected void onFileClicked(BrowserRecord file)
@@ -588,18 +765,16 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         }
     }
 
+    @NonNull
     protected FileListDataFragment getFileListDataFragment()
     {
-        FileListDataFragment f = (FileListDataFragment) getFragmentManager().findFragmentByTag(FileListDataFragment.TAG);
-        return f!=null && f.isAdded() ? f : null;
+        return (FileListDataFragment) getFragmentManager().findFragmentByTag(FileListDataFragment.TAG);
     }
 
     protected ArrayList<BrowserRecord> getSelectedFiles()
 	{
         ArrayList<BrowserRecord> selectedRecordsList = new ArrayList<>();
         ListView lv = getListView();
-        if (lv == null)
-            return selectedRecordsList;
         int count = lv.getCount();
         for(int i=0; i<count;i++)
         {
@@ -614,8 +789,6 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     {
         ArrayList<BrowserRecord> selectableFilesList = new ArrayList<>();
         ListView lv = getListView();
-        if (lv == null)
-            return selectableFilesList;
         int count = lv.getCount();
         for(int i=0; i<count;i++)
         {
@@ -634,8 +807,6 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     protected boolean haveSelectedFiles()
     {
         ListView lv = getListView();
-        if (lv == null)
-            return false;
         int count = lv.getCount();
         for(int i=0; i<count;i++)
         {
@@ -644,29 +815,6 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
                 return true;
         }
         return false;
-    }
-
-    protected void updateCurrentPathLabel()
-    {
-        FileListDataFragment df = getFileListDataFragment();
-        BrowserRecord cpr = df == null ? null : df.getCurrentPathRecord();
-        String label = "";
-        try
-        {
-            if(cpr == null)
-            {
-                Path path = getLocation().getCurrentPath();
-                if(path!=null)
-                    label = path.getPathString();
-            }
-            else
-                label = cpr.getPathDesc();
-        }
-        catch (IOException e)
-        {
-            Logger.showAndLog(getActivity(),e);
-        }
-        _currentPathTextView.setText(label);
     }
 
     protected void startSelectionMode()
@@ -754,13 +902,6 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
             _actionMode.finish();
     }
 
-    protected void fillAdapter()
-    {
-        FileListDataFragment df = getFileListDataFragment();
-        if(df!=null)
-            df.copyToAdapter(getAdapter());
-    }
-
     protected void clearSelectedFlag()
     {
         ListView lv = getListView();
@@ -842,9 +983,16 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     protected void showNewFileDialog(boolean isDir)
     {
         NewFileDialog.showDialog(getFragmentManager(), isDir ?
-                CreateNewFileTask.FILE_TYPE_FOLDER :
-                CreateNewFileTask.FILE_TYPE_FILE
+                CreateNewFile.FILE_TYPE_FOLDER :
+                CreateNewFile.FILE_TYPE_FILE,
+                getTag()
         );
+    }
+
+    //full version compat
+    protected void newRecordCreated(BrowserRecord rec)
+    {
+
     }
 
     protected FileManagerActivity getFileManagerActivity()
@@ -925,7 +1073,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     {
         return true;
         //The following check doesn't work with locations in which a path can point only to an existing file.
-        //So if the filename is not valid, we'll return a error from "create new file" task.
+        //So if the filename is not valid, we'll return a error from "createObservable new file" task.
         /*try
         {
             String filename = _selectedFileEditText.getText().toString();
@@ -997,18 +1145,36 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
             {
                 if(selectedRecs.isEmpty() || !fn.equals(selectedRecs.get(0).getName()))
                 {
-                    getFragmentManager().
-                            beginTransaction().
-                            add(
-                                    CreateNewFileAndSelectTask.newInstance(
-                                            fn,
-                                            allowCreateNewFile() ?
-                                                    CreateNewFileTask.FILE_TYPE_FILE :
-                                                    CreateNewFileTask.FILE_TYPE_FOLDER
-                                    ),
-                                    CreateNewFileAndSelectTask.TAG
-                            ).
-                            commit();
+                    getFileListDataFragment().createOrFindFile(fn,
+                            allowCreateNewFile() ?
+                                    CreateNewFile.FILE_TYPE_FILE :
+                                    CreateNewFile.FILE_TYPE_FOLDER
+                    ).
+                            compose(bindToLifecycle()).
+                            subscribe(rec -> {
+                                FileListViewAdapter adapter = getAdapter();
+                                if(adapter!=null)
+                                    adapter.add(rec);
+                                FileManagerActivity act = getFileManagerActivity();
+                                if(act != null)
+                                {
+                                    Location loc = act.getRealLocation().copy();
+                                    loc.setCurrentPath(rec.getPath());
+                                    Intent i = new Intent();
+                                    LocationsManager.storePathsInIntent(
+                                            i,
+                                            loc,
+                                            Collections.singletonList(rec.getPath())
+                                    );
+                                    act.setResult(Activity.RESULT_OK, i);
+                                    act.finish();
+                                }
+
+                            }, err ->
+                            {
+                                if(!(err instanceof CancellationException))
+                                    Logger.log(err);
+                            });
                     return;
                 }
             }
@@ -1090,32 +1256,35 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
     private void pasteFiles(boolean move)
     {
         ClipboardManager clipboard = (ClipboardManager)getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = clipboard.getPrimaryClip();
-        if (clip != null)
+        if(clipboard!=null)
         {
-            try
+            ClipData clip = clipboard.getPrimaryClip();
+            if (clip != null)
             {
-                SrcDstCollection recs = getSrcDstsFromClip(
-                        _locationsManager,
-                        clip,
-                        getRealLocation(),
-                        move
-                );
-                if(recs!=null)
+                try
                 {
-                    if (move)
-                        FileOpsService.moveFiles(getActivity(), recs, false);
-                    else
-                        FileOpsService.copyFiles(getActivity(), recs, false);
-                    Toast.makeText(getActivity(), R.string.file_operation_started, Toast.LENGTH_SHORT).show();
+                    SrcDstCollection recs = getSrcDstsFromClip(
+                            _locationsManager,
+                            clip,
+                            getRealLocation(),
+                            move
+                    );
+                    if (recs != null)
+                    {
+                        if (move)
+                            FileOpsService.moveFiles(getActivity(), recs, false);
+                        else
+                            FileOpsService.copyFiles(getActivity(), recs, false);
+                        Toast.makeText(getActivity(), R.string.file_operation_started, Toast.LENGTH_SHORT).show();
+                    }
+                    //cr.delete(MainContentProvider.getCurrentSelectionUri(), null, null);
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Empty", ""));
+                    updateOptionsMenu();
                 }
-                //cr.delete(MainContentProvider.getCurrentSelectionUri(), null, null);
-                clipboard.setPrimaryClip(ClipData.newPlainText("Empty", ""));
-                updateOptionsMenu();
-            }
-            catch(Exception e)
-            {
-                Logger.showAndLog(getActivity(), e);
+                catch (Exception e)
+                {
+                    Logger.showAndLog(getActivity(), e);
+                }
             }
         }
     }
@@ -1148,7 +1317,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
             cols.add(new SrcDstSingle(srcLoc, dstLocation));
         else
         {
-            SrcDstRec sdr = new SrcDstRec(srcLoc, dstLocation);
+            SrcDstRec sdr = new SrcDstRec(new SrcDstSingle(srcLoc, dstLocation));
             sdr.setIsDirLast(false);//move);
             cols.add(sdr);
         }
@@ -1173,6 +1342,7 @@ public abstract class FileListViewFragmentBase extends ListFragment implements S
         }*/
     }
 
+    @SuppressWarnings("SameParameterValue")
     private SrcDstCollection getSrcDsts(Location srcLocation, boolean isDirLast, Collection<? extends Path> paths) throws IOException
     {
         return SrcDstRec.fromPaths(srcLocation, getRealLocation(), isDirLast, paths);

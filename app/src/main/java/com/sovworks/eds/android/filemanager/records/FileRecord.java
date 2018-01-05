@@ -62,7 +62,7 @@ class FileRecord extends FsBrowserRecord
                 RowViewInfo rvi = FileRecord.getCurrentRowViewInfo(fr.getHostFragment(), fr);
                 if(rvi!=null)
                 {
-                    ImageView iv = (ImageView)rvi.view.findViewById(android.R.id.icon);
+                    ImageView iv = rvi.view.findViewById(android.R.id.icon);
                     iv.setImageDrawable(null);
                     iv.setImageBitmap(null);
                     FileRecord.updateRowView(rvi);
@@ -108,7 +108,7 @@ class FileRecord extends FsBrowserRecord
     public void updateView(View view, final int position)
     {
         super.updateView(view, position);
-        TextView tv = (TextView)view.findViewById(android.R.id.text2);
+        TextView tv = view.findViewById(android.R.id.text2);
         if(_infoString != null)
         {
             tv.setVisibility(View.VISIBLE);
@@ -117,7 +117,7 @@ class FileRecord extends FsBrowserRecord
         else
             tv.setVisibility(View.INVISIBLE);
 
-        ImageView iv = (ImageView)view.findViewById(android.R.id.icon);
+        ImageView iv = view.findViewById(android.R.id.icon);
         if(_mainIcon != null)
         {
             //iv.setScaleType(ImageView.ScaleType.FIT_CENTER);

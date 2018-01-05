@@ -9,6 +9,7 @@ import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.fs.util.SrcDstCollection;
 import com.sovworks.eds.fs.util.SrcDstPlain;
 import com.sovworks.eds.fs.util.SrcDstRec;
+import com.sovworks.eds.fs.util.SrcDstSingle;
 import com.sovworks.eds.locations.Location;
 
 import java.io.IOException;
@@ -26,12 +27,13 @@ public class ClearTempFolderTask extends WipeFilesTask
 		);
 		if(loc.getCurrentPath()!=null && loc.getCurrentPath().exists())
 		{
-			SrcDstRec sdr = new SrcDstRec(
+			SrcDstRec sdr = new SrcDstRec(new SrcDstSingle(
 					FileOpsService.getSecTempFolderLocation(
 							UserSettings.getSettings(context).getWorkDir(),
 							context
 					),
 					null
+			)
 			);
 			sdr.setIsDirLast(true);
 			return sdr;

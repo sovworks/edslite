@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface SettingsCommon
 {
-	int VERSION = 2;
+	int VERSION = 3;
 
 	int USE_INTERNAL_IMAGE_VIEWER_NEVER = 0;
 	int USE_INTERNAL_IMAGE_VIEWER_VIRT_FS = 1;

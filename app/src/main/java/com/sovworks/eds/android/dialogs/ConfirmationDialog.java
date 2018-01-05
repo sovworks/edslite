@@ -1,9 +1,10 @@
 package com.sovworks.eds.android.dialogs;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.content.DialogInterface;
+import android.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 
@@ -13,6 +14,13 @@ import com.sovworks.eds.android.helpers.Util;
 
 public abstract class ConfirmationDialog extends DialogFragment
 {
+    public static final String ARG_RECEIVER_TAG = "com.sovworks.eds.android.RECEIVER_TAG";
+
+    public interface Receiver
+    {
+        void onYes();
+        void onNo();
+    }
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -29,22 +37,16 @@ public abstract class ConfirmationDialog extends DialogFragment
         builder.setMessage(getTitle())
                 .setCancelable(false)
                 .setPositiveButton(R.string.yes,
-                        new DialogInterface.OnClickListener()
+                        (dialog, id) ->
                         {
-                            public void onClick(DialogInterface dialog, int id)
-                            {
-                                onYes();
-                                dismiss();
-                            }
+                            onYes();
+                            dismiss();
                         })
                 .setNegativeButton(R.string.no,
-                        new DialogInterface.OnClickListener()
+                        (dialog, id) ->
                         {
-                            public void onClick(DialogInterface dialog, int id)
-                            {
-                                onNo();
-                                dismiss();
-                            }
+                            onNo();
+                            dismiss();
                         });
 
         return builder.create();
@@ -52,9 +54,35 @@ public abstract class ConfirmationDialog extends DialogFragment
 
     protected void onNo()
     {
-
+        Receiver rec = getReceiver();
+        if(rec != null)
+            rec.onNo();
     }
 
-    protected abstract void onYes();
+    protected void onYes()
+    {
+        Receiver rec = getReceiver();
+        if(rec != null)
+            rec.onYes();
+    }
+
     protected abstract String getTitle();
+
+    protected Receiver getReceiver()
+    {
+        String tag = getArguments().getString(ARG_RECEIVER_TAG);
+        if(tag != null)
+        {
+            Fragment f = getFragmentManager().findFragmentByTag(tag);
+            if(f instanceof Receiver)
+                return (Receiver) f;
+        }
+        else
+        {
+            Activity act = getActivity();
+            if(act instanceof Receiver)
+                return (Receiver) act;
+        }
+        return null;
+    }
 }

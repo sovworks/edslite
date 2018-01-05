@@ -82,6 +82,14 @@ public class PathUtil
         }
     }
 
+    public static Path unwrapPath(Path wrappedPath)
+    {
+        Path path = wrappedPath;
+        while(path instanceof PathWrapper)
+            path = ((PathWrapper)path).getBase();
+        return path;
+    }
+
     public static Path buildPath(Path startPath, String... parts)
     {
         Path path = startPath;

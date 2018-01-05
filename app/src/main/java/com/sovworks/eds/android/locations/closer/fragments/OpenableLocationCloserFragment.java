@@ -13,6 +13,7 @@ import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.android.service.LocationsService;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.fs.util.SrcDstRec;
+import com.sovworks.eds.fs.util.SrcDstSingle;
 import com.sovworks.eds.locations.EDSLocation;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
@@ -31,9 +32,10 @@ public class OpenableLocationCloserFragment extends LocationCloserBaseFragment
         );
         if(mirrorLocation.getCurrentPath().exists())
         {
-            SrcDstRec sdr = new SrcDstRec(
+            SrcDstRec sdr = new SrcDstRec(new SrcDstSingle(
                     mirrorLocation,
                     null
+            )
             );
             sdr.setIsDirLast(true);
             WipeFilesTask.wipeFilesRnd(

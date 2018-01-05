@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import io.reactivex.functions.Cancellable;
+
 public class Util
 {
 	public static long copyFileToOutputStream(OutputStream output, com.sovworks.eds.fs.File file, long offset, long count, com.sovworks.eds.fs.File.ProgressInfo pi) throws IOException
@@ -115,14 +117,14 @@ public class Util
 			case Read:
 				return ParcelFileDescriptor.MODE_READ_ONLY;
 			case Write:
-				return ParcelFileDescriptor.MODE_WRITE_ONLY;
+				return ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_TRUNCATE | ParcelFileDescriptor.MODE_CREATE;
 			case WriteAppend:
-				return ParcelFileDescriptor.MODE_APPEND;
+				return ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_APPEND | ParcelFileDescriptor.MODE_CREATE;
 			case ReadWriteTruncate:
-				return ParcelFileDescriptor.MODE_TRUNCATE;
+				return ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_TRUNCATE  | ParcelFileDescriptor.MODE_CREATE;
 			case ReadWrite:
 			default:
-				return ParcelFileDescriptor.MODE_READ_WRITE;
+				return ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_CREATE;
 		}
 	}
 
@@ -912,5 +914,42 @@ public class Util
 		{
 			io.seek(cur);
 		}
+	}
+
+	public static class CancellableProgressInfo implements com.sovworks.eds.fs.File.ProgressInfo, Cancellable
+	{
+
+		@Override
+		public void setProcessed(long num)
+		{
+		}
+
+		@Override
+		public boolean isCancelled()
+		{
+			return _isCancelled;
+		}
+
+		@Override
+		public void cancel() throws Exception
+		{
+			_isCancelled = true;
+		}
+
+		private boolean _isCancelled;
+	}
+
+	public static long countFolderSize(Directory dir) throws IOException
+	{
+		long res = 0;
+		Directory.Contents dc = dir.list();
+		for(Path p: dc)
+		{
+			if(p.isFile())
+				res += p.getFile().getSize();
+			else
+				res += countFolderSize(p.getDirectory());
+		}
+		return res;
 	}
 }

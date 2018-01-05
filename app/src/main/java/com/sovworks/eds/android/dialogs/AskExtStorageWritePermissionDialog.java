@@ -31,31 +31,34 @@ public class AskExtStorageWritePermissionDialog extends DialogFragment
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setMessage(R.string.ext_storage_write_permission_request)
                 .setPositiveButton(R.string.grant,
-                        new DialogInterface.OnClickListener()
-                        {
-                            public void onClick(DialogInterface dialog, int id)
-                            {
-                                dialog.dismiss();
-								ExternalStorageOpenerFragment f = getRecFragment();
-								if(f!=null)
-									f.showSystemDialog();
-							}
+						(dialog, id) ->
+						{
+                            dialog.dismiss();
+                            ExternalStorageOpenerFragment f = getRecFragment();
+                            if(f!=null)
+                                f.showSystemDialog();
                         })
 				.setNegativeButton(android.R.string.cancel,
-						new DialogInterface.OnClickListener()
+						(dialog, id) ->
 						{
-							public void onClick(DialogInterface dialog, int id)
-							{
-								ExternalStorageOpenerFragment f = getRecFragment();
-								if(f!=null)
-									f.setDontAskPermissionAndOpenLocation();
+                            ExternalStorageOpenerFragment f = getRecFragment();
+                            if(f!=null)
+                                f.setDontAskPermissionAndOpenLocation();
 
-							}
-						});
+                        });
 		return builder.create();		
 	}
 
-	private ExternalStorageOpenerFragment getRecFragment()
+    @Override
+    public void onCancel(DialogInterface dialog)
+    {
+        super.onCancel(dialog);
+        ExternalStorageOpenerFragment f = getRecFragment();
+        if(f!=null)
+            f.cancelOpen();
+    }
+
+    private ExternalStorageOpenerFragment getRecFragment()
 	{
 		return (ExternalStorageOpenerFragment) getFragmentManager().
 				findFragmentByTag(

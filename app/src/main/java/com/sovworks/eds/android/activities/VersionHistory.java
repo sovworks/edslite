@@ -5,8 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.webkit.WebView;
 
 import com.sovworks.eds.android.R;
@@ -26,21 +24,14 @@ public class VersionHistory extends Activity
 		setContentView(R.layout.changes_dialog);
 		//setStyle(STYLE_NO_TITLE, R.style.Dialog);
 		markAsRead();
-		WebView vw = (WebView)findViewById(R.id.changesWebView);
+		WebView vw = findViewById(R.id.changesWebView);
 		vw.loadData(getString(R.string.changes_text), "text/html; charset=UTF-8", null);
 		//vw.setBackgroundColor(0);
 		//Spanned sp = Html.fromHtml( getString(R.string.promo_text));
 		//((TextView)v.findViewById(R.id.promoTextView)).setText(sp);
 		//tv.setText(sp);
 		//((TextView)v.findViewById(R.id.promoTextView)).setText(Html.fromHtml(getString(R.string.promo_text)));
-		findViewById(R.id.okButton).setOnClickListener(new OnClickListener()
-		{
-			@Override
-			public void onClick(View v)
-			{
-				finish();
-			}
-		});
+		findViewById(R.id.okButton).setOnClickListener(v -> finish());
 	}
 
 	@SuppressLint({"CommitPrefEdits", "ApplySharedPref"})

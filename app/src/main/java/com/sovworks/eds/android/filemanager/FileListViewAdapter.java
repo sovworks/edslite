@@ -1,6 +1,7 @@
 package com.sovworks.eds.android.filemanager;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -13,7 +14,7 @@ public class FileListViewAdapter extends ArrayAdapter<BrowserRecord>
 {
     public FileListViewAdapter(Context context)
     {
-        super(context, R.layout.fs_browser_row);
+        super(context.getApplicationContext(), R.layout.fs_browser_row);
     }
 
     public void setCurrentLocationId(String locationId)
@@ -34,11 +35,14 @@ public class FileListViewAdapter extends ArrayAdapter<BrowserRecord>
          return 2;
      }
 
+    @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent)
+    public View getView(int position, View convertView, @NonNull ViewGroup parent)
     {
-        final BrowserRecord rec = getItem(position);
-        if(rec.needLoadExtendedInfo())
+        BrowserRecord rec = getItem(position);
+        if(rec == null)
+            return new View(getContext());
+        if(rec.needLoadExtendedInfo() && _currentLocationId!=null)
             ExtendedFileInfoLoader.getInstance().requestExtendedInfo(_currentLocationId, rec);
 
         View v;

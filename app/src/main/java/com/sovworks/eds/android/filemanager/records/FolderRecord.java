@@ -49,7 +49,7 @@ public class FolderRecord extends FsBrowserRecord
 	public boolean open() throws Exception
 	{
 		if(_path!=null)
-			_host.goTo(_path);		
+			_host.goTo(_path);
 		return true;
 	}
 

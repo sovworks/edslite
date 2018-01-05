@@ -49,14 +49,19 @@ public class StdLayout extends VolumeLayoutBase
 		}
 		if(_encEngine == null)
 			setEngine(new AESXTS());
-	}	
+	}
+
+	protected long getBackupHeaderOffset()
+	{
+		return _inputSize - 2*HEADER_SIZE;
+	}
 	
 	@Override
 	public void writeHeader(RandomAccessIO output) throws IOException, ApplicationException
 	{
 		checkWriteHeaderPrereqs();		
 		byte[] headerData = encodeHeader();
-		encryptAndWriteHeaderData(output, headerData, getHeaderOffset());		
+		encryptAndWriteHeaderData(output, headerData);
 		prepareEncryptionEngineForPayload();
 	}
 
@@ -321,14 +326,25 @@ public class StdLayout extends VolumeLayoutBase
         return isValidSign(header) ? header : null;
     }
 	
-	protected void encryptAndWriteHeaderData(RandomAccessIO output, byte[] headerData, long offset) throws ApplicationException, IOException
+	protected void encryptAndWriteHeaderData(RandomAccessIO output, byte[] headerData) throws ApplicationException, IOException
 	{
 		byte[] salt = getSaltFromHeader(headerData);	
 		byte[] key = deriveHeaderKey(_encEngine, _hashFunc, salt);
 		encryptHeader(headerData, key);
 		Arrays.fill(key, (byte)0);
+		writeHeaderData(output, headerData);
+	}
+
+	protected void writeHeaderData(RandomAccessIO output, byte[] encryptedHeaderData) throws ApplicationException, IOException
+	{
+		writeHeaderData(output, encryptedHeaderData, getHeaderOffset());
+		writeHeaderData(output, encryptedHeaderData, getBackupHeaderOffset());
+	}
+
+	protected void writeHeaderData(RandomAccessIO output, byte[] encryptedHeaderData, long offset) throws ApplicationException, IOException
+	{
 		output.seek(offset);
-		output.write(headerData,0,headerData.length - getEncryptedHeaderPartOffset());
+		output.write(encryptedHeaderData,0,encryptedHeaderData.length - getEncryptedHeaderPartOffset());
 	}
 	
 	protected byte[] deriveHeaderKey(EncryptionEngine ee, MessageDigest md, byte[] salt) throws ApplicationException

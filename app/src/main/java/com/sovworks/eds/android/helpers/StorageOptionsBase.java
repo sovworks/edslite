@@ -199,7 +199,7 @@ public abstract class StorageOptionsBase
         return extCounter;
     }
 
-    protected ArrayList<StorageInfo> parseMountsFile(String mountsStr)
+    ArrayList<StorageInfo> parseMountsFile(String mountsStr)
     {
         ArrayList<StorageInfo> res = new ArrayList<>();
         if(mountsStr == null || mountsStr.isEmpty())
@@ -226,6 +226,8 @@ public abstract class StorageOptionsBase
 
     protected boolean checkMountPoint(Settings s, StorageOptionsBase.StorageInfo si)
     {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            return true;
         File f = new File(si.path);
         return f.isDirectory() && !si.path.startsWith("/mnt/media_rw");
     }

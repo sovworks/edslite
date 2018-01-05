@@ -87,7 +87,8 @@ public class CopyToClipboardTask extends TaskFragment
 			return;
 		}
 		ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-		clipboard.setPrimaryClip(clip);
+		if(clipboard!=null)
+			clipboard.setPrimaryClip(clip);
 		if(GlobalConfig.isDebug())
 			Logger.debug("CopyToClipboardTask: clip has been set: " + clip);
 	}

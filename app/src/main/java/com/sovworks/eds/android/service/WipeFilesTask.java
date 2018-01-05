@@ -15,13 +15,13 @@ import java.util.concurrent.CancellationException;
 
 class WipeFilesTask extends DeleteFilesTask
 {	
-	public WipeFilesTask(boolean wipe)
+	WipeFilesTask(boolean wipe)
 	{
 		_wipe = wipe;
 	}
 	
-	protected final boolean _wipe;
-	protected TempFilesMonitor _mon;
+	private final boolean _wipe;
+	private TempFilesMonitor _mon;
 	
 	@Override 
 	public Object doWork(Context context, Intent i) throws Throwable

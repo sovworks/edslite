@@ -2,7 +2,7 @@ package com.sovworks.eds.android.filemanager.fragments;
 
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,26 +18,40 @@ import com.sovworks.eds.android.filemanager.comparators.FileNamesNumericComparat
 import com.sovworks.eds.android.filemanager.comparators.FileSizesComparator;
 import com.sovworks.eds.android.filemanager.comparators.ModDateComparator;
 import com.sovworks.eds.android.filemanager.records.BrowserRecord;
-import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
-import com.sovworks.eds.android.helpers.ActivityResultHandler;
+import com.sovworks.eds.android.filemanager.tasks.CreateNewFile;
+import com.sovworks.eds.android.filemanager.tasks.LoadDirSettingsObservable;
+import com.sovworks.eds.android.filemanager.tasks.ReadDir;
 import com.sovworks.eds.android.helpers.CachedPathInfo;
+import com.sovworks.eds.android.helpers.CachedPathInfoBase;
 import com.sovworks.eds.android.helpers.ExtendedFileInfoLoader;
 import com.sovworks.eds.android.locations.activities.OpenLocationsActivity;
-import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.fs.Path;
-import com.sovworks.eds.fs.util.StringPathUtil;
 import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.LocationsManager;
+import com.sovworks.eds.settings.GlobalConfig;
 import com.sovworks.eds.settings.Settings;
+import com.trello.rxlifecycle2.android.FragmentEvent;
+import com.trello.rxlifecycle2.components.RxFragment;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Stack;
 import java.util.TreeSet;
+import java.util.concurrent.CancellationException;
+
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_DATE_ASC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_DATE_DESC;
@@ -48,12 +62,21 @@ import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_FILENAME_NUM_DESC
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_SIZE_ASC;
 import static com.sovworks.eds.settings.SettingsCommon.FB_SORT_SIZE_DESC;
 
-public class FileListDataFragment extends Fragment
+public class FileListDataFragment extends RxFragment
 {
     public static FileListDataFragment newInstance()
     {
         return new FileListDataFragment();
     }
+
+    static
+    {
+        if(GlobalConfig.isTest())
+            TEST_READING_OBSERVABLE = BehaviorSubject.createDefault(false);
+
+    }
+
+    public static Subject<Boolean> TEST_READING_OBSERVABLE;
 
     public static <T extends CachedPathInfo> Comparator<T> getComparator(Settings settings)
     {
@@ -99,6 +122,7 @@ public class FileListDataFragment extends Fragment
         setRetainInstance(true);
         _location = getFallbackLocation();
         _locationsManager = LocationsManager.getLocationsManager(getActivity());
+        _fileList = new TreeSet<>(initSorter());
         loadLocation(state, true);
     }
 
@@ -106,6 +130,7 @@ public class FileListDataFragment extends Fragment
     public void onActivityCreated(Bundle savedInstanceState)
     {
         super.onActivityCreated(savedInstanceState);
+        //TODO remove dependency
         synchronized (_filesListSync)
         {
             if(_fileList!=null)
@@ -122,37 +147,27 @@ public class FileListDataFragment extends Fragment
         {
             if(resultCode != Activity.RESULT_OK)
                 getActivity().setIntent(new Intent());
-            _resHandler.addResult(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    loadLocation(null, false);
-                }
-            });
+            lifecycle().
+                    filter(event -> event == FragmentEvent.RESUME).
+                    firstElement().
+                    subscribe(isResumed ->
+                            loadLocation(null, false),
+                            err ->
+                    {
+                        if(!(err instanceof CancellationException))
+                            Logger.log(err);
+                    });
+
         }
 		else
 			super.onActivityResult(requestCode, resultCode, data);
 	}
 
     @Override
-    public void onPause()
-    {
-        _resHandler.onPause();
-        super.onPause();
-    }
-
-    @Override
-    public void onResume()
-    {
-        super.onResume();
-        _resHandler.handle();
-    }
-
-    @Override
     public void onDetach ()
     {
         super.onDetach();
+        //TODO remove dependency
         synchronized (_filesListSync)
         {
             if(_fileList!=null)
@@ -164,10 +179,7 @@ public class FileListDataFragment extends Fragment
     @Override
     public void onDestroy()
     {
-        ReadDirTask f = (ReadDirTask) getFragmentManager().findFragmentByTag(ReadDirTask.TAG);
-        if(f!=null && f.isAdded())
-            f.cancel();
-        _resHandler.clear();
+        cancelReadDirTask();
         _navigHistory.clear();
         synchronized (_filesListSync)
         {
@@ -190,9 +202,6 @@ public class FileListDataFragment extends Fragment
             ArrayList<Path> selectedPaths = getSelectedPaths();
             LocationsManager.storePathsInBundle(state, _location, selectedPaths);
         }
-        FileListViewFragment fl = getFilesListViewFragment();
-        if(fl != null)
-            state.putInt(ReadDirTask.ARG_SCROLL_POSITION, fl.getListView().getLastVisiblePosition());
         state.putParcelableArrayList(STATE_NAVIG_HISTORY, new ArrayList<>(_navigHistory));
     }
 
@@ -227,9 +236,13 @@ public class FileListDataFragment extends Fragment
 
     public BrowserRecord findLoadedFileByPath(Path path)
     {
-        for(BrowserRecord f: _fileList)
-            if(path.equals(f.getPath()))
-                return f;
+        synchronized (_filesListSync)
+        {
+        	if(_fileList!=null)
+	            for(BrowserRecord f: _fileList)
+		            if(path.equals(f.getPath()))
+		                return f;        
+        }
         return null;
     }
 
@@ -253,18 +266,6 @@ public class FileListDataFragment extends Fragment
         return _location;
     }
 
-    public void addFileToList(BrowserRecord file)
-    {
-        FileManagerActivity act = (FileManagerActivity) getActivity();
-        synchronized (_filesListSync)
-        {
-            file.setHostActivity(act);
-            if(_fileList == null)
-                _fileList = new TreeSet<>(initSorter());
-            _fileList.add(file);
-        }
-    }
-
     public void copyToAdapter(FileListViewAdapter adapter)
     {
         synchronized (_filesListSync)
@@ -275,138 +276,215 @@ public class FileListDataFragment extends Fragment
         }
     }
 
-    public ArrayList<Path> getImageFilesInCurrentDir()
+    public Observable<LoadLocationInfo> getLocationLoadingObservable()
     {
-        ArrayList<Path> al = new ArrayList<>();
-        synchronized (_filesListSync)
-        {
-            if(_fileList!=null)
-            {
-                int length = 0;
-                for (BrowserRecord rec : _fileList)
-                {
-                    if (rec.isFile())
-                    {
-                        String mime = FileOpsService.getMimeTypeFromExtension(getActivity(), new StringPathUtil(rec.getName()).getFileExtension());
-                        if (mime.startsWith("image/"))
-                        {
-                            al.add(rec.getPath());
-                            length += rec.getPath().getPathString().length();
-                            if (length >= 100000)
-                                break;
-                        }
-                    }
-                }
-            }
-        }
-        return al;
+        return _locationLoading;
     }
 
-
-    public void goTo(Location location, int scrollPosition)
+    public Observable<BrowserRecord> getLoadRecordObservable()
     {
-        Location prevLocation = getLocation();
-        int prevScrollPosition = 0;
-        FileListViewFragment fl = getFilesListViewFragment();
-        if(fl!=null)
-            prevScrollPosition = fl.getListView().getLastVisiblePosition();
-		readLocation(location, scrollPosition);
-		if(prevLocation!=null)
-        {
-            Uri uri = prevLocation.getLocationUri();
-            if(_navigHistory.empty() || !_navigHistory.lastElement().locationUri.equals(uri))
-            {
-                HistoryItem hi = new HistoryItem();
-                hi.locationUri = uri;
-                hi.scrollPosition = prevScrollPosition;
-                hi.locationId = prevLocation.getId();
-                _navigHistory.push(hi);
-            }
-        }
+        return _recordLoadedSubject;
     }
 
-    public void goToPrevLocation()
-	{
-		while(!_navigHistory.isEmpty())
+    static class LoadLocationInfo implements Cloneable
+    {
+        enum Stage
         {
-            HistoryItem hi = _navigHistory.pop();
-            Uri uri  = hi.locationUri;
+            StartedLoading,
+            Loading,
+            FinishedLoading
+        }
+        Stage stage;
+        CachedPathInfo folder;
+        BrowserRecord file;
+        DirectorySettings folderSettings;
+        Location location;
+
+        @Override
+        public LoadLocationInfo clone()
+        {
             try
             {
-                Location loc = _locationsManager.getLocation(uri);
-                if(loc!=null && LocationsManager.isOpen(loc))
-                {
-                    readLocation(loc, hi.scrollPosition);
-                    break;
-                }
+                return (LoadLocationInfo) super.clone();
             }
-            catch (Exception e)
+            catch (CloneNotSupportedException ignore)
             {
-                Logger.log(e);
+                return null;
             }
         }
-	}
-
-    public void setDirectorySettings(DirectorySettings ds)
-    {
-        _directorySettings = ds;
     }
 
-    public void setCurrentPathRecord(BrowserRecord rec)
+    public synchronized void readLocation(Location location, Collection<Path> selectedFiles)
     {
-        _currentPathRecord = rec;
-    }
-
-    public BrowserRecord getCurrentPathRecord()
-    {
-        return _currentPathRecord;
-    }
-
-    public void rereadCurrentLocation()
-    {
-        Logger.debug(TAG + "rereadCurrentLocation");
-        int scrollPosition = 0;
-        FileListViewFragment fl = getFilesListViewFragment();
-        if(fl!=null)
-            scrollPosition = fl.getListView().getLastVisiblePosition();
-        readLocation(getLocation(), scrollPosition);
-    }
-
-    public void readLocation(Location location, int scrollPosition)
-    {
-        Logger.debug(TAG + "readCurrentLocation");
+        Logger.debug(TAG + " readCurrentLocation");
         cancelReadDirTask();
         clearCurrentFiles();
         _location = location;
-        if(_location == null)
+        if (_location == null)
             return;
-        FileListViewFragment f = getFilesListViewFragment();
-        if(f!=null)
-            f.onLocationChanged();
-        FileManagerActivity act = (FileManagerActivity) getActivity();
-        getFragmentManager().beginTransaction().add(
-                ReadDirTask.newInstance(
-                        getLocation(),
-                        act.getIntent().
-                                getBooleanExtra(
-                                        FileManagerActivity.EXTRA_ALLOW_SELECT_ROOT_FOLDER,
-                                        act.isSelectAction() && act.allowFolderSelect()
-                                ),
-                        scrollPosition
-                ),
-                ReadDirTask.TAG
-        ).commitAllowingStateLoss();
+
+        FileManagerActivity activity = (FileManagerActivity) getActivity();
+        if(activity == null)
+            return;
+        Context context = activity.getApplicationContext();
+        boolean showRootFolder = activity.getIntent().
+                getBooleanExtra(
+                        FileManagerActivity.EXTRA_ALLOW_SELECT_ROOT_FOLDER,
+                        activity.isSelectAction() && activity.allowFolderSelect()
+                );
+        LoadLocationInfo startInfo = new LoadLocationInfo();
+        startInfo.stage = LoadLocationInfo.Stage.StartedLoading;
+        startInfo.location = location;
+        Logger.debug(TAG + ": _locationLoading.onNext started loading");
+        _locationLoading.onNext(startInfo);
+        Observable<BrowserRecord> observable = LoadDirSettingsObservable.
+                create(location).
+                toSingle(new DirectorySettings()).
+                onErrorReturn(err -> {
+                    Logger.log(err);
+                    return new DirectorySettings();
+                }).
+                map(dirSettings -> {
+                    LoadLocationInfo loadLocationInfo = new LoadLocationInfo();
+                    loadLocationInfo.stage = LoadLocationInfo.Stage.Loading;
+                    loadLocationInfo.folderSettings = dirSettings;
+                    if(location.getCurrentPath().isFile())
+                    {
+                        loadLocationInfo.file = ReadDir.getBrowserRecordFromFsRecord(
+                                context,
+                                location,
+                                location.getCurrentPath(),
+                                dirSettings
+                        );
+                        Location parentLocation = location.copy();
+                        parentLocation.setCurrentPath(location.getCurrentPath().getParentPath());
+                        loadLocationInfo.location = parentLocation;
+                    }
+                    else
+                        loadLocationInfo.location = location;
+                    CachedPathInfo cpi = new CachedPathInfoBase();
+                    cpi.init(loadLocationInfo.location.getCurrentPath());
+                    loadLocationInfo.folder = cpi;
+                    return loadLocationInfo;
+                }).
+                observeOn(AndroidSchedulers.mainThread()).
+                doOnSuccess(loadLocationInfo -> {
+                    _directorySettings = loadLocationInfo.folderSettings;
+                    Logger.debug(TAG + ": _locationLoading.onNext loading");
+                    _locationLoading.onNext(loadLocationInfo);
+                }).
+                observeOn(Schedulers.io()).
+                flatMapObservable(loadLocationInfo -> ReadDir.createObservable(
+                    context,
+                    loadLocationInfo.location,
+                    selectedFiles,
+                    loadLocationInfo.folderSettings,
+                    showRootFolder
+
+                ));
+        if(TEST_READING_OBSERVABLE != null)
+        {
+            observable = observable.
+                    doOnSubscribe(res -> TEST_READING_OBSERVABLE.onNext(true)).
+                    doFinally(() -> TEST_READING_OBSERVABLE.onNext(false));
+        }
+
+        _readLocationObserver = observable.
+                compose(bindUntilEvent(FragmentEvent.DESTROY)).
+                subscribeOn(Schedulers.io()).
+                observeOn(AndroidSchedulers.mainThread()).
+                doFinally(() -> sendFinishedLoading(location)).
+                subscribe(loadedRecord -> {
+                            addRecordToList(loadedRecord);
+                            _recordLoadedSubject.onNext(loadedRecord);
+                        },
+                        err ->
+                        {
+                            if(!(err instanceof CancellationException))
+                                Logger.log(err);
+                        }
+                );
+
+    }
+
+    private void sendFinishedLoading(Location location)
+    {
+        Logger.debug(TAG + ": _locationLoading.onNext isLoading = false");
+        LoadLocationInfo loadLocationInfo = new LoadLocationInfo();
+        loadLocationInfo.location = location;
+        loadLocationInfo.stage = LoadLocationInfo.Stage.FinishedLoading;
+        _locationLoading.onNext(loadLocationInfo);
+    }
+
+    public Single<BrowserRecord> makeNewFile(String name, int type)
+    {
+        return Single.create(emitter -> CreateNewFile.createObservable(
+                getActivity().getApplicationContext(),
+                getLocation(),
+                name,
+                type,
+                false
+        ).compose(bindToLifecycle()).
+                subscribeOn(Schedulers.io()).
+                observeOn(AndroidSchedulers.mainThread()).
+                subscribe(rec -> {
+                            addRecordToList(rec);
+                            if(!emitter.isDisposed())
+                                emitter.onSuccess(rec);
+                        },
+                        err -> Logger.showAndLog(getActivity(), err)));
+    }
+
+    public Single<BrowserRecord> createOrFindFile(String name, int type)
+    {
+        return Single.create(emitter -> CreateNewFile.createObservable(
+                getActivity().getApplicationContext(),
+                getLocation(),
+                name,
+                type,
+                true
+        ).compose(bindToLifecycle()).
+                subscribeOn(Schedulers.io()).
+                observeOn(AndroidSchedulers.mainThread()).
+                subscribe(rec -> {
+                            if(findLoadedFileByPath(rec.getPath()) == null)
+                                addRecordToList(rec);
+                            if(!emitter.isDisposed())
+                                emitter.onSuccess(rec);
+                        },
+                        err -> Logger.showAndLog(getActivity(), err)));
+
+    }
+
+    private void addRecordToList(BrowserRecord rec)
+    {
+        FileManagerActivity fm = (FileManagerActivity) getActivity();
+        rec.setHostActivity(fm);
+        synchronized (_filesListSync)
+        {
+            if(_fileList!=null)
+                _fileList.add(rec);
+        }
     }
 
     public void reSortFiles()
     {
+        LoadLocationInfo loadInfo = new LoadLocationInfo();
+        loadInfo.stage = LoadLocationInfo.Stage.StartedLoading;
+        loadInfo.location = _location;
+        Logger.debug(TAG + ": _locationLoading.onNext started loading (sorting)");
+        _locationLoading.onNext(loadInfo);
         synchronized (_filesListSync)
         {
             TreeSet<BrowserRecord> n = new TreeSet<>(initSorter());
-            if(_fileList != null)
+            if (_fileList != null)
                 n.addAll(_fileList);
             _fileList = n;
         }
+        loadInfo = loadInfo.clone();
+        loadInfo.stage = LoadLocationInfo.Stage.FinishedLoading;
+        Logger.debug(TAG + ": _locationLoading.onNext finished loading (sorting)");
+        _locationLoading.onNext(loadInfo);
     }
 
     public Stack<HistoryItem> getNavigHistory()
@@ -482,17 +560,21 @@ public class FileListDataFragment extends Fragment
 
     private LocationsManager _locationsManager;
     private Location _location;
-    private BrowserRecord _currentPathRecord;
     private DirectorySettings _directorySettings;
     private NavigableSet<BrowserRecord> _fileList;
     private final Object _filesListSync = new Object();
     private final Stack<HistoryItem> _navigHistory = new Stack<>();
-    private final ActivityResultHandler _resHandler = new ActivityResultHandler();
-    private void cancelReadDirTask()
+    private final Subject<LoadLocationInfo> _locationLoading = BehaviorSubject.create();
+    private final Subject<BrowserRecord> _recordLoadedSubject = PublishSubject.create();
+    private Disposable _readLocationObserver;
+
+    private synchronized void cancelReadDirTask()
     {
-        ReadDirTask task = (ReadDirTask) getFragmentManager().findFragmentByTag(ReadDirTask.TAG);
-        if(task!=null)
-            task.cancel();
+        if(_readLocationObserver != null)
+        {
+            _readLocationObserver.dispose();
+            _readLocationObserver = null;
+        }
     }
 
     private void restoreNavigHistory(Bundle state)
@@ -505,7 +587,7 @@ public class FileListDataFragment extends Fragment
         }
 	}
 
-    private void loadLocation(final Bundle savedState, final boolean autoOpen)
+    public void loadLocation(final Bundle savedState, final boolean autoOpen)
 	{
 		final Uri uri = getLocationUri(getActivity().getIntent(), savedState);
         Location loc = null;
@@ -518,9 +600,8 @@ public class FileListDataFragment extends Fragment
 			Logger.showAndLog(getActivity(), e);
 		}
 		if(loc == null)
-        {
             loc = getFallbackLocation();
-        }
+
         if(autoOpen && !LocationsManager.isOpen(loc))
 		{
             Intent i = new Intent(getActivity(), OpenLocationsActivity.class);
@@ -528,33 +609,47 @@ public class FileListDataFragment extends Fragment
             startActivityForResult(i, REQUEST_CODE_OPEN_LOCATION);
 		}
 		else if(savedState == null)
-            readLocation(loc, 0);
+        {
+            resetIntent();
+            readLocation(loc, null);
+        }
         else
             restoreState(savedState);
 	}
 
-    private  void clearCurrentFiles()
+    private void resetIntent()
+    {
+        Intent i = getActivity().getIntent();
+        if(i.getAction() == null || Intent.ACTION_MAIN.equals(i.getAction()))
+        {
+            i.setData(null);
+            getActivity().setIntent(i);
+        }
+    }
+
+    private void clearCurrentFiles()
     {
         synchronized (_filesListSync)
         {
-            if(_fileList!=null)
+            if(_location!=null)
             {
-                if (_location != null)
-                {
-                    ExtendedFileInfoLoader loader = ExtendedFileInfoLoader.getInstance();
-                    for (BrowserRecord rec : _fileList)
-                        loader.detachRecord(_location.getId(), rec);
-                }
-                _fileList.clear();
+                ExtendedFileInfoLoader loader = ExtendedFileInfoLoader.getInstance();
+                for (BrowserRecord br: _fileList)
+                    loader.detachRecord(_location.getId(), br);
             }
-            _directorySettings = null;
+            _fileList.clear();
         }
+        _directorySettings = null;
+        _location = null;
     }
 
     private void restoreState(Bundle state)
     {
         restoreNavigHistory(state);
-        getFragmentManager().beginTransaction().add(ReadDirTask.newInstance(state), ReadDirTask.TAG).commit();
+        ArrayList<Path> selectedFiles = new ArrayList<>();
+        Location loc = _locationsManager.getFromBundle(state, selectedFiles);
+        if(loc!=null)
+            readLocation(loc, selectedFiles);
     }
 
     private Location initLocationFromUri(Uri locationUri) throws Exception
@@ -568,12 +663,6 @@ public class FileListDataFragment extends Fragment
 	private Location getFallbackLocation()
 	{
 		return FileManagerActivity.getStartLocation(getActivity());
-	}
-
-    private FileListViewFragment getFilesListViewFragment()
-	{
-		FileListViewFragment f = (FileListViewFragment) getFragmentManager().findFragmentByTag(FileListViewFragment.TAG);
-		return f!=null && f.isAdded() && f.isResumed() ? f : null;
 	}
 
     private Comparator<BrowserRecord> initSorter()

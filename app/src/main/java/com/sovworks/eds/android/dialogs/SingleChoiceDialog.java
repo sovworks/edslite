@@ -30,28 +30,20 @@ public abstract class SingleChoiceDialog<T> extends DialogFragment
     public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         View v = inflater.inflate(getLayoutId(), container);
-        v.findViewById(android.R.id.button1).setOnClickListener(new View.OnClickListener()
+        v.findViewById(android.R.id.button1).setOnClickListener(view ->
         {
-            @Override
-            public void onClick(View view)
-            {
-                onNo();
-                getDialog().dismiss();
-            }
+            onNo();
+            getDialog().dismiss();
         });
-        _okButton = (Button) v.findViewById(android.R.id.button2);
-        _okButton.setOnClickListener(new View.OnClickListener()
+        _okButton = v.findViewById(android.R.id.button2);
+        _okButton.setOnClickListener(view ->
         {
-            @Override
-            public void onClick(View view)
-            {
-                onYes();
-                dismiss();
-            }
+            onYes();
+            dismiss();
         });
         _okButton.setEnabled(false);
-        _progressBar = (ProgressBar)v.findViewById(android.R.id.progress);
-        _listView = (ListView)v.findViewById(android.R.id.list);
+        _progressBar = v.findViewById(android.R.id.progress);
+        _listView = v.findViewById(android.R.id.list);
         ((TextView)v.findViewById(android.R.id.text1)).setText(getTitle());
         if(_progressBar!=null)
         {
@@ -112,14 +104,10 @@ public abstract class SingleChoiceDialog<T> extends DialogFragment
             public View getView(final int position, View convertView, ViewGroup parent)
             {
                 final CheckedTextView tv = (CheckedTextView) super.getView(position, convertView, parent);
-                tv.setOnClickListener(new View.OnClickListener()
+                tv.setOnClickListener(v ->
                 {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        getListView().setItemChecked(position, true);
-                        _okButton.setEnabled(true);
-                    }
+                    getListView().setItemChecked(position, true);
+                    _okButton.setEnabled(true);
                 });
                 tv.setChecked(getListView().isItemChecked(position));
                 return tv;

@@ -259,7 +259,7 @@ public class DocumentTreeFS implements FileSystem
                     _path.getDocumentUri(),
                     mimeType, name);
             if(uri == null)
-                throw new IOException("Failed creating folder");
+                throw new IOException("Failed creating file");
             return new File(new DocumentPath(uri));
         }
 

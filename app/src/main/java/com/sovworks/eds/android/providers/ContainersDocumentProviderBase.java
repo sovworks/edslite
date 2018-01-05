@@ -3,33 +3,33 @@ package com.sovworks.eds.android.providers;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
-import android.text.format.Formatter;
 import android.util.Base64;
 
 import com.sovworks.eds.android.Logger;
-import com.sovworks.eds.android.R;
-import com.sovworks.eds.fs.util.Util;
-import com.sovworks.eds.locations.LocationsManager;
+import com.sovworks.eds.android.providers.cursor.DocumentRootsCursor;
+import com.sovworks.eds.android.providers.cursor.FSCursor;
+import com.sovworks.eds.android.filemanager.tasks.LoadPathInfoObservable;
 import com.sovworks.eds.android.service.FileOpsService;
 import com.sovworks.eds.fs.Directory;
 import com.sovworks.eds.fs.Path;
-import com.sovworks.eds.fs.util.PathUtil;
 import com.sovworks.eds.fs.util.StringPathUtil;
-import com.sovworks.eds.locations.EDSLocation;
+import com.sovworks.eds.fs.util.Util;
 import com.sovworks.eds.locations.Location;
+import com.sovworks.eds.locations.LocationsManager;
 import com.sovworks.eds.settings.SystemConfig;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 
 @TargetApi(Build.VERSION_CODES.KITKAT)
 public abstract class ContainersDocumentProviderBase extends android.provider.DocumentsProvider
@@ -71,40 +71,27 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     @Override
     public Cursor queryRoots(String[] projection) throws FileNotFoundException
     {
-        checkProjection(projection, ALL_ROOT_COLUMNS);
-        if(projection == null)
-            projection = ALL_ROOT_COLUMNS;
-        final MatrixCursor result =
-                new MatrixCursor(projection);
-        for(EDSLocation cont: getLocationsManager().getLoadedEDSLocations(true))
-        {
-            if(cont.isOpen())
-                try
-                {
-                    addRootRow(result, cont);
-                }
-                catch (IOException e)
-                {
-                    Logger.log(e);
-                }
-        }
-        return result;
-
+        return new DocumentRootsCursor(
+                getContext(),
+                getLocationsManager(),
+                projection == null ? ALL_ROOT_COLUMNS : projection
+        );
     }
 
     @Override
     public Cursor queryDocument(String documentId, String[] projection) throws FileNotFoundException
     {
-        checkProjection(projection, ALL_DOCUMENT_COLUMNS);
-        if(projection == null)
-            projection = ALL_DOCUMENT_COLUMNS;
-        final MatrixCursor result =
-                new MatrixCursor(projection);
         try
         {
             Location loc = getLocationsManager().getLocation(getLocationUriFromDocumentId(documentId));
-            addPathRow(result, loc,  loc.getCurrentPath());
-            return result;
+            return new FSCursor(
+                    getContext(),
+                    loc,
+                    projection == null ? ALL_DOCUMENT_COLUMNS : projection,
+                    null,
+                    null,
+                    false
+            );
         }
         catch (Exception e)
         {
@@ -119,13 +106,14 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
         try
         {
             Location loc = getLocationsManager().getLocation(getLocationUriFromDocumentId(documentId));
-            Path path = loc.getCurrentPath();
-            return path.isFile() ?
+            return LoadPathInfoObservable.create(loc).map(cpi -> cpi.isFile() ?
                     FileOpsService.getMimeTypeFromExtension(
                             getContext(),
-                            new StringPathUtil(PathUtil.getNameFromPath(path)).getFileExtension()
-                    ) :
-                    DocumentsContract.Document.MIME_TYPE_DIR;
+                            new StringPathUtil(cpi.getName()).getFileExtension()
+                    ) : DocumentsContract.Document.MIME_TYPE_DIR
+            ).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
         }
         catch (Exception e)
         {
@@ -137,25 +125,17 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     @Override
     public Cursor queryChildDocuments(String parentDocumentId, String[] projection, String sortOrder) throws FileNotFoundException
     {
-        checkProjection(projection, ALL_DOCUMENT_COLUMNS);
-        if(projection == null)
-            projection = ALL_DOCUMENT_COLUMNS;
-        final MatrixCursor result =
-                new MatrixCursor(projection);
         try
         {
             Location loc = getLocationsManager().getLocation(getLocationUriFromDocumentId(parentDocumentId));
-            Directory.Contents dc = loc.getCurrentPath().getDirectory().list();
-            try
-            {
-                for(Path p: dc)
-                    addPathRow(result, loc,  p);
-                return result;
-            }
-            finally
-            {
-                dc.close();
-            }
+            return new FSCursor(
+                    getContext(),
+                    loc,
+                    projection == null ? ALL_DOCUMENT_COLUMNS : projection,
+                    null,
+                    null,
+                    true
+            );
         }
         catch (Exception e)
         {
@@ -170,8 +150,9 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
         try
         {
             Location loc = getLocationsManager().getLocation(getLocationUriFromDocumentId(documentId));
-            return MainContentProvider.getParcelFileDescriptor(this, loc.getLocationUri(), loc, mode, new Bundle());
-
+            return Single.<ParcelFileDescriptor>create(s -> s.onSuccess(MainContentProvider.getParcelFileDescriptor(this, loc, mode, new Bundle()))).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
         }
         catch (Exception e)
         {
@@ -193,24 +174,28 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     {
         try
         {
-            Path srcPath = getLocationsManager().
-                    getLocation(getLocationUriFromDocumentId(sourceDocumentId)).
-                    getCurrentPath();
-            Location dstLocation = getLocationsManager().
-                    getLocation(getLocationUriFromDocumentId(targetParentDocumentId));
-            Directory dest = dstLocation.
-                    getCurrentPath().
-                    getDirectory();
-            Location res = dstLocation.copy();
-            if(srcPath.isDirectory())
-                res.setCurrentPath(dest.createDirectory(srcPath.getDirectory().getName()).getPath());
-            else if(srcPath.isFile())
-                res.setCurrentPath(Util.copyFile(srcPath.getFile(), dest).getPath());
-            Context context = getContext();
-            if(context!=null)
-                context.getContentResolver().notifyChange(getUriFromLocation(res), null);
+            return Single.<String>create(em -> {
+                Path srcPath = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(sourceDocumentId)).
+                        getCurrentPath();
+                Location dstLocation = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(targetParentDocumentId));
+                Directory dest = dstLocation.
+                        getCurrentPath().
+                        getDirectory();
+                Location res = dstLocation.copy();
+                if(srcPath.isDirectory())
+                    res.setCurrentPath(dest.createDirectory(srcPath.getDirectory().getName()).getPath());
+                else if(srcPath.isFile())
+                    res.setCurrentPath(Util.copyFile(srcPath.getFile(), dest).getPath());
+                Context context = getContext();
+                if(context!=null)
+                    context.getContentResolver().notifyChange(getUriFromLocation(res), null);
 
-            return getDocumentIdFromLocation(res);
+                em.onSuccess(getDocumentIdFromLocation(res));
+            }).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
         }
         catch (Exception e)
         {
@@ -224,36 +209,41 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     {
         try
         {
-            Location srcLocation = getLocationsManager().
-                    getLocation(getLocationUriFromDocumentId(sourceDocumentId));
-            Path srcPath = srcLocation.
-                    getCurrentPath();
-            Location dstLocation = getLocationsManager().
-                    getLocation(getLocationUriFromDocumentId(targetParentDocumentId));
-            Directory dest = dstLocation.
-                    getCurrentPath().
-                    getDirectory();
-            Location res = dstLocation.copy();
-            if(srcPath.isDirectory())
-            {
-                String name = srcPath.getDirectory().getName();
-                srcPath.getDirectory().moveTo(dest);
-                res.setCurrentPath(dest.getPath().combine(name));
-            }
-            else if(srcPath.isFile())
-            {
-                String name = srcPath.getFile().getName();
-                srcPath.getFile().moveTo(dest);
-                res.setCurrentPath(dest.getPath().combine(name));
-            }
-            Context context = getContext();
-            if(context!=null)
-            {
-                context.getContentResolver().notifyChange(getUriFromLocation(srcLocation), null);
-                context.getContentResolver().notifyChange(getUriFromLocation(res), null);
-            }
+            return Single.<String>create(em -> {
+                Location srcLocation = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(sourceDocumentId));
+                Path srcPath = srcLocation.
+                        getCurrentPath();
+                Location dstLocation = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(targetParentDocumentId));
+                Directory dest = dstLocation.
+                        getCurrentPath().
+                        getDirectory();
+                Location res = dstLocation.copy();
+                if(srcPath.isDirectory())
+                {
+                    String name = srcPath.getDirectory().getName();
+                    srcPath.getDirectory().moveTo(dest);
+                    res.setCurrentPath(dest.getPath().combine(name));
+                }
+                else if(srcPath.isFile())
+                {
+                    String name = srcPath.getFile().getName();
+                    srcPath.getFile().moveTo(dest);
+                    res.setCurrentPath(dest.getPath().combine(name));
+                }
+                Context context = getContext();
+                if(context!=null)
+                {
+                    context.getContentResolver().notifyChange(getUriFromLocation(srcLocation), null);
+                    context.getContentResolver().notifyChange(getUriFromLocation(res), null);
+                }
 
-            return getDocumentIdFromLocation(res);
+                em.onSuccess(getDocumentIdFromLocation(res));
+            }).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
+
         }
         catch (Exception e)
         {
@@ -267,17 +257,21 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     {
         try
         {
-            Location loc = getLocationsManager().
-                    getLocation(getLocationUriFromDocumentId(documentId));
-            Path srcPath = loc.getCurrentPath();
-            if(srcPath.isFile())
-                srcPath.getFile().delete();
-            else if(srcPath.isDirectory())
-                srcPath.getDirectory().delete();
-            Context context = getContext();
-            if(context!=null)
-                context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
-
+            Completable.create(em -> {
+                Location loc = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(documentId));
+                Path srcPath = loc.getCurrentPath();
+                if(srcPath.isFile())
+                    srcPath.getFile().delete();
+                else if(srcPath.isDirectory())
+                    srcPath.getDirectory().delete();
+                Context context = getContext();
+                if(context!=null)
+                    context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
+                em.onComplete();
+            }).
+                    subscribeOn(Schedulers.io()).
+                    blockingAwait();
         }
         catch (Exception e)
         {
@@ -291,19 +285,23 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     {
         try
         {
-            Location loc = getLocationsManager().getLocation(getLocationUriFromDocumentId(documentId)).copy();
-            Path srcPath = loc.getCurrentPath();
-            if(srcPath.isDirectory())
-                srcPath.getDirectory().rename(displayName);
-            else if(srcPath.isFile())
-                srcPath.getFile().rename(displayName);
-            Context context = getContext();
-            if(context!=null)
-                context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
-            loc.setCurrentPath(srcPath);
-            if(context!=null)
-                context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
-            return getDocumentIdFromLocation(loc);
+            return Single.<String>create(em -> {
+                Location loc = getLocationsManager().getLocation(getLocationUriFromDocumentId(documentId)).copy();
+                Path srcPath = loc.getCurrentPath();
+                if(srcPath.isDirectory())
+                    srcPath.getDirectory().rename(displayName);
+                else if(srcPath.isFile())
+                    srcPath.getFile().rename(displayName);
+                Context context = getContext();
+                if(context!=null)
+                    context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
+                loc.setCurrentPath(srcPath);
+                if(context!=null)
+                    context.getContentResolver().notifyChange(getUriFromLocation(loc), null);
+                em.onSuccess(getDocumentIdFromLocation(loc));
+            }).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
         }
         catch (Exception e)
         {
@@ -317,17 +315,21 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     {
         try
         {
-            Location res = getLocationsManager().
-                    getLocation(getLocationUriFromDocumentId(parentDocumentId)).copy();
-            Directory dest = res.getCurrentPath().getDirectory();
-            if(DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType))
-                res.setCurrentPath(dest.createDirectory(displayName).getPath());
-            else
-                res.setCurrentPath(dest.createFile(displayName).getPath());
-            Context context = getContext();
-            if(context!=null)
-                context.getContentResolver().notifyChange(getUriFromLocation(res), null);
-            return getDocumentIdFromLocation(res);
+            return Single.<String>create(em -> {
+                Location res = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(parentDocumentId)).copy();
+                Directory dest = res.getCurrentPath().getDirectory();
+                if(DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType))
+                    res.setCurrentPath(dest.createDirectory(displayName).getPath());
+                else
+                    res.setCurrentPath(dest.createFile(displayName).getPath());
+                Context context = getContext();
+                if(context!=null)
+                    context.getContentResolver().notifyChange(getUriFromLocation(res), null);
+                em.onSuccess(getDocumentIdFromLocation(res));
+            }).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
         }
         catch (Exception e)
         {
@@ -342,16 +344,19 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
     {
         try
         {
-            Path parentPath = getLocationsManager().
-                getLocation(getLocationUriFromDocumentId(parentDocumentId)).getCurrentPath();
-            Path testPath = getLocationsManager().
-                    getLocation(getLocationUriFromDocumentId(documentId)).getCurrentPath();
-            int maxParents = 0;
-            while(testPath != null && !testPath.equals(parentPath) && maxParents++ < 1000)
-                testPath = testPath.getParentPath();
+            return Single.<Boolean>create(em -> {
+                Path parentPath = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(parentDocumentId)).getCurrentPath();
+                Path testPath = getLocationsManager().
+                        getLocation(getLocationUriFromDocumentId(documentId)).getCurrentPath();
+                int maxParents = 0;
+                while(testPath != null && !testPath.equals(parentPath) && maxParents++ < 1000)
+                    testPath = testPath.getParentPath();
 
-            return testPath != null && maxParents < 1000;
-
+                em.onSuccess(testPath != null && maxParents < 1000);
+            }).
+                    subscribeOn(Schedulers.io()).
+                    blockingGet();
         }
         catch (Exception e)
         {
@@ -381,96 +386,6 @@ public abstract class ContainersDocumentProviderBase extends android.provider.Do
             DocumentsContract.Document.COLUMN_SIZE,
             DocumentsContract.Document.COLUMN_SUMMARY
     };
-
-    private void checkProjection(String[] projection, String[] columns)
-    {
-        if(projection != null)
-        {
-            for(String col: projection)
-                if(!Arrays.asList(columns).contains(col))
-                    throw new IllegalArgumentException("Wrong projection column: " + col);
-        }
-    }
-
-    private void addPathRow(MatrixCursor cur, Location loc, Path path) throws IOException
-    {
-        final MatrixCursor.RowBuilder row = cur.newRow();
-        row.add(DocumentsContract.Document.COLUMN_DISPLAY_NAME, PathUtil.getNameFromPath(path));
-        Location tmp = loc.copy();
-        tmp.setCurrentPath(path);
-        row.add(DocumentsContract.Document.COLUMN_DOCUMENT_ID, getDocumentIdFromLocation(tmp));
-        boolean ro = loc.isReadOnly();
-        int flags = 0;
-        if(!ro)
-        {
-            if(path.isFile())
-                flags |= DocumentsContract.Document.FLAG_SUPPORTS_WRITE;
-            else if(path.isDirectory())
-                flags |= DocumentsContract.Document.FLAG_DIR_SUPPORTS_CREATE;
-            flags |= DocumentsContract.Document.FLAG_SUPPORTS_DELETE;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                flags |= DocumentsContract.Document.FLAG_SUPPORTS_RENAME;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                flags |= DocumentsContract.Document.FLAG_SUPPORTS_COPY |
-                        DocumentsContract.Document.FLAG_SUPPORTS_MOVE;
-        }
-        row.add(DocumentsContract.Document.COLUMN_FLAGS, flags);
-        row.add(DocumentsContract.Document.COLUMN_ICON, null);
-        if(path.isFile())
-            row.add(DocumentsContract.Document.COLUMN_LAST_MODIFIED, path.getFile().getLastModified().getTime());
-        else if(path.isDirectory())
-            row.add(DocumentsContract.Document.COLUMN_LAST_MODIFIED, path.getDirectory().getLastModified().getTime());
-        else
-            row.add(DocumentsContract.Document.COLUMN_LAST_MODIFIED, null);
-        row.add(DocumentsContract.Document.COLUMN_MIME_TYPE, path.isFile() ?
-                FileOpsService.getMimeTypeFromExtension(getContext(), new StringPathUtil(PathUtil.getNameFromPath(path)).getFileExtension()) :
-                        DocumentsContract.Document.MIME_TYPE_DIR
-        );
-        row.add(DocumentsContract.Document.COLUMN_SIZE, path.isFile() ? path.getFile().getSize() : null);
-        row.add(DocumentsContract.Document.COLUMN_SUMMARY, null);
-    }
-
-    private void addRootRow(MatrixCursor cur, EDSLocation cont) throws IOException
-    {
-        Context context = getContext();
-        if(context == null)
-            return;
-        final MatrixCursor.RowBuilder row = cur.newRow();
-        row.add(DocumentsContract.Root.COLUMN_ROOT_ID, cont.getId());
-        row.add(DocumentsContract.Root.COLUMN_SUMMARY, context.getString(
-                    R.string.container_info_summary,
-                    Formatter.formatFileSize(context, cont.getFS().getRootPath().getDirectory().getFreeSpace()),
-                    Formatter.formatFileSize(context, cont.getFS().getRootPath().getDirectory().getTotalSpace())
-                )
-        );
-
-        // FLAG_SUPPORTS_CREATE means at least one directory under the root supports
-        // creating documents. FLAG_SUPPORTS_RECENTS means your application's most
-        // recently used documents will show up in the "Recents" category.
-        // FLAG_SUPPORTS_SEARCH allows users to search all documents the application
-        // shares.
-        int flags = DocumentsContract.Root.FLAG_SUPPORTS_SEARCH;
-        if(!cont.isReadOnly())
-            flags |= DocumentsContract.Root.FLAG_SUPPORTS_CREATE;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            flags |= DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD;
-        row.add(DocumentsContract.Root.COLUMN_FLAGS, flags);
-
-        // COLUMN_TITLE is the root title (e.g. Gallery, Drive).
-        row.add(DocumentsContract.Root.COLUMN_TITLE, cont.getTitle());
-        // This document id cannot change once it's shared.
-        Location tmp = cont.copy();
-        tmp.setCurrentPath(cont.getFS().getRootPath());
-        row.add(DocumentsContract.Root.COLUMN_DOCUMENT_ID, getDocumentIdFromLocation(tmp));
-
-        // The child MIME types are used to filter the roots and only present to the
-        //  user roots that contain the desired type somewhere in their file hierarchy.
-        row.add(DocumentsContract.Root.COLUMN_MIME_TYPES, "*/*");
-        row.add(DocumentsContract.Root.COLUMN_AVAILABLE_BYTES, cont.getFS().getRootPath().getDirectory().getFreeSpace());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            row.add(DocumentsContract.Root.COLUMN_CAPACITY_BYTES, cont.getFS().getRootPath().getDirectory().getTotalSpace());
-        row.add(DocumentsContract.Root.COLUMN_ICON, R.drawable.ic_lock_open);
-    }
 
     protected LocationsManager getLocationsManager()
     {

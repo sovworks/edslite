@@ -7,7 +7,7 @@ import android.util.TypedValue;
 
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
-import com.sovworks.eds.android.filemanager.tasks.ReadDirTask;
+import com.sovworks.eds.android.filemanager.fragments.FileListViewFragment;
 import com.sovworks.eds.android.locations.closer.fragments.LocationCloserBaseFragment;
 import com.sovworks.eds.android.locations.closer.fragments.OMLocationCloserFragment;
 import com.sovworks.eds.android.locations.opener.fragments.ContainerOpenerFragment;
@@ -25,7 +25,12 @@ public class DrawerContainerMenuItem extends DrawerLocationMenuItem
             if(location.isFileSystemOpen())
             {
                 Bundle args = getArguments();
-                FileManagerActivity.openFileManager((FileManagerActivity)getActivity(), location, args != null ? args.getInt(ReadDirTask.ARG_SCROLL_POSITION, 0) : 0);
+                FileManagerActivity.openFileManager(
+                        (FileManagerActivity)getActivity(),
+                        location, args != null ?
+                                args.getInt(FileListViewFragment.ARG_SCROLL_POSITION, 0)
+                                : 0
+                );
             }
         }
     }

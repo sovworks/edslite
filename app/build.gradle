@@ -3,14 +3,16 @@ apply plugin: 'com.android.application'
 android {
 
     compileSdkVersion 26
-    buildToolsVersion "26.0.2"
+    buildToolsVersion "26.0.3"
 
     defaultConfig {
         applicationId "com.sovworks.eds.android"
         minSdkVersion 14
         targetSdkVersion 25
-        versionCode 216
-        versionName "2.0.0.216"
+        versionCode 221
+        versionName "2.0.0.221"
+        multiDexEnabled true
+
 
         ndk {
             // Specifies the ABI configurations of your native
@@ -120,7 +122,17 @@ android {
 dependencies {
     implementation 'com.drewnoakes:metadata-extractor:2.9.1'
     implementation 'com.android.support:design:26.1.0'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.6'
+
+    implementation 'com.trello.rxlifecycle2:rxlifecycle:2.2.1'
+    // If you want to bind to Android-specific lifecycles
+    implementation 'com.trello.rxlifecycle2:rxlifecycle-android:2.2.1'
+    // If you want pre-written Activities and Fragments you can subclass as providers
+    implementation 'com.trello.rxlifecycle2:rxlifecycle-components:2.2.1'
+    implementation 'com.android.support:exifinterface:26.1.0'
 }
+
 
 apply from: 'build-full.gradle'
 apply from: 'build-local.gradle'

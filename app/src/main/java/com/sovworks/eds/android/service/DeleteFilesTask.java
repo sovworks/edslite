@@ -60,9 +60,7 @@ class DeleteFilesTask extends FileOperationTaskBase
 		}
 		catch (final IOException e)
 		{
-			IOException e1 = new IOException(String.format("Unable to delete record: %s", srcPath.getPathDesc()));
-			e1.initCause(e);
-			throw e1;
+			setError(new IOException(String.format("Unable to delete record: %s", srcPath.getPathDesc()), e));
 		}
 		if (_currentStatus.processed.filesCount < _currentStatus.total.filesCount - 1) _currentStatus.processed.filesCount++;
 		updateUIOnTime();
@@ -76,7 +74,7 @@ class DeleteFilesTask extends FileOperationTaskBase
 		file.delete();
 	}
 
-	protected void deleteDir(Directory dir) throws IOException
+	private void deleteDir(Directory dir) throws IOException
 	{
 		_currentStatus.fileName = dir.getName();
 		updateUIOnTime();

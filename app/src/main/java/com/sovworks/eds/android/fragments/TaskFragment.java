@@ -8,6 +8,7 @@ import android.os.AsyncTask.Status;
 import android.os.Bundle;
 
 import com.sovworks.eds.android.Logger;
+import com.sovworks.eds.android.helpers.ProgressReporter;
 import com.sovworks.eds.settings.GlobalConfig;
 
 import java.lang.ref.WeakReference;
@@ -190,6 +191,34 @@ public abstract class TaskFragment extends Fragment
 		boolean isTaskCancelled();
 		void updateUI(Object state);
 		void setResult(Object result);
+	}
+
+	public static class TaskStateProgressReporter implements ProgressReporter
+	{
+		public TaskStateProgressReporter(TaskState ts)
+		{
+			_ts = ts;
+		}
+
+		private final TaskState _ts;
+
+		@Override
+		public void setText(CharSequence text)
+		{
+			_ts.updateUI(text);
+		}
+
+		@Override
+		public void setProgress(int progress)
+		{
+			_ts.updateUI(progress);
+		}
+
+		@Override
+		public boolean isCancelled()
+		{
+			return _ts.isTaskCancelled();
+		}
 	}
 	
 	protected TaskCallbacks getTaskCallbacks(Activity activity)

@@ -4,7 +4,7 @@ import android.content.Intent;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
-import com.sovworks.eds.android.activities.AskOverwriteActivity;
+import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
 import com.sovworks.eds.android.fs.DocumentTreeFS;
 import com.sovworks.eds.android.helpers.ExtendedFileInfoLoader;
 import com.sovworks.eds.fs.Directory;
@@ -17,6 +17,7 @@ import com.sovworks.eds.fs.util.FilesOperationStatus;
 import com.sovworks.eds.fs.util.SrcDstCollection;
 import com.sovworks.eds.fs.util.SrcDstCollection.SrcDst;
 import com.sovworks.eds.fs.util.SrcDstPlain;
+import com.sovworks.eds.locations.Location;
 
 import org.json.JSONException;
 
@@ -30,7 +31,7 @@ class CopyFilesTask extends FileOperationTaskBase
 {	
 	public static class CopyFilesTaskParam extends FileOperationTaskBase.FileOperationParam
 	{
-		public CopyFilesTaskParam(Intent i)
+		CopyFilesTaskParam(Intent i)
 		{
 			super(i);
 			_overwrite = i.getBooleanExtra(FileOpsService.ARG_OVERWRITE, false);
@@ -41,7 +42,7 @@ class CopyFilesTask extends FileOperationTaskBase
 			return _overwrite;
 		}
 		
-		public SrcDstPlain getOverwriteTargetsStorage()
+		SrcDstPlain getOverwriteTargetsStorage()
 		{
 			return _overwriteTargets;			
 		}
@@ -114,12 +115,16 @@ class CopyFilesTask extends FileOperationTaskBase
 		try
 		{
 			copyFiles(record);
-            return true;
 		}
 		catch(NoFreeSpaceLeftException e)
 		{
 			throw new com.sovworks.eds.android.errors.NoFreeSpaceLeftException(_context);
 		}
+		catch (IOException e)
+		{
+			setError(e);
+		}
+		return true;
 	}
 
 	protected boolean copyFiles(SrcDst record) throws IOException
@@ -138,19 +143,21 @@ class CopyFilesTask extends FileOperationTaskBase
 		return res;
 	}
 
-	protected boolean makeDir(SrcDst record) throws IOException
+	private boolean makeDir(SrcDst record) throws IOException
 	{
 		Path src = record.getSrcLocation().getCurrentPath();
-		Path dst = record.getDstLocation().getCurrentPath();
-		return makeDir(src, dst);
+		Location dstLocation = record.getDstLocation();
+		if(dstLocation == null)
+			throw new IOException("Failed to determine destination folder for " + src.getPathDesc());
+		return makeDir(src, dstLocation.getCurrentPath());
 	}
 
-	protected boolean makeDir(Path srcPath, Path dstPath) throws IOException
+	private boolean makeDir(Path srcPath, Path dstPath) throws IOException
 	{
 		return makeDir(srcPath.getDirectory(), dstPath.getDirectory());
 	}
 
-	protected boolean makeDir(Directory srcFolder, Directory targetFolder) throws IOException
+	private boolean makeDir(Directory srcFolder, Directory targetFolder) throws IOException
 	{
 		String srcName = srcFolder.getName();
 		_currentStatus.fileName = srcName;
@@ -167,7 +174,10 @@ class CopyFilesTask extends FileOperationTaskBase
 	protected boolean copyFile(SrcDst record) throws IOException
 	{
 		Path src = record.getSrcLocation().getCurrentPath();
-		Path dst = record.getDstLocation().getCurrentPath();
+		Location dstLocation = record.getDstLocation();
+		if(dstLocation == null)
+			throw new IOException("Failed to determine destination folder for " + src.getPathDesc());
+		Path dst = dstLocation.getCurrentPath();
 		if(copyFile(src, dst))
 		{
 			ExtendedFileInfoLoader.getInstance().discardCache(record.getDstLocation(), dst);
@@ -191,7 +201,7 @@ class CopyFilesTask extends FileOperationTaskBase
         return calcPath(dstFolder, src.getName());
     }
 
-    protected Path calcPath(Directory dstFolder, String name)
+    Path calcPath(Directory dstFolder, String name)
     {
         try
         {
@@ -267,7 +277,8 @@ class CopyFilesTask extends FileOperationTaskBase
 
 	protected Intent getOverwriteRequestIntent(SrcDstCollection filesToOverwrite) throws IOException, JSONException
 	{
-		return AskOverwriteActivity.getOverwriteActivityIntent(_context, false, filesToOverwrite);
+		return FileManagerActivity.
+				getOverwriteRequestIntent(_context, false, filesToOverwrite);
 
 	}
 

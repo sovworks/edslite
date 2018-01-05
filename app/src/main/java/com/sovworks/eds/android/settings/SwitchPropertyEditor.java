@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
 import com.sovworks.eds.android.R;
 
@@ -20,19 +19,15 @@ public abstract class SwitchPropertyEditor extends PropertyEditorBase
 	public View createView(ViewGroup parent)
 	{
 		View view = super.createView(parent);
-		_switchButton = (CompoundButton) view.findViewById(android.R.id.button1);
-		_switchButton.setOnCheckedChangeListener(new OnCheckedChangeListener()
-		{			
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-			{
-				if(!_loadingValue)
-				{
-					if(!onChecked(isChecked))
-						buttonView.setChecked(!isChecked);
-				}
-			}
-		});
+		_switchButton = view.findViewById(android.R.id.button1);
+		_switchButton.setOnCheckedChangeListener((buttonView, isChecked) ->
+		{
+            if(!_loadingValue)
+            {
+                if(!onChecked(isChecked))
+                    buttonView.setChecked(!isChecked);
+            }
+        });
 		return view;
 	}
 	
@@ -90,13 +85,13 @@ public abstract class SwitchPropertyEditor extends PropertyEditorBase
 		_switchButton.toggle();
 	}
 
-	public boolean getCurrentValue()
+	protected boolean getCurrentValue()
 	{
 		return _switchButton.isChecked();
 	}
 	
 	protected CompoundButton _switchButton;
-	protected boolean _loadingValue;
+	private boolean _loadingValue;
 	
 	protected abstract boolean loadValue();
 	protected abstract void saveValue(boolean value);

@@ -10,7 +10,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -61,23 +60,16 @@ public abstract class DrawerControllerBase
             for (DrawerMenuItemBase item : copy)
                 item.restoreState(savedState);
         }
-        _drawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
-            {
-                DrawerMenuItemBase item = (DrawerMenuItemBase) _drawerListView.getItemAtPosition(i);
-                if(item!=null)
-                    item.onClick(view, i);
-            }
-        });
-        _drawerListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
+        _drawerListView.setOnItemClickListener((adapterView, view, i, l) ->
         {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
-            {
-                DrawerMenuItemBase item = (DrawerMenuItemBase) _drawerListView.getItemAtPosition(position);
-                return item != null && item.onLongClick(view, position);
-            }
+            DrawerMenuItemBase item = (DrawerMenuItemBase) _drawerListView.getItemAtPosition(i);
+            if(item!=null)
+                item.onClick(view, i);
+        });
+        _drawerListView.setOnItemLongClickListener((parent, view, position, id) ->
+        {
+            DrawerMenuItemBase item = (DrawerMenuItemBase) _drawerListView.getItemAtPosition(position);
+            return item != null && item.onLongClick(view, position);
         });
     }
 
@@ -109,12 +101,12 @@ public abstract class DrawerControllerBase
         return false;
     }
 
-    public void closeDrawer()
+    void closeDrawer()
     {
         _drawerLayout.closeDrawer(_drawerListView);
     }
 
-    public void openDrawer()
+    private void openDrawer()
     {
         _drawerLayout.openDrawer(_drawerListView);
     }
@@ -124,7 +116,7 @@ public abstract class DrawerControllerBase
         return _activity;
     }
 
-    public ListView getDrawerListView()
+    ListView getDrawerListView()
     {
         return _drawerListView;
     }

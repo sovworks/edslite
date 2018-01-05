@@ -62,9 +62,9 @@ public class ProgressDialog extends DialogFragment
     public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         View v = inflater.inflate(R.layout.progress_dialog, container);
-		_titleTextView = (TextView) v.findViewById(android.R.id.text1);
-		_statusTextView = (TextView) v.findViewById(android.R.id.text2);
-		_progressBar = (ProgressBar) v.findViewById(android.R.id.progress);
+		_titleTextView = v.findViewById(android.R.id.text1);
+		_statusTextView = v.findViewById(android.R.id.text2);
+		_progressBar = v.findViewById(android.R.id.progress);
 		setTitle(getArguments().getString(ARG_TITLE));
         return v;
     }

@@ -266,7 +266,7 @@ public abstract class UserSettingsCommon implements SettingsCommon
 	@Override
 	public int getCurrentSettingsVersion()
 	{
-		return _prefs.getInt(CURRENT_SETTINGS_VERSION , 1);
+		return _prefs.getInt(CURRENT_SETTINGS_VERSION , -1);
 	}
 
 	public SharedPreferences getSharedPreferences()
