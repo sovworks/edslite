@@ -1,7 +1,6 @@
 package com.sovworks.eds.locations;
 
 import android.net.Uri;
-import android.os.Build;
 
 import com.sovworks.eds.android.helpers.ProgressReporter;
 import com.sovworks.eds.android.providers.MainContentProvider;
@@ -211,8 +210,7 @@ public abstract class OMLocationBase extends LocationBase implements OMLocation,
 	@Override
 	public Uri getDeviceAccessibleUri(Path path)
 	{
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N || !_globalSettings.dontUseContentProvider() ?
-                MainContentProvider.getContentUriFromLocation(this, path) : null;
+        return !_globalSettings.dontUseContentProvider() ? MainContentProvider.getContentUriFromLocation(this, path) : null;
     }
 
 	@Override

@@ -49,9 +49,6 @@ import com.sovworks.eds.settings.GlobalConfig;
 import com.trello.rxlifecycle2.android.ActivityEvent;
 import com.trello.rxlifecycle2.components.RxActivity;
 
-import org.json.JSONException;
-
-import java.io.IOException;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
@@ -81,7 +78,7 @@ public abstract class FileManagerActivityBase extends RxActivity implements Prev
     public static Intent getOverwriteRequestIntent(
             Context context,
             boolean move,
-            SrcDstCollection records) throws IOException, JSONException
+            SrcDstCollection records)
     {
         Intent i = new Intent(context, FileManagerActivity.class);
         i.setAction(ACTION_ASK_OVERWRITE);
@@ -100,7 +97,7 @@ public abstract class FileManagerActivityBase extends RxActivity implements Prev
             boolean allowDirSelect,
             boolean allowCreateNew,
             boolean allowBrowseDevice,
-            boolean allowBrowseContainer) throws IOException
+            boolean allowBrowseContainer)
     {
         Intent intent = new Intent(context, FileManagerActivity.class);
         intent.setAction(Intent.ACTION_PICK);
@@ -138,7 +135,7 @@ public abstract class FileManagerActivityBase extends RxActivity implements Prev
             boolean allowDirSelect,
             boolean allowCreateNew,
             boolean allowBrowseDevice,
-            boolean allowBrowseContainer) throws IOException
+            boolean allowBrowseContainer)
     {
         Intent i = getSelectPathIntent(
                 context,
@@ -160,7 +157,7 @@ public abstract class FileManagerActivityBase extends RxActivity implements Prev
             boolean allowMultiSelect,
             boolean allowFileSelect,
             boolean allowDirSelect,
-            boolean allowCreateNew) throws IOException
+            boolean allowCreateNew)
     {
         selectPath(
                 context,
@@ -228,8 +225,8 @@ public abstract class FileManagerActivityBase extends RxActivity implements Prev
             f.goTo(location, scrollPosition, true);
     }
 
-    public void goTo(Path path) throws IOException
-	{
+    public void goTo(Path path)
+    {
 		Location prevLocation = getLocation();
         if(prevLocation != null)
         {
@@ -684,7 +681,7 @@ public abstract class FileManagerActivityBase extends RxActivity implements Prev
         }
     }
 
-    private void actionView(Bundle savedState) throws Exception
+    private void actionView(Bundle savedState)
     {
         if(savedState == null)
         {
@@ -707,7 +704,7 @@ public abstract class FileManagerActivityBase extends RxActivity implements Prev
         }
     }
 
-    private void actionAskOverwrite() throws Exception
+    private void actionAskOverwrite()
     {
         AskOverwriteDialog.showDialog(
                 getFragmentManager(),

@@ -18,6 +18,7 @@ import com.sovworks.eds.locations.Location;
 import com.sovworks.eds.locations.Openable;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -104,22 +105,45 @@ public class TempFilesMonitor
 		decryptAndStartFile(fileLocation);
 	}
 
-	public void addFileToMonitor(Location srcLocation, Location devicePath) throws IOException
-	{
-		OpenFileInfo ofi = new OpenFileInfo();
-		ofi.srcLocation = srcLocation;
-		ofi.devicePath = devicePath;
-		File f = devicePath.getCurrentPath().getFile();
-		ofi.lastModified = f.getLastModified().getTime();
-		ofi.prevSize = f.getSize();
-		addFileToMonitor(ofi);
-	}
-	
-	private void addFileToMonitor(OpenFileInfo fileInfo)
+	public boolean isUpdateRequired(Location srcLocation, Location deviceLocation) throws IOException
 	{
 		synchronized(_syncObject)
-		{			
-			_openedFiles.put(fileInfo.devicePath.getLocationUri(), fileInfo);
+		{
+			Uri deviceUri = deviceLocation.getLocationUri();
+			OpenFileInfo ofi = _openedFiles.get(deviceUri);
+			if (ofi != null) {
+				long srcLastModified = srcLocation.getCurrentPath().getFile().getLastModified().getTime();
+				return ofi.srcLastModified < srcLastModified;
+			}
+			return true;
+		}
+	}
+
+	public boolean addFileToMonitor(Location srcLocation, Location srcFolderLocation, Location devicePath, boolean isReadOnly) throws IOException
+	{
+		synchronized(_syncObject)
+		{
+			OpenFileInfo ofi = new OpenFileInfo();
+			ofi.srcFileLocation = srcLocation;
+			ofi.srcFolderLocation = srcFolderLocation;
+			ofi.devicePath = devicePath;
+			ofi.srcLastModified = srcLocation.getCurrentPath().getFile().getLastModified().getTime();
+			ofi.isReadOnly = isReadOnly;
+			File f = devicePath.getCurrentPath().getFile();
+			ofi.lastModified = f.getLastModified().getTime();
+			ofi.prevSize = f.getSize();
+			_openedFiles.put(devicePath.getLocationUri(), ofi);
+		}
+		return true;
+	}
+
+	public void updateMonitoredInfo(Location deviceLocation, Date srclastModified) throws IOException
+	{
+		synchronized(_syncObject)
+		{
+			OpenFileInfo ofi = _openedFiles.get(deviceLocation.getLocationUri());
+			if (ofi != null)
+				ofi.srcLastModified = srclastModified.getTime();
 		}
 	}
 	
@@ -158,7 +182,6 @@ public class TempFilesMonitor
 	
 	private class ModificationCheckingTask extends Thread
 	{
-		
 		@Override
 		public void run()
 		{
@@ -174,12 +197,12 @@ public class TempFilesMonitor
 						{
 							if(!fileInfo.devicePath.getCurrentPath().exists() ||
 									( 
-											fileInfo.srcLocation instanceof Openable && 
-											!((Openable)fileInfo.srcLocation).isOpen() 
+											fileInfo.srcFolderLocation instanceof Openable &&
+											!((Openable)fileInfo.srcFolderLocation).isOpen()
 									)
 							)
 								iter.remove();
-							else
+							else if (!fileInfo.isReadOnly)
 							{							
 								//long lastModified = fileInfo.devicePath.getAbsoluteFile().lastModified(); //fileInfo.devicePath.lastModified();
 								File f = fileInfo.devicePath.getCurrentPath().getFile();
@@ -189,7 +212,7 @@ public class TempFilesMonitor
 								{	
 									fileInfo.lastModified = lastModified;
 									fileInfo.prevSize = prevSize;
-									saveChangedFile(fileInfo.srcLocation,fileInfo.devicePath);																		
+									saveChangedFile(fileInfo.srcFolderLocation,fileInfo.devicePath);
 								}
 							}
 						}

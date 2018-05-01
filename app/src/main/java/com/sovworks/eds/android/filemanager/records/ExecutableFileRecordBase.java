@@ -65,7 +65,7 @@ public abstract class ExecutableFileRecordBase extends FileRecord
 	protected Location _loc;
 	protected final Settings _settings;
 	
-	protected void extractFileAndStartViewer(Location location, BrowserRecord rec) throws ApplicationException, UserException, IOException
+	protected void extractFileAndStartViewer(Location location, BrowserRecord rec) throws UserException, IOException
 	{		
 		if (rec.getSize() > 1024 * 1024 * _settings.getMaxTempFileSize())
 			throw new UserException(_host, R.string.err_temp_file_is_too_big);

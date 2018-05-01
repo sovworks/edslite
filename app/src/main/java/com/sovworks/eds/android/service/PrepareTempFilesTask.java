@@ -26,7 +26,6 @@ import java.util.List;
 
 class PrepareTempFilesTask extends CopyFilesTask
 {
-	
 	public static class FilesTaskParam extends CopyFilesTaskParam
 	{
 		FilesTaskParam(Intent i, Context context)
@@ -107,12 +106,20 @@ class PrepareTempFilesTask extends CopyFilesTask
 			throw new IOException("Failed to calc destination folder");
 		dstLoc = dstLoc.copy();
         Path tmpPath = calcDstPath(srcLoc.getCurrentPath().getFile(), dstLoc.getCurrentPath().getDirectory());
-        srcLoc.setCurrentPath(srcLoc.getCurrentPath().getParentPath());
+        Location srcFolderLocation = srcLoc.copy();
+        srcFolderLocation.setCurrentPath(srcLoc.getCurrentPath().getParentPath());
         if(tmpPath!=null)
         {
             dstLoc.setCurrentPath(tmpPath);
             if (dstLoc.getCurrentPath().exists())
             {
+            	TempFilesMonitor monitor = TempFilesMonitor.getMonitor(_context);
+				if(!monitor.isUpdateRequired(srcLoc, dstLoc))
+				{
+					incProcessedSize((int) srcLoc.getCurrentPath().getFile().getSize());
+					_tempFilesList.add(dstLoc);
+					return true;
+				}
                 TempFilesMonitor.getMonitor(_context).removeFileFromMonitor(dstLoc);
                 TempFilesMonitor.deleteRecWithWiping(dstLoc.getCurrentPath(), _wipe);
             }
@@ -124,7 +131,7 @@ class PrepareTempFilesTask extends CopyFilesTask
         }
 		if(super.copyFile(record))
 		{
-			addFileToMonitor(srcLoc, dstLoc);
+			addFileToMonitor(srcLoc, srcFolderLocation, dstLoc);
 			_tempFilesList.add(dstLoc);
 			return true;
 		}
@@ -164,8 +171,8 @@ class PrepareTempFilesTask extends CopyFilesTask
 		return super.copyFile(srcFile, targetFolder);
 	}
 
-	private void addFileToMonitor(Location srcLocation, Location dstFilePath) throws IOException
+	private void addFileToMonitor(Location srcLocation, Location srcFodlerLocation, Location dstFilePath) throws IOException
 	{
-			TempFilesMonitor.getMonitor(_context).addFileToMonitor(srcLocation, dstFilePath);
+		TempFilesMonitor.getMonitor(_context).addFileToMonitor(srcLocation, srcFodlerLocation, dstFilePath, false);
 	}
 }

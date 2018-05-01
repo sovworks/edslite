@@ -793,7 +793,7 @@ public abstract class FileListViewFragmentBase extends RxFragment implements
         for(int i=0; i<count;i++)
         {
             BrowserRecord file = (BrowserRecord) lv.getItemAtPosition(i);
-            if (file.allowSelect())
+            if (file!=null && file.allowSelect())
                 selectableFilesList.add(file);
         }
         return selectableFilesList;

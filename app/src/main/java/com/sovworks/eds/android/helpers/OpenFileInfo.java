@@ -5,8 +5,11 @@ import com.sovworks.eds.locations.Location;
 
 public class OpenFileInfo
 {
-	public Location srcLocation;
-	public Location devicePath;
-	public long lastModified;
-	public long prevSize;
+	Location srcFileLocation;
+	Location srcFolderLocation;
+	Location devicePath;
+	long lastModified;
+	long srcLastModified;
+	long prevSize;
+	boolean isReadOnly;
 }

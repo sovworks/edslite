@@ -202,24 +202,38 @@ public abstract class MainContentProviderBase extends ContentProvider
                 UserSettings.getSettings(cp.getContext()).getWorkDir(),
                 mode != ParcelFileDescriptor.MODE_READ_ONLY
         );
-        File dst;
+        File dst = null;
+        Path dstFilePath = PathUtil.buildPath(tmpLocation.getCurrentPath(), srcFile.getName());
         if((mode & ParcelFileDescriptor.MODE_TRUNCATE) == 0)
-            dst = Util.copyFile(srcFile, tmpLocation.getCurrentPath().getDirectory(), srcFile.getName());
+        {
+            if(dstFilePath != null && dstFilePath.isFile())
+            {
+                Location dstLocation = tmpLocation.copy();
+                dstLocation.setCurrentPath(dstFilePath);
+                if(!TempFilesMonitor.getMonitor(cp.getContext()).isUpdateRequired(srcLoc, dstLocation))
+                    dst = dstFilePath.getFile();
+            }
+            if (dst == null)
+                dst = Util.copyFile(srcFile, tmpLocation.getCurrentPath().getDirectory(), srcFile.getName());
+        }
         else
         {
-            Path p = PathUtil.buildPath(tmpLocation.getCurrentPath(), srcFile.getName());
-            if (p!=null && p.isFile())
-                WipeFilesTask.wipeFileRnd(p.getFile());
+            if (dstFilePath!=null && dstFilePath.isFile())
+                WipeFilesTask.wipeFileRnd(dstFilePath.getFile());
             dst = tmpLocation.getCurrentPath().getDirectory().createFile(srcFile.getName());
         }
         tmpLocation.setCurrentPath(dst.getPath());
-        srcLoc.setCurrentPath(parentPath);
-        if((mode & ParcelFileDescriptor.MODE_READ_ONLY) == 0)
-        {
-            Uri u = tmpLocation.getDeviceAccessibleUri(dst.getPath());
-            if(u == null || !ContentResolver.SCHEME_FILE.equalsIgnoreCase(u.getScheme()))
-                TempFilesMonitor.getMonitor(cp.getContext()).addFileToMonitor(srcLoc, tmpLocation);
-        }
+        Location srcFolderLocation = srcLoc.copy();
+        srcFolderLocation.setCurrentPath(parentPath);
+        Uri u = tmpLocation.getDeviceAccessibleUri(dst.getPath());
+        if(u == null || !ContentResolver.SCHEME_FILE.equalsIgnoreCase(u.getScheme()))
+            TempFilesMonitor.getMonitor(cp.getContext()).addFileToMonitor(
+                    srcLoc,
+                    srcFolderLocation,
+                    tmpLocation,
+                    (mode & ParcelFileDescriptor.MODE_READ_ONLY) != 0
+            );
+
         return tmpLocation;
     }
 

@@ -3,14 +3,13 @@ apply plugin: 'com.android.application'
 android {
 
     compileSdkVersion 26
-    buildToolsVersion "26.0.3"
 
     defaultConfig {
         applicationId "com.sovworks.eds.android"
         minSdkVersion 14
-        targetSdkVersion 25
-        versionCode 221
-        versionName "2.0.0.221"
+        targetSdkVersion 23
+        versionCode 224
+        versionName "2.0.0.224"
         multiDexEnabled true
 
 

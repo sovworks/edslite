@@ -43,6 +43,8 @@ public class CloseLocationsActivity extends Activity
         @Override
         public void onTargetLocationClosed(Location location, Bundle closeTaskArgs)
         {
+            if (!_targetLocations.isEmpty())
+                _targetLocations.remove(0);
             closeNextLocation();
         }
 
@@ -50,6 +52,8 @@ public class CloseLocationsActivity extends Activity
         public void onTargetLocationNotClosed(Location location, Bundle closeTaskArgs)
         {
             _failedToClose = true;
+            if (!_targetLocations.isEmpty())
+                _targetLocations.remove(0);
             closeNextLocation();
         }
 
@@ -111,7 +115,9 @@ public class CloseLocationsActivity extends Activity
             else
             {
                 Location loc = _targetLocations.get(0);
-                _targetLocations.remove(0);
+                String closerTag = LocationCloserBaseFragment.getCloserTag(loc);
+                if (getFragmentManager().findFragmentByTag(closerTag) != null)
+                    return;
                 Bundle args = new Bundle();
                 args.putString(LocationCloserBaseFragment.PARAM_RECEIVER_FRAGMENT_TAG, getTag());
                 LocationsManager.storePathsInBundle(args, loc, null);
@@ -122,7 +128,7 @@ public class CloseLocationsActivity extends Activity
                     );
                 LocationCloserBaseFragment closer = LocationCloserBaseFragment.getDefaultCloserForLocation(loc);
                 closer.setArguments(args);
-                getFragmentManager().beginTransaction().add(closer, LocationCloserBaseFragment.getCloserTag(loc)).commit();
+                getFragmentManager().beginTransaction().add(closer, closerTag).commit();
             }
         }
 

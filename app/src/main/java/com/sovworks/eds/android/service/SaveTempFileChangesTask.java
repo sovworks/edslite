@@ -3,10 +3,12 @@ package com.sovworks.eds.android.service;
 import android.content.Intent;
 
 import com.sovworks.eds.android.R;
+import com.sovworks.eds.android.helpers.TempFilesMonitor;
 import com.sovworks.eds.android.settings.UserSettings;
 import com.sovworks.eds.fs.Directory;
 import com.sovworks.eds.fs.File;
 import com.sovworks.eds.fs.Path;
+import com.sovworks.eds.fs.util.SrcDstCollection;
 
 import java.io.IOException;
 
@@ -16,6 +18,20 @@ class SaveTempFileChangesTask extends CopyFilesTask
 	protected int getNotificationMainTextId()
 	{
 		return R.string.saving_changes;
+	}
+
+	@Override
+	protected boolean copyFile(SrcDstCollection.SrcDst record) throws IOException
+	{
+		if(super.copyFile(record))
+		{
+			Path dstPath = calcDstPath(record.getSrcLocation().getCurrentPath().getFile(), record.getDstLocation().getCurrentPath().getDirectory());
+			if (dstPath != null && dstPath.isFile())
+				TempFilesMonitor.getMonitor(_context).updateMonitoredInfo(record.getSrcLocation(), dstPath.getFile().getLastModified());
+			return true;
+		}
+		else
+			return false;
 	}
 
 	@Override

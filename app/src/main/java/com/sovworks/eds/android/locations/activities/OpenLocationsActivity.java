@@ -53,12 +53,16 @@ public class OpenLocationsActivity extends RxActivity
         @Override
         public void onTargetLocationOpened(Bundle openerArgs, Location location)
         {
+            if (!_targetLocations.isEmpty())
+                _targetLocations.remove(0);
             openNextLocation();
         }
 
         @Override
         public void onTargetLocationNotOpened(Bundle openerArgs)
         {
+            if (!_targetLocations.isEmpty())
+                _targetLocations.remove(0);
             if(_targetLocations.isEmpty())
             {
                 getActivity().setResult(Activity.RESULT_CANCELED);
@@ -86,9 +90,11 @@ public class OpenLocationsActivity extends RxActivity
             else
             {
                 Location loc = _targetLocations.get(0);
+                String openerTag = LocationOpenerBaseFragment.getOpenerTag(loc);
+                if (getFragmentManager().findFragmentByTag(openerTag) != null)
+                    return;
                 loc.getExternalSettings().setVisibleToUser(true);
                 loc.saveExternalSettings();
-                _targetLocations.remove(0);
                 Bundle args = new Bundle();
                 setOpenerArgs(args, loc);
                 LocationOpenerBaseFragment opener = LocationOpenerBaseFragment.
@@ -98,7 +104,7 @@ public class OpenLocationsActivity extends RxActivity
                         beginTransaction().
                         add(
                                 opener,
-                                LocationOpenerBaseFragment.getOpenerTag(loc)
+                                openerTag
                         ).
                         commit();
             }

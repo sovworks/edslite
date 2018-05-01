@@ -70,7 +70,8 @@ public abstract class ConfirmationDialog extends DialogFragment
 
     protected Receiver getReceiver()
     {
-        String tag = getArguments().getString(ARG_RECEIVER_TAG);
+        Bundle args = getArguments();
+        String tag = args == null ? null : args.getString(ARG_RECEIVER_TAG);
         if(tag != null)
         {
             Fragment f = getFragmentManager().findFragmentByTag(tag);
