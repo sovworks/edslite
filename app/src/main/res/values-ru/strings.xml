@@ -239,5 +239,5 @@
   <string name="force_temp_files_desc">Использовать временные файлы вместо "каналов" даже для передачи файлов в режиме "только для чтения". Некоторые приложения не работают с "каналами".</string>
   <string name="wrong_path">Указан неверный путь</string>
   <string name="encfs_config_file_not_found">Не найден файл конфигурации EncFs</string>
-    <string name="container_opened_read_only">Контейнер был открыт в режиме "только для чтения".</string>
+  <string name="container_opened_read_only">Контейнер был открыт в режиме "только для чтения".</string>
 </resources>

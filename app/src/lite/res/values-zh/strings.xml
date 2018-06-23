@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources
+    xmlns:xliff="http://schemas.android.com/tools">
+    <string name="eds" translatable="false"><xliff:g id="program_name">EDS Lite</xliff:g></string>
+    <string name="changes_text" translatable="false"><![CDATA[<font color="black">
+        <b>2.0.0.212</b>:
+	    <ul>
+	        <li>Better handling of folders with large number of files.</li>
+	        <li>Fixed bugs</li>
+	    </ul>
+        <b>2.0.0.211</b>:
+	    <ul>
+	        <li>Added an option to use temp files instead of pipes even for read-only access.</li>
+	        <li>Added additional parameters to container opening and closing intents (see FAQ).</li>
+	        <li>Added numeric sorting mode to the file manager.</li>
+	        <li>The full version of EDS now has an option to unlock a container using fingerprints.</li>
+	        <li>The full version of EDS now supports opening a LUKS container using a keyfile.</li>
+	        <li>Fixed bugs</li>
+	    </ul>
+        <b>2.0.0.206</b>:
+	    <ul>
+	        <li>"last modified" timestamp of a file is restored after a copy/move operation.</li>
+	        <li>Improved file manager: previously opened folder and scroll position are restored when switching between the containers and/or memory cards</li>
+	        <li>Fixed: password dialog freezes on some systems.</li>
+	    	<li>Fixed: in some cases the remembered password is not working</li>
+	    	<li>Other minor fixes</li>
+		</ul>
+        <b>2.0.0.202</b>:
+	    <ul>
+	    	<li>Added an option to install additional file system modules. Currently ExFAT module is supported which allows to open containers with ExFAT file system.</li>
+		</ul>
+		<b>2.0.0</b>:
+	    <ul>
+	        <li>EDS Lite is now on <a href="https://github.com/sovworks/">GitHub</a>!</li>
+	    	<li>New UI. Please make yourself familiar with the new UI by watching a few <a href="https://sovworks.com/eds/managing-containers.php">videos</a>.</li>
+	    	<li>Android 8 support</li>
+	    	<li>Added VeraCrypt support</li>
+	    	<li>Added LUKS support</li>
+	    	<li>Added EncFs support</li>
+	    	<li>More encryption algorithms supported</li>
+	    	<li>Improved image viewer.</li>
+	    	<li>You can download the previous version using <a href="https://sovworks.com/eds/files/distr/lite/Edslite-v1.2.0.35.apk">this</a> link</li>
+		</ul>
+		</font>]]></string>
+    <string name="donation_notice">这是EDS的开源版本. 请通过购买完整版本，或者捐赠来<b>支持开源版本</b>的发展 .</string>
+    <string name="make_a_donation">捐赠</string>
+    <string name="check_the_full_version">查看完整版本</string>
+    <string name="check_source_code">查看源代码</string>
+</resources>

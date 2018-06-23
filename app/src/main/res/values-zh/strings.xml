@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="http://schemas.android.com/tools">
+    <string name="add_container">添加现有容器</string>
+	<string name="eds" translatable="false"><xliff:g id="program_name">EDS</xliff:g></string>
+    <string name="ok">确认</string>
+	<string name="enter_password">输入密码:</string>
+	<string name="select">选取</string>
+	<string name="enter_new_folder_name">输入新文件夹名称</string>
+	<string name="new_file">新建文件</string>
+	<string name="new_dir">新建文件夹</string>
+	<string name="remove_from_list">从列表中移除</string>
+	<string name="processing_file"><xliff:g id="filename" example="/sdcard/data.txt">%1$s</xliff:g> (<xliff:g id="number of files processed">%2$d</xliff:g> of <xliff:g id="total_number_of_files">%3$d</xliff:g>)</string>
+	<string name="copying_files">正在复制文件</string>
+	<string name="copy_failed">复制失败</string>
+	<string name="move_failed">移动失败</string>
+	<string name="delete">删除</string>
+	<string name="deleting_files">正在删除文件</string>
+	<string name="delete_failed">删除失败</string>
+	<string name="rename">重命名</string>
+	<string name="enter_new_file_name">输入新文件名</string>
+	<string name="settings">设置</string>
+	<string name="bad_container_file_or_wrong_password">密码错误或容器格式不支持</string>
+	<string name="main_settings">主要设置</string>
+	<string name="eds_shortcut"><xliff:g id="program_name">EDS</xliff:g> shortcut</string>
+	<string name="enter_widget_title">输入插件标题</string>	
+	<string name="select_path">选取路径</string>
+	<string name="container_size">容器大小</string>
+	<string name="container_size_desc">输入容器的大小(MB)</string>
+	<string name="container_password">容器密码</string>
+	<string name="create_new_container">创建新容器</string>
+	<string name="cancel_task_confirmation">你确定要取消当前的任务吗?</string>
+	<string name="yes">是</string>
+	<string name="no">不</string>
+	<string name="skip">跳过</string>
+	<string name="overwrite">覆盖</string>
+	<string name="file_already_exists">文件 <xliff:g id="filename" example="example.txt">%1$s</xliff:g> 已存在于<xliff:g id="directory" example="/sdcard">%2$s</xliff:g>.</string>
+	<string name="size">大小</string>
+	<string name="number_of_files">文件数量</string>
+	<string name="properties">属性</string>
+	<string name="total_space">总空间</string>
+	<string name="free_space">可用空间</string>
+	<string name="use_password">使用密码</string>
+	<string name="saving_changes">保存更改</string>
+	<string name="preparing_file">正在准备文件</string>
+	<string name="eds_service_is_running"><xliff:g id="program_name">EDS</xliff:g> 服务正在运行</string>
+	<string name="stop_service_and_exit">停止服务并退出</string>
+	<string name="send_files_to">发送文件到</string>
+	<string name="send">发送</string>
+	<string name="max_temporary_file_size">最大临时文件大小</string>
+	<string name="overwrite_temp_files_with_random_data">采用随机数据覆盖临时文件</string>
+	<string name="err_target_container_is_closed">目标容器被关闭</string>
+	<string name="err_failed_opening_container">容器打开失败</string>
+	<string name="err_input_output">读取或写入数据失败</string>
+	<string name="err_temp_file_is_too_big">文件太大，你可以手动复制它或在程序设置中增加最大临时文件大小</string>
+	<string name="err_external_storage_is_not_available">外部存储空间不可用</string>
+	<string name="err_container_size_is_too_small">指定的容器尺寸太小</string>
+	<string name="err_failed_processing_settings_file">处理设置文件失败</string>
+	<string name="err_failed_creating_container">创建容器失败</string>
+	<string name="about_message" translatable="false"><xliff:g id="copyright">\u00A9</xliff:g> 2012–2017, <xliff:g id="dev_name">sovworks</xliff:g></string>
+	<string name="about">关于</string>
+	<string name="opening_container">打开</string>
+	<string name="decrypt_to_temp_folder">解密到临时文件夹</string>
+	<string name="container_file_name_is_not_specified">容器的文件名未指定</string>
+	<string name="do_you_want_to_overwrite_existing_file">你要覆盖已存在的文件吗？</string>
+	<string name="enter_file_name">输入文件名</string>
+	<string name="save_changes">保存更改</string>
+	<string name="do_you_want_to_save_changes">你要保存更改吗？</string>
+	<string name="select_image">选取一张图片</string>
+	<string name="do_you_really_want_to_delete_selected_files">你真的要删除选定的文件吗？(%s)?</string>
+	<string name="wiping_files">擦除文件</string>
+	<string name="creating_container">创建容器</string>
+	<string name="err_failed_saving_changes">保存更改失败.尝试再次保存或手动复制文件.详细信息请查看程序日志文件.</string>
+	<string name="help">帮助</string>
+	<string name="select_file">选取文件</string>
+	<string name="file_not_found">指定路径不存在</string>
+	<string name="select_all">选取全部</string>
+	<string name="apply_to_all">应用到全部</string>		
+	<string name="closing">关闭</string>
+	<string-array name="image_viewer_use_mode">
+		<item >永不</item>
+		<item >除本地未加密文件外的所有文件</item>
+		<item >总是</item>
+	</string-array>
+	<string name="image_viewer">图片查看器</string>
+	<string name="loading">载入中</string>
+	<string name="last_modified">上一次更改</string>
+	<string name="path">路径</string>
+	<string name="always_force_close_containers">总是强制关闭容器</string>
+	<string name="show_previews">在文件管理器中显示预览</string>
+	<string name="open_read_only">以只读模式打开</string>
+	<string name="disable_wide_screen_layouts">禁用横向布局</string>
+	<string name="close_all_containers">关闭所有<xliff:g id="program_name">EDS</xliff:g> 容器</string>
+	<string name="fill_free_space_with_random_data">采用随机数据填充可用空间</string>
+	<string name="ascending">升序</string>
+	<string name="descending">降序</string>
+	<string-array name="sort_mode">
+		<item >依文件名</item>
+		<item >依修改日期</item>
+		<item >依大小</item>
+		<item >依文件名(数字)</item>
+	</string-array>
+	<string name="sort">分类</string>
+	<string name="zoom_in">放大</string>
+	<string name="zoom_out">缩小</string>
+	<string name="next_image">下一张图片</string>
+	<string name="previous_image">上一张图片</string>
+	<string name="rotate_left">向左旋转</string>
+	<string name="rotate_right">向右旋转</string>
+	<string name="encryption_algorithm">加密算法</string>
+	<string name="hash_algorithm">Hash算法</string>
+	<string name="version_history">版本历史</string>
+	<string name="containers">容器</string>
+	<string name="close">关闭</string>
+	<string name="target_path">目标路径</string>
+	<string name="device">设备</string>
+	<string name="username">用户名</string>
+	<string name="password">密码</string>
+	<string name="title">标题</string>
+	<string name="open">打开</string>
+	<string name="disable_wide_screen_layouts_desc">这个选项禁止在横向模式下预览面板</string>
+	<string name="temp_data_path">临时数据路径</string>
+	<string name="temp_data_path_desc">如果容器在非挂载模式下打开来存储临时文件，则将使用此路径。留空将使用默认路径。</string>
+	<string name="max_temporary_file_size_desc">如果容器在非挂载模式下打开，然后使用外部工具打开一个文件，那么这个文件必须被解密到临时位置。该项用来设置一个可自动解密文件的最大值 (MB).</string>
+	<string name="overwrite_temp_files_with_random_data_desc">如果启用此选项，则临时文件将在删除之前用随机数据覆盖.</string>
+	<string name="auto_close_container">自动关闭容器</string>
+	<string name="auto_close_container_desc">指定时间内没有数据读写,则自动关闭容器(分钟).</string>
+	<string name="extension_mime_override">根据其扩展覆盖文件的mime类型</string>
+	<string name="extension_mime_override_desc">你应该每行输入一个mime类型. 例如, <xliff:g id="example">txt text/plain</xliff:g>.</string>
+	<string name="internal_image_viewer_mode">内置图像查看器模式</string>
+	<string name="internal_image_viewer_mode_desc">当您想要使用内置图像查看器时选择</string>
+	<string name="always_force_close_containers_desc">未请求下强制关闭容器. 你可能会丢失未保存的数据.</string>
+	<string name="path_to_container">容器路径</string>
+	<string name="internal_container_settings">内部容器设置</string>
+	<string name="internal_container_settings_desc">你需要打开容器来进入这些设置</string>
+	<string name="change_container_password">更改容器密码</string>
+	<string name="enter_new_password">输入新密码</string>
+	<string name="repeat_password">确认新密码</string>
+	<string name="password_does_not_match">密码不匹配</string>
+	<string name="save_password">记住密码</string>
+	<string name="save_password_desc">保存该容器密码.保存密码可能是不安全的.</string>
+	<string name="enable_full_screen_mode">启用全屏模式</string>
+	<string name="never_save_history">不要保存容器的链接</string>
+	<string name="never_save_history_desc">关闭 <xliff:g id="program_name">EDS</xliff:g>之后，新容器链接将被移除.</string>
+	<string name="contact_support">联系支持</string>
+	<string name="no_free_space_left">没有可用空间</string>
+	<string name="speed">当前速度: <xliff:g id="current_speed">%1$.1f</xliff:g> Mb/s</string>
+	<string name="container_format">容器格式</string>
+	<string name="container_format_desc">你可以指定容器的格式，以加快打开速度</string>
+	<string name="encryption_alg_desc">你可以指定加密算法，以加快打开速度 </string>
+	<string name="hash_alg_desc">你可以指定Hash算法，以加快打开速度 </string>
+	<string name="working">工作中</string>	
+	<string name="generic_error_message">发生错误:可从程序日志中查看细节.</string>
+	<string name="err_no_application_found">没有发现处理该类型文件的应用程序. 您可以从主设置屏幕上覆盖文件的mime类型.</string>
+	<string name="disable_modified_files_backup">禁用修改后文件的备份</string>
+    <string name="invalid_master_password">管理密码无效</string>
+    <string name="enter_master_password">输入管理密码</string>
+    <string name="master_password">管理密码</string>
+    <string name="location_type">位置类型</string>
+    <string name="drawer_open">打开抽屉</string>
+    <string name="drawer_close">关闭抽屉</string>
+    <string name="open_file">打开文件</string>
+	<string name="add_new">添加新的</string>
+	<string name="create_new_container_or_add_existing_container">你要创建一个新的容器或添加现有容器吗？</string>
+	<string name="changing_password">正在更改密码</string>
+	<string name="choose_files_to_copy_or_move">选取文件复制或移动…</string>
+	<string name="manage_containers">容器管理</string>
+	<string name="local_files">本地文件</string>
+	<string name="built_in_memory_card">内置存储卡</string>
+	<string name="force_close_request">不能关闭 <xliff:g id="path_to_container">\"%1$s\"</xliff:g>容器. 你要强行关闭吗?</string>
+	<string name="debug_log">调试日志</string>
+	<string name="edit">编辑</string>
+	<string name="external_storage">外部存储</string>
+	<string name="content_provider" translatable="false">Content provider</string>
+	<string name="manage_local_storages">管理本地存储空间</string>
+	<string name="container_info_summary">可用空间: <xliff:g id="free_space" example="10Mb">%1$s</xliff:g>; 总空间: <xliff:g id="total_space" example="100Mb">%2$s</xliff:g>.</string>
+	<string name="disable">禁用</string>
+	<string name="copy_here">复制到这里</string>
+	<string name="move_here">移动到这里</string>
+	<string name="storage_permission_desc">需要存储空间访问权限，以便可以访问内存卡和USB存储空间</string>
+	<string name="ext_storage_write_permission_request">你要授予EDS的外部存储写入权限吗?</string>
+	<string name="grant">授予</string>
+	<string name="number_of_kdf_iterations_veracrypt_descr">输入 <xliff:g id="key_derivation_function">KDF</xliff:g> 迭代次数 (<xliff:g id="pim">PIM</xliff:g>). 选择的值越大.容器打开需要的时间越长. 输入0采用默认值. 查看细节 <xliff:g id="url">https://veracrypt.codeplex.com/wikipage?title=Personal%20Iterations%20Multiplier%20(PIM)</xliff:g> .</string>
+	<string name="kdf_iterations_multiplier"><xliff:g id="key_derivation_function">KDF</xliff:g> 迭代次数 (<xliff:g id="pim">PIM</xliff:g>)</string>
+	<string name="container_format_is"><xliff:g id="formatting">&lt;p&gt;</xliff:g>容器格式是 <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="container_format" example="VeraCrypt">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.<xliff:g id="formatting">&lt;/p&gt;</xliff:g></string>
+	<string name="encryption_alg_is"><xliff:g id="formatting">&lt;p&gt;</xliff:g>加密算法是 <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="encryption_algorithm_name" example="AES">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.<xliff:g id="formatting">&lt;/p&gt;</xliff:g></string>
+	<string name="kdf_base_hash_func_is"><xliff:g id="key_derivation_function">KDF</xliff:g> hash 基本函数是 <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="hash_algorithm_name" example="SHA-256">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.</string>
+	<string name="hidden">隐藏</string>
+	<string name="value_has_been_copied">字段值已复制到剪贴板</string>
+	<string name="overwrite_and_delete">覆盖和删除</string>
+	<string name="list_is_empty">列表是空的</string>
+	<string name="hide_eds_screen_from_other_apps">从其他应用程序中隐藏 <xliff:g id="program_name">EDS</xliff:g> 屏幕</string>
+	<string name="toggle_auto_zoom">切换自动缩放</string>
+	<string name="change">更改</string>
+	<string name="do_you_really_want_to_remove_from_the_list">你真的要从列表中移除 <xliff:g id="title">\"%1$s\"</xliff:g> 吗?</string>
+	<string name="toggle_display_password">切换显示密码</string>
+	<string name="file_operation_started">文件处理开始</string>
+	<string name="open_file_as_container">打开文件作为容器</string>
+	<string name="remember_kdf_iterations_multiplier">记住KDF迭代乘数</string>
+	<string name="default_theme">默认</string>
+	<string name="dark_theme">黑色</string>
+	<string name="theme">主题</string>
+	<string name="theme_desc">重启程序应用更改</string>
+	<string name="use_external_file_manager">外部文件管理器</string>
+	<string name="use_external_file_manager_desc">容器装载后打开外部文件管理器</string>
+	<string name="builtin_file_manager">内置文件管理器</string>
+	<string name="dont_use_content_provider">在其他应用中,不要使用 EDS content provider 打开解密文件.</string>
+    <string name="dont_use_content_provider_desc">有些应用程序不能使用content providers.</string>
+    <string name="uri_of_the_container">容器的URI</string>
+    <string name="text_has_been_copied">文本已经复制到剪贴板</string>
+	<string name="select_root_folder_tip">请打开外部存储的root文件夹,然后点击 \"Select\"</string>
+	<string name="wrong_encfs_root_path">错误的 <xliff:g id="encfs">EncFs</xliff:g> root 路径</string>
+	<string name="filename_encryption_algorithm">文件名加密算法</string>
+	<string name="key_size">密钥长度</string>
+	<string name="key_size_descr">请以bits为单位选择一个密钥大小</string>
+	<string name="block_size">块大小</string>
+	<string name="block_size_descr">请以bytes为单位选择文件区块大小</string>
+	<string name="enable_per_file_iv">开启每个文件的初始化向量?</string>
+	<string name="enable_per_file_iv_descr">针对存储要求将大约每个文件增加8个字节. 除了可能会影响使用依赖区块对齐的文件输入输出来实现性能的应用程序之外，应该不会影响性能.</string>
+	<string name="enable_filename_iv_chain">启用文件名初始化向量链接</string>
+	<string name="enable_filename_iv_chain_descr">这使得文件名编码依赖于完整的路径，而不是单独对每个路径元素进行编码.</string>
+	<string name="enable_filename_to_file_iv_chain">启用文件名到 <xliff:g id="initializing_vector">IV</xliff:g> 的标题链接?</string>
+	<string name="enable_filename_to_file_iv_chain_descr">这使得文件数据编码依赖于完整的文件路径.</string>
+	<string name="allow_empty_blocks">允许空块头</string>
+	<string name="allow_empty_blocks_descr">这样可以避免在稀疏文件中编写加密区块.</string>
+	<string name="mac_bytes_per_block">启用限制文件每个区块的鉴别代码头信息?</string>
+	<string name="mac_bytes_per_block_descr">这为一个文件的存储需求增加12个字节, 很影响性能.但也意味着区块内任何修改或错误都会响应，并引发读写错误。</string>
+	<string name="add_rand_bytes">为每个块头添加随机字节?</string>
+	<string name="add_rand_bytes_descr">这增加了性能损失, 但能确保区块拥有不同的鉴别代码.请注意，您可以通过启用每个文件初始化向量来获得相同的好处，这并不会带来很大的性能损失. 从1到8选择一个字节.</string>
+	<string name="number_of_kdf_iterations"><xliff:g id="key_derivation_function">KDF</xliff:g> 迭代次数</string>
+	<string name="number_of_kdf_iterations_descr">输入密钥导出功能的迭代次数. 你选择的值越大，打开容器的时间越长。</string>
+    <string name="install_exfat_module">安装 <xliff:g id="exfat">ExFAT</xliff:g> 模块</string>
+    <string name="install_exfat_module_desc">为了打开 <xliff:g id="exfat">ExFAT</xliff:g> 格式的容器, 你可以安装额外的 <xliff:g id="exfat">ExFAT</xliff:g> 文件系统模块. 该开源模块可以从 <xliff:g id="exfat_module_link">%s</xliff:g>下载.</string>
+	<string name="module_has_been_installed">该模块已安装</string>
+    <string name="file_system_type">文件系统类型</string>
+	<string name="file_system_type_desc">你可以从以下地址下载额外的开源<xliff:g id="exfat">ExFAT</xliff:g> 文件系统模块: <xliff:g id="exfat_module_link">%s</xliff:g>.</string>
+    <string name="get_program_log">调试日志</string>
+	<string name="save_log_file_to">日志文件保存到…</string>
+    <string name="update_exfat_module">请更新 <xliff:g id="exfat">exFAT</xliff:g> 模块</string>
+	<string name="exfat_module_required">请安装 <xliff:g id="exfat">exFAT</xliff:g> 模块</string>
+    <string name="restart_application">请重启EDS</string>
+    <string name="force_temp_files">强制临时文件</string>
+	<string name="force_temp_files_desc">使用临时文件代替 \"pipes\" 即使针对只读请求. 某些apps无法使用 \"pipes\".</string>
+	<string name="wrong_path">路径错误</string>
+	<string name="encfs_config_file_not_found">EncFs 配置文件未找到</string>
+    <string name="container_opened_read_only">该容器已以只读模式打开</string>
+</resources>
