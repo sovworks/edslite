@@ -12,7 +12,7 @@ Download and extract [NDK v13b](https://developer.android.com/ndk/downloads/olde
 
 ## License
 
-GPLv2
+GPLv2+
 
 
 
