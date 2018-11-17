@@ -8,7 +8,7 @@ Please support the development of the open source version of EDS by making a don
 
 ## Building
 
-Download and extract [NDK v13b](https://developer.android.com/ndk/downloads/older_releases.html). Clone the project to a local folder. In the root folder of the project create the `local.properties` file and add the following line: `ndk.dir=/path/to/ndk-bundle`. Replace `/path/to/ndk-bundle` with the actual path. Import the project to Android Studio. Select `Build->Build APK`.
+Download and extract [NDK v13b](https://developer.android.com/ndddk/downloads/older_releases.html). Clone the project to a local folder. In the root folder of the project create the `local.properties` file and add the following line: `ndk.dir=/path/to/ndk-bundle`. Replace `/path/to/ndk-bundle` with the actual path. Import the project to Android Studio. Select `Build->Build APK`.
 
 ## License
 
