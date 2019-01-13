@@ -1,0 +1,8 @@
+EDS allows you to store your files in an encrypted container.
+
+    * Supports VeraCrypt(R), TrueCrypt(R), LUKS, EncFs container formats.
+    * Choose among different secure ciphers.
+    * Encrypt/decrypt any kind of file.
+    * All the standard file operations supported.
+    * You can quickly open a folder (or file) inside a container from the Home screen using the shortcut widget.
+
