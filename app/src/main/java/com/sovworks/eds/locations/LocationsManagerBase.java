@@ -506,6 +506,15 @@ public abstract class LocationsManagerBase
 			return li == null ? null : li.location;
 		}		
 	}
+
+	public boolean isStoredLocation(String locationId)
+	{
+		synchronized (_currentLocations)
+		{
+			LocationInfo li = findExistingLocationInfo(locationId);
+			return li != null && li.store;
+		}
+	}
 	
 	public Location findExistingLocation(Uri locationUri) throws Exception
 	{

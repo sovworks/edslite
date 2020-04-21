@@ -11,6 +11,7 @@ import android.support.v4.app.NotificationCompat;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.activities.CancelTaskActivity;
+import com.sovworks.eds.android.helpers.CompatHelper;
 
 public abstract class ServiceTaskWithNotificationBase implements Task
 {
@@ -83,7 +84,7 @@ public abstract class ServiceTaskWithNotificationBase implements Task
 	{
 		if(title == null)
 			return;
-        NotificationCompat.Builder nb = new NotificationCompat.Builder(_context)
+        NotificationCompat.Builder nb = new NotificationCompat.Builder(_context, CompatHelper.getFileOperationsNotificationsChannelId(_context))
                 .setSmallIcon(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? R.drawable.ic_notification_new : R.drawable.ic_notification)
                 .setOngoing(false)
                 .setAutoCancel(true)
@@ -105,7 +106,7 @@ public abstract class ServiceTaskWithNotificationBase implements Task
 
     protected NotificationCompat.Builder initNotification()
     {
-        NotificationCompat.Builder nb = new NotificationCompat.Builder(_context)
+        NotificationCompat.Builder nb = new NotificationCompat.Builder(_context, CompatHelper.getFileOperationsNotificationsChannelId(_context))
 				.setContentTitle(_context.getString(R.string.eds))
                 .setSmallIcon(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? R.drawable.ic_notification_new : R.drawable.ic_notification)
                 .setOngoing(true)

@@ -46,3 +46,5 @@
 
 -dontwarn android.support.**
 -dontnote android.support.**
+
+-dontwarn java.awt.*

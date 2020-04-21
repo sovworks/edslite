@@ -240,4 +240,6 @@
   <string name="wrong_path">Указан неверный путь</string>
   <string name="encfs_config_file_not_found">Не найден файл конфигурации EncFs</string>
   <string name="container_opened_read_only">Контейнер был открыт в режиме "только для чтения".</string>
+  <string name="service_notifications_channel_name">Служебные сообщения</string>
+  <string name="file_operations_notifications_channel_name">Файловые операции</string>
 </resources>

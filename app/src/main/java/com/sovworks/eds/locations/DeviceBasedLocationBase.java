@@ -2,6 +2,7 @@ package com.sovworks.eds.locations;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.providers.MainContentProvider;
@@ -93,7 +94,7 @@ public abstract class DeviceBasedLocationBase implements Location, Cloneable
     @Override
     public Uri getDeviceAccessibleUri(Path path)
     {
-		if(_settings.dontUseContentProvider())
+		if(_settings.dontUseContentProvider() && Build.VERSION.SDK_INT < Build.VERSION_CODES.N)
 		{
 			StringPathUtil pu = new StringPathUtil(getRootPath()).combine(path.getPathString());
 			return Uri.fromFile(new File(pu.toString()));

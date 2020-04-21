@@ -17,6 +17,7 @@ import android.support.v4.app.NotificationCompat;
 import com.sovworks.eds.android.Logger;
 import com.sovworks.eds.android.R;
 import com.sovworks.eds.android.filemanager.activities.FileManagerActivity;
+import com.sovworks.eds.android.helpers.CompatHelper;
 import com.sovworks.eds.android.helpers.TempFilesMonitor;
 import com.sovworks.eds.android.locations.activities.CloseLocationsActivity;
 import com.sovworks.eds.android.settings.UserSettings;
@@ -222,7 +223,7 @@ public class LocationsServiceBase extends Service
 	{
         Intent i = new Intent(this, FileManagerActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CompatHelper.getServiceRunningNotificationsChannelId(this))
                 .setContentTitle(getString(R.string.eds_service_is_running))
                 .setSmallIcon(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? R.drawable.ic_notification_new : R.drawable.ic_notification)
                 .setContentText("")

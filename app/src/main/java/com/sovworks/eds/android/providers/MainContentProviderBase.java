@@ -231,7 +231,7 @@ public abstract class MainContentProviderBase extends ContentProvider
                     srcLoc,
                     srcFolderLocation,
                     tmpLocation,
-                    (mode & ParcelFileDescriptor.MODE_READ_ONLY) != 0
+                    mode  == ParcelFileDescriptor.MODE_READ_ONLY
             );
 
         return tmpLocation;

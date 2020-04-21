@@ -44,10 +44,15 @@ public abstract class AddExistingEDSLocationTaskFragment extends TaskFragment
         EDSLocation exCont = (EDSLocation) lm.findExistingLocation(loc);
         if(exCont != null)
         {
-            exCont.getExternalSettings().setVisibleToUser(true);
-            if(storeLink)
-                exCont.saveExternalSettings();
-            return exCont;
+            if (lm.isStoredLocation(exCont.getId()) && exCont.getClass().equals(loc.getClass()))
+            {
+                exCont.getExternalSettings().setVisibleToUser(true);
+                if(storeLink)
+                    exCont.saveExternalSettings();
+                return exCont;
+            }
+            else
+                lm.removeLocation(exCont);
         }
         addEDSLocation(lm, loc, storeLink);
         setLocationSettings(loc, storeLink);

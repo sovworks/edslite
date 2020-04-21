@@ -243,4 +243,6 @@
 	<string name="wrong_path">Wrong path</string>
 	<string name="encfs_config_file_not_found">EncFs config file not found</string>
     <string name="container_opened_read_only">The container has been opened in read-only mode.</string>
+	<string name="service_notifications_channel_name">Service notifications</string>
+	<string name="file_operations_notifications_channel_name">File operation notifications</string>
 </resources>

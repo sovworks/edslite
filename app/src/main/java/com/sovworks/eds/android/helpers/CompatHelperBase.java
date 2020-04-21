@@ -2,6 +2,8 @@ package com.sovworks.eds.android.helpers;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +14,7 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.view.WindowManager;
 
+import com.sovworks.eds.android.R;
 import com.sovworks.eds.fs.Path;
 
 import java.io.IOException;
@@ -82,6 +85,48 @@ public class CompatHelperBase
 		{
 			data.close();
 		}
+	}
+
+	private static String serviceRunningNotificationsChannelId;
+	public static synchronized String getServiceRunningNotificationsChannelId(Context context)
+	{
+		if (serviceRunningNotificationsChannelId == null)
+		{
+			serviceRunningNotificationsChannelId = "com.sovworks.eds.SERVICE_RUNNING_CHANNEL2";
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				NotificationChannel channel = new NotificationChannel(
+					serviceRunningNotificationsChannelId,
+					context.getString(R.string.service_notifications_channel_name),
+					NotificationManager.IMPORTANCE_LOW
+				);
+				channel.enableLights(false);
+				channel.enableVibration(false);
+				NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+				notificationManager.createNotificationChannel(channel);
+			}
+		}
+		return serviceRunningNotificationsChannelId;
+	}
+
+	private static String fileOperationsNotificationsChannelId;
+	public static synchronized String getFileOperationsNotificationsChannelId(Context context)
+	{
+		if (fileOperationsNotificationsChannelId == null)
+		{
+			fileOperationsNotificationsChannelId = "com.sovworks.eds.FILE_OPERATIONS_CHANNEL2";
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				NotificationChannel channel = new NotificationChannel(
+					fileOperationsNotificationsChannelId,
+					context.getString(R.string.file_operations_notifications_channel_name),
+					NotificationManager.IMPORTANCE_LOW
+				);
+				channel.enableLights(false);
+				channel.enableVibration(false);
+				NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+				notificationManager.createNotificationChannel(channel);
+			}
+		}
+		return fileOperationsNotificationsChannelId;
 	}
 		
 }
