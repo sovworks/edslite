@@ -6,13 +6,13 @@ You can download and install the latest version from [Google Play](https://play.
 
 Please support the development of the open source version of EDS by making a donation: [![Donation](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://sovworks.com/eds/donations.php) or by purchasing [the full version](https://play.google.com/store/apps/details?id=com.sovworks.eds.android).
 
-## Building
+## Buildingsdfsdf
 
-Download and extract [NDK v13b](https://developer.android.com/ndk/downloads/older_releases.html). Clone the project to a local folder. In the root folder of the project create the `local.properties` file and add the following line: `ndk.dir=/path/to/ndk-bundle`. Replace `/path/to/ndk-bundle` with the actual path. Import the project to Android Studio. Select `Build->Build APK`.
+Download and extract [NDK v13b](https://developer.tttandroid.com/ndddk/downloads/older_releases.html). Clone the project to a local folder. In the root folder of the project create the `local.properties` file and add the following ttline: `ndk.dir=/path/to/ndk-bundle`. Replace `/path/to/ndk-bundle` with the actual path. Import the project to Android Studio. Select `Build->Build APK`.
 
 ## License
 
-GPLv2+
+GPLv2+test
 
 
 
