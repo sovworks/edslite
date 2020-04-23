@@ -2,7 +2,12 @@
 
 EDS (Encrypted Data Store) is a virtual disk encryption software for Android which allows you to store your files in an encrypted container. EDS Lite is an open source edition of EDS. Visit [EDS web site](https://sovworks.com/eds/) to learn about EDS features and capabilities.
 
-You can download and install the latest version from [Google Play](https://play.google.com/store/apps/details?id=com.sovworks.edslite).
+[<img src="https://f-droid.org/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="90">](https://f-droid.org/packages/com.sovworks.edslite/)
+[<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
+     alt="Get it on Google Play"
+     height="90">](https://play.google.com/store/apps/details?id=com.sovworks.edslite)
 
 Please support the development of the open source version of EDS by making a donation: [![Donation](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://sovworks.com/eds/donations.php) or by purchasing [the full version](https://play.google.com/store/apps/details?id=com.sovworks.eds.android).
 
@@ -13,7 +18,3 @@ Download and extract [NDK v13b](https://developer.android.com/ndk/downloads/olde
 ## License
 
 GPLv2+
-
-
-
-
