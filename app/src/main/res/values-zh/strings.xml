@@ -243,4 +243,6 @@
 	<string name="wrong_path">路径错误</string>
 	<string name="encfs_config_file_not_found">EncFs 配置文件未找到</string>
     <string name="container_opened_read_only">该容器已以只读模式打开</string>
+	<string name="service_notifications_channel_name">服务通知</string>
+	<string name="file_operations_notifications_channel_name">文件操作通知</string>
 </resources>
