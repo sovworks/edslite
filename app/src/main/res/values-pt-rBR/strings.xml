@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="http://schemas.android.com/tools">
+        <string name="add_container">Adicionar um volume existente</string>
+        <string name="ok">OK</string>
+	<string name="enter_password">Digite a senha:</string>
+	<string name="select">Selecione</string>
+	<string name="enter_new_folder_name">Digite um novo nome da pasta</string>
+	<string name="new_file">Novo arquivo</string>
+	<string name="new_dir">Nova pasta</string>
+	<string name="remove_from_list">Remover da lista</string>
+	<string name="processing_file"><xliff:g id="filename" example="/sdcard/data.txt">%1$s</xliff:g> (<xliff:g id="number of files processed">%2$d</xliff:g> de <xliff:g id="total_number_of_files">%3$d</xliff:g>)</string>
+	<string name="copying_files">Copiando arquivos</string>
+	<string name="copy_failed">Falha ao copiar</string>
+	<string name="move_failed">Falha ao mover</string>
+	<string name="delete">Excluir</string>
+	<string name="deleting_files">Excluindo arquivos</string>
+	<string name="delete_failed">Falha ao excluir</string>
+	<string name="rename">Renomear</string>
+	<string name="enter_new_file_name">Digite um novo nome do arquivo</string>
+	<string name="settings">Configurações</string>
+	<string name="bad_container_file_or_wrong_password">A senha incorreta ou formato do volume sem suporte</string>
+	<string name="main_settings">Configurações gerais</string>
+	<string name="eds_shortcut"><xliff:g id="program_name">EDS</xliff:g> atalho</string>
+	<string name="enter_widget_title">Digite um título do widget</string>	
+	<string name="select_path">Selecione localização</string>
+	<string name="container_size">Tamanho do volume</string>
+	<string name="container_size_desc">Digite um tamanho do volume em megabytes</string>
+	<string name="container_password">Senha do volume</string>
+	<string name="create_new_container">Criar um novo volume</string>
+	<string name="cancel_task_confirmation">Você tem certeza quer cancelar a tarefa atual?</string>
+	<string name="yes">Sim</string>
+	<string name="no">Não</string>
+	<string name="skip">Pular</string>
+	<string name="overwrite">Substituir</string>
+	<string name="file_already_exists">Arquivo <xliff:g id="filename" example="example.txt">%1$s</xliff:g> já existe em <xliff:g id="directory" example="/sdcard">%2$s</xliff:g>.</string>
+	<string name="size">Tamanho</string>
+	<string name="number_of_files">Número de arquivos</string>
+	<string name="properties">Propriedades</string>
+	<string name="total_space">Espaço total</string>
+	<string name="free_space">Espaço livre</string>
+	<string name="use_password">Utilizar senha</string>
+	<string name="saving_changes">Salvando alterações</string>
+	<string name="preparing_file">Preparando arquivos</string>
+	<string name="eds_service_is_running"><xliff:g id="program_name">EDS</xliff:g> serviço está funcionando</string>
+	<string name="stop_service_and_exit">Parar o serviço e sair</string>
+	<string name="send_files_to">Enviar arquivos para</string>
+	<string name="send">Enviar</string>
+	<string name="max_temporary_file_size">Tamanho máximo do arquivo temporário</string>
+	<string name="overwrite_temp_files_with_random_data">Substituir arquivos temporários com dados aleatórios</string>
+	<string name="err_target_container_is_closed">O volume alvo está fechado</string>
+	<string name="err_failed_opening_container">Falha ao abrir o volume</string>
+	<string name="err_input_output">Falha ao ler ou salvar dados</string>
+	<string name="err_temp_file_is_too_big">O arquivo é muito grande. Você pode copiá-lo manualmente ou aumentar o tamanho máximo do arquivo temporário em configurações do app.</string>
+	<string name="err_external_storage_is_not_available">O armazenamento externo não está disponível</string>
+	<string name="err_container_size_is_too_small">O tamanho especificado do volume é muito pequeno</string>
+	<string name="err_failed_processing_settings_file">Falha ao processar o arquivo de configurações</string>
+	<string name="err_failed_creating_container">Falha ao criar o volume</string>
+	<string name="about">Sobre</string>
+	<string name="opening_container">Abrindo</string>
+	<string name="decrypt_to_temp_folder">Descriptografar para a pasta temporária</string>
+	<string name="container_file_name_is_not_specified">O nome de arquivo do volume não foi especificado</string>
+	<string name="do_you_want_to_overwrite_existing_file">Você deseja substituir o arquivo existente?</string>
+	<string name="enter_file_name">Digite o nome do arquivo</string>
+	<string name="save_changes">Salvar alterações</string>
+	<string name="do_you_want_to_save_changes">Você quer salvar as alterações?</string>
+	<string name="select_image">Selecione uma imagem</string>
+	<string name="do_you_really_want_to_delete_selected_files">Você realmente quer excluir arquivos selecionados (%s)?</string>
+	<string name="wiping_files">Removendo arquivos</string>
+	<string name="creating_container">Criando volume</string>
+	<string name="err_failed_saving_changes">Falha ao salvar as alterações. Tente salvar o arquivo novamente ou copiar-lo manualmente. Veja o arquivo de registro do app para mais detalhes.</string>
+	<string name="help">Ajuda</string>
+	<string name="select_file">Selecione arquivo</string>
+	<string name="file_not_found">A localização especificada não existe</string>
+	<string name="select_all">Selecionar tudo</string>
+	<string name="apply_to_all">Aplicar a tudo</string>		
+	<string name="closing">Fechando</string>
+	<string-array name="image_viewer_use_mode">
+		<item >Nunca</item>
+		<item >Para tudo, exceto os arquivos locais não criptografados</item>
+		<item >Sempre</item>
+	</string-array>
+	<string name="image_viewer">Visualizador de imagens</string>
+	<string name="loading">Carregando</string>
+	<string name="last_modified">Última modificação</string>
+	<string name="path">Localização</string>
+	<string name="always_force_close_containers">Sempre forçar o fechamento de volume</string>
+	<string name="show_previews">Mostrar pré-visualizações no gerenciador de arquivos</string>
+	<string name="open_read_only">Abrir apenas em modo de leitura</string>
+	<string name="disable_wide_screen_layouts">Desativar o layout da paisagem</string>
+	<string name="close_all_containers">Fechar todos volumes <xliff:g id="program_name">EDS</xliff:g>.</string>
+	<string name="fill_free_space_with_random_data">Preencher o espaço livre com dados aleatórios</string>
+	<string name="ascending">Ascendente</string>
+	<string name="descending">Descendente</string>
+	<string-array name="sort_mode">
+		<item >Por nome de arquivo</item>
+		<item >Por data de modificação</item>
+		<item >Por tamanho</item>
+		<item >Por nome de arquivo (numérico)</item>
+	</string-array>
+	<string name="sort">Ordenar</string>
+	<string name="zoom_in">Aumentar o zoom</string>
+	<string name="zoom_out">Diminuir o zoom</string>
+	<string name="next_image">Imagem seguinte</string>
+	<string name="previous_image">Imagem anterior</string>
+	<string name="rotate_left">Girar à esquerda</string>
+	<string name="rotate_right">Girar à direita</string>
+	<string name="encryption_algorithm">Algoritmo da criptografia</string>
+	<string name="hash_algorithm">Algoritmo do Hash</string>
+	<string name="version_history">Histórico de versões</string>
+	<string name="containers">Volumes</string>
+	<string name="close">Fechar</string>
+	<string name="target_path">Localização alvo</string>
+	<string name="device">Dispositivo</string>
+	<string name="username">Nome de usuário</string>
+	<string name="password">Senha</string>
+	<string name="title">Título</string>
+	<string name="open">Abrir</string>
+	<string name="disable_wide_screen_layouts_desc">Esta opção desativa o painel de visualização em modo de paisagem</string>
+	<string name="temp_data_path">Localização temporária de dados</string>
+	<string name="temp_data_path_desc">Esta localização será usada se um volume for aberto em modo não-montado para armazenar arquivos temporários. Deixe o campo vazio para usar a localização padrão.</string>
+	<string name="max_temporary_file_size_desc">Se um volume for aberto em modo não-montado, então para abrir um arquivo com uma ferramenta externa, este arquivo tem que ser descriptografado em localização temporária. Esta opção define o tamanho máximo de um arquivo que pode ser descriptografado automaticamente (em megabytes).</string>
+	<string name="overwrite_temp_files_with_random_data_desc">Se esta opção for ativada, um arquivo temporário será substituído com dados aleatórios antes de ser excluído.</string>
+	<string name="auto_close_container">Fechar automaticamente volumes</string>
+	<string name="auto_close_container_desc">Fechar automaticamente volumes se nenhum dado tiver sido lido/escrito para ele durante o tempo especificado (em minutos).</string>
+	<string name="extension_mime_override">Substituir o tipo Mime de um arquivo com base em sua extensão.</string>
+	<string name="extension_mime_override_desc">Deve digitar um tipo de Mime por linha. Ex, <xliff:g id="example">txt texto/puro</xliff:g>.</string>
+	<string name="internal_image_viewer_mode">Modo de visualizador de imagens incorporado</string>
+	<string name="internal_image_viewer_mode_desc">Selecione quando você quer usar o visualizador de imagens incorporado</string>
+	<string name="always_force_close_containers_desc">Forçar fechamento de volumes sem solicitação. Você pode perder dados não salvos.</string>
+	<string name="path_to_container">Localização do volume</string>
+	<string name="internal_container_settings">Configurações internas do volume</string>
+	<string name="internal_container_settings_desc">Você tem que abrir o volume para acessar estas configurações</string>
+	<string name="change_container_password">Alterar a senha do volume</string>
+	<string name="enter_new_password">Digite uma nova senha</string>
+	<string name="repeat_password">Repita a senha</string>
+	<string name="password_does_not_match">A senha não corresponde</string>
+	<string name="save_password">Lembrar a senha</string>
+	<string name="save_password_desc">Salvar a senha do volume. Salvando uma senha pode não ser seguro.</string>
+	<string name="enable_full_screen_mode">Ativar o modo de tela completa</string>
+	<string name="never_save_history">Nunca salvar links para volumes</string>
+	<string name="never_save_history_desc">Um link para o novo volume será removido após o fechamento do <xliff:g id="program_name">EDS</xliff:g></string>
+	<string name="contact_support">Entre em contato com o suporte</string>
+	<string name="no_free_space_left">Não há mais espaço livre</string>
+	<string name="speed">Velocidade atual: <xliff:g id="current_speed">%1$.1f</xliff:g> Mb/s</string>
+	<string name="container_format">Formato do volume</string>
+	<string name="container_format_desc">Você pode especificar o formato do volume a fim de acelerar a abertura dele</string>
+	<string name="encryption_alg_desc">Você pode especificar o algoritmo de criptografia a fim de acelerar a abertura dele</string>
+	<string name="hash_alg_desc">Você pode especificar o algoritmo de Hash a fim de acelerar a abertura dele</string>
+	<string name="working">Executado</string>	
+	<string name="generic_error_message">Ocorreu um erro. Você pode ver os detalhes no arquivo de registro do app.</string>
+	<string name="err_no_application_found">Não foi encontrado nenhum app para abrir este tipo de arquivo. Você pode substituir o tipo Mime de arquivo na tela de configurações gerais.</string>
+	<string name="disable_modified_files_backup">Desativar backup de arquivos modificados</string>
+        <string name="invalid_master_password">Senha geral inválida</string>
+        <string name="enter_master_password">Digite a senha geral</string>
+        <string name="master_password">Senha geral</string>
+        <string name="location_type">tipo de localização</string>
+        <string name="drawer_open">Abrir aba</string>
+        <string name="drawer_close">Fechar aba</string>
+        <string name="open_file">Abrir arquivo</string>
+	<string name="add_new">Adicionar novo</string>
+	<string name="create_new_container_or_add_existing_container">Você gostaria de criar um novo volume ou adicionar já existente?</string>
+	<string name="changing_password">Alterando a senha</string>
+	<string name="choose_files_to_copy_or_move">Escolha arquivos para copiar ou mover…</string>
+	<string name="manage_containers">Gerenciar  volumes</string>
+	<string name="local_files">Arquivos locais</string>
+	<string name="built_in_memory_card">Cartão da memória integrado</string>
+	<string name="force_close_request">Não foi possível fechar o volume <xliff:g id="path_to_container">\"%1$s\"</xliff:g>. Você quer forçar o fechamento?</string>
+	<string name="debug_log">Registro de depuração</string>
+	<string name="edit">Editar</string>
+	<string name="external_storage">Armazenagem externa</string>
+	<string name="manage_local_storages">Gerenciar armazenamentos locais</string>
+	<string name="container_info_summary">Liberar o espaço: <xliff:g id="free_space" example="10Mb">%1$s</xliff:g>; Espaço total: <xliff:g id="total_space" example="100Mb">%2$s</xliff:g>.</string>
+	<string name="disable">Desativar</string>
+	<string name="copy_here">Copiar aqui</string>
+	<string name="move_here">Mover aqui</string>
+	<string name="storage_permission_desc">É necessária a permissão de acesso ao armazenamento para acessar cartões de memória e USBs</string>
+	<string name="ext_storage_write_permission_request">Você gostaria de conceder a permissão de leitura no armazenamento externo para o EDS?</string>
+	<string name="grant">Conceder</string>
+	<string name="number_of_kdf_iterations_veracrypt_descr">Digite o <xliff:g id="key_derivation_function">KDF</xliff:g> multiplicador de iterações (<xliff:g id="pim">PIM</xliff:g>). Quanto maior o valor escolhido, mais tempo levará para abrir o volume. Digite 0 para usar o valor padrão. Verifique <xliff:g id="url">https://veracrypt.codeplex.com/wikipage?title=Personal%20Iterations%20Multiplier%20(PIM)</xliff:g> para mais detalhes.</string>
+	<string name="kdf_iterations_multiplier"><xliff:g id="key_derivation_function">KDF</xliff:g> multiplicador de iterações (<xliff:g id="pim">PIM</xliff:g>)</string>
+	<string name="container_format_is"><xliff:g id="formatting">&lt;p&gt;</xliff:g>O formato do volume é <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="container_format" example="VeraCrypt">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.<xliff:g id="formatting">&lt;/p&gt;</xliff:g></string>
+	<string name="encryption_alg_is"><xliff:g id="formatting">&lt;p&gt;</xliff:g>O algoritmo de criptografia é <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="encryption_algorithm_name" example="AES">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.<xliff:g id="formatting">&lt;/p&gt;</xliff:g></string>
+	<string name="kdf_base_hash_func_is"><xliff:g id="key_derivation_function">KDF</xliff:g> A função base do Hash é <xliff:g id="formatting">&lt;b&gt;</xliff:g><xliff:g id="hash_algorithm_name" example="SHA-256">%1$s</xliff:g><xliff:g id="formatting">&lt;/b&gt;</xliff:g>.</string>
+	<string name="hidden">oculto</string>
+	<string name="value_has_been_copied">O valor do campo foi copiado ao Clipboard</string>
+	<string name="overwrite_and_delete">Substituir e excluir</string>
+	<string name="list_is_empty">A lista está vazia</string>
+	<string name="hide_eds_screen_from_other_apps">Ocultar <xliff:g id="program_name">EDS</xliff:g> a tela para outros apps</string>
+	<string name="toggle_auto_zoom">Alternar zoom automático</string>
+	<string name="change">Mudar</string>
+	<string name="do_you_really_want_to_remove_from_the_list">Você realmente quer excluir <xliff:g id="title">\"%1$s\"</xliff:g> da lista?</string>
+	<string name="toggle_display_password">Alternar exibição de senha</string>
+	<string name="file_operation_started">A operação de arquivo começou</string>
+	<string name="open_file_as_container">Abrir arquivo como volume</string>
+	<string name="remember_kdf_iterations_multiplier">Lembrar o multiplicador de iterações KDF</string>
+	<string name="default_theme">Padrão</string>
+	<string name="dark_theme">Escuro</string>
+	<string name="theme">Tema</string>
+	<string name="theme_desc">Reiniciar o app para aplicar as mudanças</string>
+	<string name="use_external_file_manager">Gerenciador de arquivos externo</string>
+	<string name="use_external_file_manager_desc">Abrir um gerenciador de arquivos externo uma vez que o volume tenha sido montado</string>
+	<string name="builtin_file_manager">Gerenciador de arquivos integrado</string>
+	<string name="dont_use_content_provider">Não use o provedor de conteúdo EDS para abrir arquivos descriptografados em outros apps.</string>
+        <string name="dont_use_content_provider_desc">Alguns apps não podem funcionar com fornecedores de conteúdo.</string>
+        <string name="uri_of_the_container">URI do volume</string>
+        <string name="text_has_been_copied">O texto foi copiado ao Clipboard</string>
+	<string name="select_root_folder_tip">Por favor, abra a pasta Root do armazenamento externo e pressione \"Selecionar\"</string>
+	<string name="wrong_encfs_root_path">A localização <xliff:g id="encfs">EncFs</xliff:g> Root errada</string>
+	<string name="filename_encryption_algorithm">Algoritmo de criptografia de nome de arquivo</string>
+	<string name="key_size">Tamanho de chave</string>
+	<string name="key_size_descr">Por favor selecione um tamanho de chave em bits.</string>
+	<string name="block_size">Tamanho de bloco</string>
+	<string name="block_size_descr">Selecione um tamanho de bloco de arquivo em bytes</string>
+	<string name="enable_per_file_iv">Ativar vetores de inicialização por arquivo?</string>
+	<string name="enable_per_file_iv_descr">Isto acrescenta cerca de 8 bytes por arquivo aos requisitos de armazenamento. Ele não deve afetar o desempenho, exceto possivelmente com apps que dependem do arquivo alinhado em bloco io para o desempenho.</string>
+	<string name="enable_filename_iv_chain">Ativar o encadeamento vetorial de inicialização de nomes de arquivos</string>
+	<string name="enable_filename_iv_chain_descr">Isso torna a codificação de nome do arquivo dependente da localização completa, em vez de codificar cada elemento da localização individualmente.</string>
+	<string name="enable_filename_to_file_iv_chain">Ativar o nome do arquivo para <xliff:g id="initializing_vector">IV</xliff:g> encadeamento de cabeçalho?</string>
+	<string name="enable_filename_to_file_iv_chain_descr">Isso torna a codificação de dados do arquivo dependente da localização completa do arquivo.</string>
+	<string name="allow_empty_blocks">Permitir blocos vazios</string>
+	<string name="allow_empty_blocks_descr">Isto evita salvar blocos criptografados em arquivos dispersos.</string>
+	<string name="mac_bytes_per_block">Ativar cabeçalhos de código de autenticação de bloco em cada bloco de arquivo?</string>
+	<string name="mac_bytes_per_block_descr">Isto acrescenta cerca de 12 bytes por bloco aos requisitos de armazenamento de um arquivo e afeta significativamente o desempenho, mas também significa que [quase] quaisquer modificações ou erros dentro de um bloco serão captados e causarão um erro de leitura.</string>
+	<string name="add_rand_bytes">Adicionar bytes aleatórios a cada cabeçalho de bloco?</string>
+	<string name="add_rand_bytes_descr">Isto resulta numa redução de desempenho, mas garante que os blocos tenham códigos de autenticação diferentes. Observe que você pode ter os mesmos benefícios ao ativar vetores de inicialização por arquivo, o que não provoca uma redução de desempenho tão grande. Selecione um número de bytes, de 1 a 8.</string>
+	<string name="number_of_kdf_iterations">Número de iterações <xliff:g id="key_derivation_function">KDF</xliff:g>.</string>
+	<string name="number_of_kdf_iterations_descr">Digite o número de iterações para a função de derivação de chave. Quanto maior o valor escolhido, mais tempo levará para abrir o volume.</string>
+        <string name="install_exfat_module">Instalar o módulo <xliff:g id="exfat">ExFAT</xliff:g>.</string>
+        <string name="install_exfat_module_desc">A fim de abrir um volume formatado como <xliff:g id="exfat">ExFAT</xliff:g> você pode instalar um módulo de sistema de arquivo adicional <xliff:g id="exfat">ExFAT</xliff:g>. O módulo de código livre pode ser baixado no <xliff:g id="exfat_module_link">%s</xliff:g>.</string>
+	<string name="module_has_been_installed">O módulo foi instalado</string>
+        <string name="file_system_type">Tipo de sistema de arquivo</string>
+	<string name="file_system_type_desc">Você pode baixar um módulo adicional do sistema de arquivos <xliff:g id="exfat">ExFAT</xliff:g> de código livre no seguinte site: <xliff:g id="exfat_module_link">%s</xliff:g>.</string>
+        <string name="get_program_log">Registro de depuração</string>
+	<string name="save_log_file_to">Salvar o arquivo de registro em…</string>
+        <string name="update_exfat_module">Por favor, atualize o módulo <xliff:g id="exfat">exFAT</xliff:g>.</string>
+	<string name="exfat_module_required">Por favor, instale o módulo <xliff:g id="exfat">exFAT</xliff:g>.</string>
+        <string name="restart_application">Por favor, reinicie o EDS</string>
+        <string name="force_temp_files">Forçar arquivos temporários</string>
+	<string name="force_temp_files_desc">Use arquivos temporários em vez de \"pipes\" mesmo para solicitações somente de leitura. Alguns apps não podem funcionar com \"pipes\".</string>
+	<string name="wrong_path">Localização errada</string>
+	<string name="encfs_config_file_not_found">O arquivo de configuração EncFs não encontrado</string>
+        <string name="container_opened_read_only">O volume foi aberto apenas em modo de leitura.</string>
+	<string name="service_notifications_channel_name">Notificações de serviço</string>
+	<string name="file_operations_notifications_channel_name">Notificações de operação do arquivo</string>
+</resources>
